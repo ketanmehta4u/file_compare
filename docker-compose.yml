@@ -12,6 +12,10 @@ services:
       LOG_FORMAT: ${LOG_FORMAT:-json}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      # One proxy hop -- the nginx container in front of this service. See
+      # backend/src/config/env.ts (trustProxy) for why this matters to
+      # per-client rate limiting and the logged client address.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-}
       MAX_CONCURRENT_COMPARISONS: ${MAX_CONCURRENT_COMPARISONS:-}
       COMPARE_QUEUE_TIMEOUT_S: ${COMPARE_QUEUE_TIMEOUT_S:-}

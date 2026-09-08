@@ -13,6 +13,10 @@
 > history and requirements, and the `git log` for what was actually
 > built, phase by phase.
 >
+> **For a specification that does match this repo, see
+> `BUILD_PROMPT.md`** -- written from the finished code, it is the file
+> to hand to anyone rebuilding this app.
+>
 > Kept here only for reference (it independently converged on several
 > of the same financial-comparison rules — decimal-exact math, currency/
 > parens normalisation, control totals, audit header with SHA-256 —

@@ -115,6 +115,18 @@ git log -1 <hash>          # full detail on any one phase
 `README.md` has the run instructions (Docker-first) and two Docker
 gotchas worth knowing before touching the Dockerfiles again.
 
+## About `BUILD_PROMPT.md` and `prompt.md`
+
+`BUILD_PROMPT.md` **is** an accurate specification of this repo: a
+rebuild-from-scratch prompt written after the fact from the finished
+code, covering the stack, architecture, every engine rule (normalisation
+order, DMY-before-MDY dates, Excel's 1899-12-30 epoch, tolerance vs.
+equality, key fallback), the API contract, the middleware, the frontend
+state subtleties, the nginx requirements, and the verification bar. It is
+the file to hand to anyone rebuilding this. `README.md` is the operator
+documentation: setup on a new machine, running, limitations,
+troubleshooting.
+
 ## About `prompt.md`
 
 There's a `prompt.md` in this repo root. **It does not describe this
