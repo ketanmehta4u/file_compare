@@ -2,6 +2,7 @@ import { compareColumns } from "./columnDiff";
 import { compareRecords } from "./compareRecords";
 import { controlTotals as computeControlTotals } from "./controlTotals";
 import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, ReconciliationOutcome, Table } from "./types";
+import type { ProgressReporter } from "./progress";
 
 /** Port of comparison.py's `_file_notice_warnings`. Surfaces a file's
  * load-time notices (hidden Excel data, uncalculated formulas) as run
@@ -82,15 +83,27 @@ export function runComparison(
   targetMeta: FileMeta,
   settings: CompareSettings,
   mapping: ColumnMapping | null = null,
-  user = ""
+  user = "",
+  onProgress?: ProgressReporter
 ): CompareReport {
   const columnDiff = compareColumns(sourceMeta, targetMeta, settings);
 
   const srcRowOffset = sourceMeta.hasHeader !== false ? 2 : 1;
   const tgtRowOffset = targetMeta.hasHeader !== false ? 2 : 1;
 
-  const records = compareRecords(source, target, columnDiff.common, settings, srcRowOffset, tgtRowOffset);
-  const totals = computeControlTotals(source, target, columnDiff.common, settings);
+  const records = compareRecords(
+    source,
+    target,
+    columnDiff.common,
+    settings,
+    srcRowOffset,
+    tgtRowOffset,
+    onProgress
+  );
+
+  const totals = computeControlTotals(source, target, columnDiff.common, settings, onProgress);
+
+  onProgress?.({ phase: "reporting", done: 0, total: 0 });
 
   const warnings = [
     ...fileNoticeWarnings("Source", sourceMeta),

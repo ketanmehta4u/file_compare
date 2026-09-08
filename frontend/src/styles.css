@@ -290,6 +290,17 @@ button:disabled {
   justify-content: center;
 }
 
+/* Live comparison progress: the bar reuses .progress-bar from the upload
+   control, with room for the phase label underneath. */
+.run-progress {
+  margin-top: 12px;
+  max-width: 420px;
+}
+.run-progress p {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+}
+
 .app-footer {
   background: var(--wb-navy);
   color: #cfd8e3;

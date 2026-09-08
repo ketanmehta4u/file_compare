@@ -7,16 +7,18 @@ import {
   mappingFromPairs,
   validateColumnsAgainstMapping,
 } from "../../engine/catalog";
-import { runComparison } from "../../engine/runComparison";
+import { runComparisonInWorker } from "../../worker/runInWorker";
+import { startCompareJob, getJob, cancelJob } from "../compareJobs";
 import { defaultSettings } from "../../engine/types";
-import type { ColumnMapping, CompareSettings, FileMeta, Table } from "../../engine/types";
+import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, Table } from "../../engine/types";
 import { buildExcelReport, EXCEL_MAX_ROWS } from "../../engine/report/buildExcelReport";
 import { annotateForExcel, diffCellsForAnnotated, buildAnnotatedExcel } from "../../engine/report/annotate";
 import { compareRateLimit, downloadRateLimit } from "../middleware/rateLimit";
-import { compareSlot } from "../middleware/compareSlot";
+import { acquireCompareSlot, releaseCompareSlot, compareSlotCount } from "../middleware/compareSlot";
 import { currentUser } from "../middleware/currentUser";
 import { compareToResponse } from "../toView";
 import type { CompareRequest, CompareResultResponse, WriteToBlobResponse } from "../dto";
+import type { CompareJobInput } from "../../worker/compareWorker";
 
 export const compareRouter = Router();
 
@@ -47,11 +49,17 @@ function getFileOr404(fileId: string, side: string) {
   return cached;
 }
 
-compareRouter.post("/compare/run", compareRateLimit, compareSlot, async (req, res, next) => {
-  try {
-    const body = req.body as CompareRequest;
-    const user = currentUser(req);
-
+/**
+ * Turns a compare request into everything the engine needs: the two
+ * post-mapping tables, the settings, and any catalogue compliance
+ * warnings. Shared by the synchronous route and the job route so the two
+ * cannot drift apart. Throws HttpError for anything the caller got wrong.
+ */
+function prepareCompare(
+  body: CompareRequest,
+  user: string
+): { input: CompareJobInput; complianceWarnings: string[] } {
+  {
     const srcCached = getFileOr404(body.source_file_id, "Source");
     const tgtCached = getFileOr404(body.target_file_id, "Target");
 
@@ -115,26 +123,108 @@ compareRouter.post("/compare/run", compareRateLimit, compareSlot, async (req, re
       enforcedDtypes: enforced,
     });
 
-    const report = runComparison(srcTable, srcMeta, tgtTable, tgtMeta, settings, mapping, user);
+    return {
+      input: {
+        source: srcTable,
+        sourceMeta: srcMeta,
+        target: tgtTable,
+        targetMeta: tgtMeta,
+        settings,
+        mapping,
+        user,
+      },
+      complianceWarnings,
+    };
+  }
+}
 
-    const runId = newRunId();
-    runCache.set(runId, {
-      report,
-      sourceTable: srcTable,
-      targetTable: tgtTable,
-      sourceMeta: srcMeta,
-      targetMeta: tgtMeta,
-      mapping,
-      cachedAt: Date.now(),
-    });
+/** Caches a finished run so its report and annotated downloads stay
+ * available, and shapes the HTTP response. */
+function storeRun(report: CompareReport, input: CompareJobInput, complianceWarnings: string[]): CompareResultResponse {
+  const runId = newRunId();
+  runCache.set(runId, {
+    report,
+    sourceTable: input.source,
+    targetTable: input.target,
+    sourceMeta: input.sourceMeta,
+    targetMeta: input.targetMeta,
+    mapping: input.mapping,
+    cachedAt: Date.now(),
+  });
+  return compareToResponse(report, runId, complianceWarnings);
+}
 
-    const responseBody: CompareResultResponse = compareToResponse(report, runId, complianceWarnings);
-    res.json(responseBody);
+/**
+ * Synchronous comparison -- unchanged contract: one request, the whole
+ * result. The engine now runs in a worker thread, so a long run no longer
+ * blocks this process; health checks, uploads and other users' requests
+ * keep being served while it works. The concurrency slot is taken here
+ * rather than by the compareSlot middleware so it is held for the actual
+ * work rather than merely until this response finishes.
+ *
+ * For a large comparison prefer POST /compare/jobs, which returns
+ * immediately and reports live progress instead of holding a connection
+ * open for minutes.
+ */
+compareRouter.post("/compare/run", compareRateLimit, async (req, res, next) => {
+  let slotHeld = false;
+  try {
+    const { input, complianceWarnings } = prepareCompare(req.body as CompareRequest, currentUser(req));
+
+    slotHeld = await acquireCompareSlot();
+    if (!slotHeld) {
+      return res.status(503).set("Retry-After", "60").json({
+        detail:
+          `Server busy — ${compareSlotCount()} comparison(s) already running and ` +
+          "the queue did not clear in time. Please retry shortly.",
+      });
+    }
+
+    const report = await runComparisonInWorker(input);
+    res.json(storeRun(report, input, complianceWarnings));
+  } catch (err) {
+    if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
+    if (err instanceof Error) return res.status(400).json({ detail: err.message });
+    next(err);
+  } finally {
+    if (slotHeld) releaseCompareSlot();
+  }
+});
+
+/** Starts a comparison in the background and hands back a job id to poll. */
+compareRouter.post("/compare/jobs", compareRateLimit, (req, res, next) => {
+  try {
+    const user = currentUser(req);
+    const { input, complianceWarnings } = prepareCompare(req.body as CompareRequest, user);
+    const job = startCompareJob(input, { user, requestId: req.requestId, complianceWarnings });
+    res.status(202).json({ job_id: job.id, status: job.status });
   } catch (err) {
     if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
     if (err instanceof Error) return res.status(400).json({ detail: err.message });
     next(err);
   }
+});
+
+/** Live progress for a job, and the full result once it has finished. */
+compareRouter.get("/compare/jobs/:jobId", (req, res) => {
+  const job = getJob(String(req.params.jobId));
+  if (!job) return res.status(404).json({ detail: "Job not found — it may have expired." });
+  res.json({
+    job_id: job.id,
+    status: job.status,
+    progress: job.progress,
+    result: job.status === "done" ? job.result : null,
+    detail: job.error,
+  });
+});
+
+/** Cancels a queued or running job. */
+compareRouter.delete("/compare/jobs/:jobId", (req, res) => {
+  const id = String(req.params.jobId);
+  const job = getJob(id);
+  if (!job) return res.status(404).json({ detail: "Job not found — it may have expired." });
+  const cancelled = cancelJob(id);
+  res.json({ job_id: id, status: cancelled ? "cancelled" : job.status, cancelled });
 });
 
 function getRunOr404(runId: string) {

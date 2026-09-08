@@ -31,7 +31,20 @@
     <button type="button" (click)="run(state)" [disabled]="!canRun(state)">
       {{ running ? 'Running…' : 'Run comparison' }}
     </button>
+    <button type="button" *ngIf="running" class="link-button" (click)="cancel()">Cancel</button>
     <span *ngIf="!state.sourceFile || !state.targetFile" class="muted">Load both a source and target file to run a comparison.</span>
+
+    <div *ngIf="running" class="run-progress" role="status" aria-live="polite">
+      <div class="progress-bar">
+        <div class="progress-bar-fill" [style.width.%]="progress?.percent ?? 0"></div>
+        <span>{{ progress?.percent ?? 0 }}%</span>
+      </div>
+      <p class="muted">
+        {{ progress?.label || 'Starting…' }}<ng-container *ngIf="progress && progress.total > 0">:
+          {{ progress.done | number }} / {{ progress.total | number }} rows</ng-container>
+      </p>
+    </div>
+
     <div *ngIf="runError" class="alert alert-error">{{ runError }}</div>
   </div>
 

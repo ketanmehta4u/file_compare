@@ -172,8 +172,8 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 129 tests
-cd ../frontend && npm test # 15 tests (opens Chrome)
+cd backend && npm test     # 141 tests
+cd ../frontend && npm test # 21 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -383,8 +383,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 129 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 15 tests
+cd backend && npm test    # vitest — engine + API, 141 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 21 tests
 ```
 
 The backend suite includes an **anchor end-to-end test**: the sample
@@ -445,11 +445,40 @@ as `{"detail": "..."}`. Decimal values cross the wire as strings.
 | GET | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset |
 | POST | `/api/files/upload` | Upload one file → `file_id` + metadata |
 | POST | `/api/files/list-sheets` | Sheet names in a workbook |
-| POST | `/api/compare/run` | Run a comparison → result + `run_id` |
+| POST | `/api/compare/run` | Run a comparison synchronously → result + `run_id` |
+| POST | `/api/compare/jobs` | Start a comparison in the background → `job_id` (202) |
+| GET | `/api/compare/jobs/:jobId` | Live progress, and the result once done |
+| DELETE | `/api/compare/jobs/:jobId` | Cancel a queued or running comparison |
 | GET | `/api/compare/:runId/report.xlsx` | Audit workbook |
 | GET | `/api/compare/:runId/annotated/:side` | Annotated `source` or `target` |
 
-`POST /api/compare/run` needs `source_file_id` and `target_file_id`;
+### Running a comparison
+
+There are two ways in, taking the same request body.
+
+`POST /api/compare/jobs` returns a `job_id` straight away and runs the
+comparison in a worker thread. `GET /api/compare/jobs/:jobId` then reports
+live progress — the phase, its row counts and an overall percentage —
+and carries the finished result once `status` is `done`:
+
+```json
+{ "job_id": "a36ab59d005743a8", "status": "running",
+  "progress": { "phase": "comparing", "label": "Comparing matched rows",
+                "done": 132000, "total": 150000, "percent": 55 },
+  "result": null, "detail": null }
+```
+
+`DELETE` on the same URL cancels it, terminating the worker and freeing
+its concurrency slot. The UI uses this path, polling every 400ms.
+
+`POST /api/compare/run` still does the whole thing in one request and
+returns the full result, unchanged. It also runs in a worker now, so it
+no longer blocks the server — but it holds the connection open for the
+length of the run, which for a large comparison is minutes and is exactly
+what intermediate proxies tend to cut off. Prefer the job route for
+anything big.
+
+Both routes need `source_file_id` and `target_file_id`;
 everything else is optional — `catalog_id` + `dataset_id`, `column_map`
 (source column → target column), `drop_unmapped`, `key_columns`,
 `case_sensitive`, `trim_whitespace`, `numeric_tolerance` (decimal
@@ -485,7 +514,15 @@ explicit `column_map` takes precedence over the catalogue's mapping.
   Very large files are limited by the container's memory, well before the
   200 MB upload cap.
 - Default caps: 200 MB per file, 3 concurrent comparisons (a fourth
-  request queues, then gets a 503 after 120s). All tunable.
+  request queues, then gets a 503 after 120s). All tunable. Comparisons
+  run in worker threads, so the cap now buys real parallelism rather than
+  just bounding memory.
+- A comparison's whole result is returned in one response: every
+  source-only row, target-only row and cell difference, even though the
+  UI shows the first 100 of each. On a run with hundreds of thousands of
+  breaks that is a large payload (a 150k-row all-different run produced
+  roughly 28 MB) — the Excel report is the better route for the full
+  detail.
 - The audit workbook respects Excel's 1,048,576-row limit by spilling
   oversized sheets to CSV attachments; oversized annotated exports stream
   as CSV instead of `.xlsx`.

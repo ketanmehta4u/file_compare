@@ -1,11 +1,12 @@
-import { Component, OnInit } from "@angular/core";
-import { Observable } from "rxjs";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Observable, Subscription, timer } from "rxjs";
+import { switchMap } from "rxjs/operators";
 import { AuthService } from "./core/auth.service";
 import { ConfigService } from "./core/config.service";
 import { ApiService } from "./core/api.service";
 import { CompareStateService, type CompareFormState } from "./core/compare-state.service";
 import { theme } from "./theme";
-import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView } from "./shared/models/dto";
+import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView, JobProgress } from "./shared/models/dto";
 
 /** Root shell -- port of the original's App.tsx. Bootstraps auth/config,
  * renders the branded header/footer (from theme.ts), and composes the
@@ -15,7 +16,7 @@ import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView } 
   selector: "app-root",
   templateUrl: "./app.component.html",
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   readonly theme = theme;
   config: ConfigInfo | null = null;
   user = "";
@@ -23,6 +24,11 @@ export class AppComponent implements OnInit {
   result: CompareResultResponse | null = null;
   runError = "";
   running = false;
+
+  /** Live progress of the comparison currently running, if any. */
+  progress: JobProgress | null = null;
+  private jobId: string | null = null;
+  private pollSub: Subscription | null = null;
 
   constructor(
     private readonly auth: AuthService,
@@ -56,10 +62,72 @@ export class AppComponent implements OnInit {
     return !!state.sourceFile && !!state.targetFile && !this.running;
   }
 
+  /** Stops polling a job we are no longer interested in. */
+  private stopPolling(): void {
+    this.pollSub?.unsubscribe();
+    this.pollSub = null;
+  }
+
+  /** Asks the server to stop the running comparison. The job is cancelled
+   * server-side (its worker is terminated), so this frees the slot for
+   * other users rather than just hiding the result. */
+  cancel(): void {
+    const jobId = this.jobId;
+    if (!jobId) return;
+    this.stopPolling();
+    this.api.cancelCompareJob(jobId).subscribe({
+      next: () => this.finishRun("Comparison cancelled."),
+      error: () => this.finishRun("Comparison cancelled."),
+    });
+  }
+
+  private finishRun(message: string): void {
+    this.running = false;
+    this.jobId = null;
+    this.progress = null;
+    this.runError = message;
+  }
+
+  /** Polls a job until it reaches a terminal state, updating progress on
+   * the way. 400ms is frequent enough to feel live without hammering the
+   * server on a run that takes minutes. */
+  private pollJob(jobId: string): void {
+    this.pollSub = timer(0, 400)
+      .pipe(switchMap(() => this.api.compareJob(jobId)))
+      .subscribe({
+        next: (job) => {
+          this.progress = job.progress;
+          if (job.status === "done" && job.result) {
+            this.stopPolling();
+            this.running = false;
+            this.jobId = null;
+            this.progress = null;
+            this.result = job.result;
+            this.compareState.setResult(job.result);
+            return;
+          }
+          if (job.status === "error") {
+            this.stopPolling();
+            this.finishRun(job.detail ?? "Comparison failed.");
+            return;
+          }
+          if (job.status === "cancelled") {
+            this.stopPolling();
+            this.finishRun("Comparison cancelled.");
+          }
+        },
+        error: (err) => {
+          this.stopPolling();
+          this.finishRun(err?.error?.detail ?? "Lost contact with the comparison.");
+        },
+      });
+  }
+
   run(state: CompareFormState): void {
     if (!state.sourceFile || !state.targetFile) return;
     this.running = true;
     this.runError = "";
+    this.progress = null;
 
     const req: CompareRequest = {
       source_file_id: state.sourceFile.file_id,
@@ -83,16 +151,23 @@ export class AppComponent implements OnInit {
       req.column_map = Object.fromEntries(Object.entries(state.columnMap).filter(([, t]) => t));
     }
 
-    this.api.runCompare(req).subscribe({
-      next: (res) => {
-        this.running = false;
-        this.result = res;
-        this.compareState.setResult(res);
+    // Started as a background job rather than one long request: the
+    // server answers immediately with an id, and progress is polled while
+    // it works. A large comparison can take minutes, which is well past
+    // what an intermediate proxy will hold a connection open for.
+    this.api.startCompareJob(req).subscribe({
+      next: (started) => {
+        this.jobId = started.job_id;
+        this.pollJob(started.job_id);
       },
       error: (err) => {
         this.running = false;
         this.runError = err?.error?.detail ?? "Comparison failed.";
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
   }
 }

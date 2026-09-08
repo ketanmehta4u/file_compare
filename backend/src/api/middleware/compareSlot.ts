@@ -60,6 +60,29 @@ class Semaphore {
 const totalSlots = maxConcurrentComparisons();
 const semaphore = new Semaphore(totalSlots);
 
+/** How many comparisons may run at once. */
+export function compareSlotCount(): number {
+  return totalSlots;
+}
+
+/**
+ * Programmatic access to the same gate the middleware uses, for work that
+ * outlives its HTTP request. A queued comparison job holds a slot for as
+ * long as it actually runs, not just until the POST that created it
+ * responds -- releasing on response-finish (as the middleware does) would
+ * free the slot immediately and let the cap be exceeded.
+ *
+ * Every acquire that returns true must be paired with exactly one
+ * release, including on the failure and cancellation paths.
+ */
+export function acquireCompareSlot(timeoutMs = compareQueueTimeoutMs()): Promise<boolean> {
+  return semaphore.acquire(timeoutMs);
+}
+
+export function releaseCompareSlot(): void {
+  semaphore.release();
+}
+
 export async function compareSlot(req: Request, res: Response, next: NextFunction): Promise<void> {
   const waitedFrom = performance.now();
   const acquired = await semaphore.acquire(compareQueueTimeoutMs());

@@ -187,3 +187,36 @@ export interface WriteToBlobResponse {
   written: string[];
   failed: Array<[string, string]>;
 }
+
+/** Live progress for a background comparison. `percent` is null while a
+ * phase has no countable total (the tail phases). */
+export interface JobProgress {
+  phase: string;
+  label: string;
+  done: number;
+  total: number;
+  percent: number | null;
+}
+
+export type CompareJobStatus = "queued" | "running" | "done" | "error" | "cancelled";
+
+export interface CompareJobStarted {
+  job_id: string;
+  status: CompareJobStatus;
+}
+
+export interface CompareJobView {
+  job_id: string;
+  status: CompareJobStatus;
+  progress: JobProgress | null;
+  /** Populated only once the status is "done". */
+  result: CompareResultResponse | null;
+  /** Failure message when the status is "error". */
+  detail: string | null;
+}
+
+export interface CompareJobCancelled {
+  job_id: string;
+  status: CompareJobStatus;
+  cancelled: boolean;
+}

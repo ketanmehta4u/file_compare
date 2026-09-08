@@ -3,6 +3,9 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import type {
   AuthMe,
+  CompareJobCancelled,
+  CompareJobStarted,
+  CompareJobView,
   BlobReadRequest,
   CatalogUploadResponse,
   CompareRequest,
@@ -85,6 +88,21 @@ export class ApiService {
 
   runCompare(req: CompareRequest): Observable<CompareResultResponse> {
     return this.http.post<CompareResultResponse>("/api/compare/run", req);
+  }
+
+  /** Starts a comparison in the background; returns as soon as the server
+   * has queued it, rather than holding the connection open for the whole
+   * run. Poll compareJob() for progress. */
+  startCompareJob(req: CompareRequest): Observable<CompareJobStarted> {
+    return this.http.post<CompareJobStarted>("/api/compare/jobs", req);
+  }
+
+  compareJob(jobId: string): Observable<CompareJobView> {
+    return this.http.get<CompareJobView>(`/api/compare/jobs/${encodeURIComponent(jobId)}`);
+  }
+
+  cancelCompareJob(jobId: string): Observable<CompareJobCancelled> {
+    return this.http.delete<CompareJobCancelled>(`/api/compare/jobs/${encodeURIComponent(jobId)}`);
   }
 
   reportXlsxUrl(runId: string): string {

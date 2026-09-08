@@ -10,6 +10,7 @@ import type {
   ValueDifference,
 } from "./types";
 import { enforcedFor } from "./types";
+import { throttleByCount, type ProgressPhase, type ProgressReporter } from "./progress";
 
 export interface CompareRecordsResult {
   sourceOnlyRows: Array<Record<string, unknown>>;
@@ -33,16 +34,21 @@ interface KeyEntry {
 function buildIndex(
   table: Table,
   keyColNames: readonly string[],
-  settings: CompareSettings
+  settings: CompareSettings,
+  onProgress?: ProgressReporter,
+  phase: ProgressPhase = "indexing_source"
 ): Map<string, KeyEntry> {
   const index = new Map<string, KeyEntry>();
   const enforced = keyColNames.map((c) => enforcedFor(settings, c));
+  const report = throttleByCount(onProgress);
+  const total = table.rows.length;
   table.rows.forEach((row, i) => {
     const key = keyColNames.map((c, ci) => normaliseCell(row[c], settings, enforced[ci]).value);
     const encoded = encodeKey(key);
     const entry = index.get(encoded);
     if (entry) entry.indices.push(i);
     else index.set(encoded, { key, indices: [i] });
+    report({ phase, done: i + 1, total });
   });
   return index;
 }
@@ -102,7 +108,8 @@ export function compareRecords(
   commonColumns: readonly string[],
   settings: CompareSettings,
   sourceRowOffset = 1,
-  targetRowOffset = 1
+  targetRowOffset = 1,
+  onProgress?: ProgressReporter
 ): CompareRecordsResult {
   const warnings: string[] = [];
   let keyCols = [...settings.keyColumns];
@@ -121,8 +128,8 @@ export function compareRecords(
   const srcKeyColNames = keyCols.length > 0 ? keyCols : [...source.columns].sort();
   const tgtKeyColNames = keyCols.length > 0 ? keyCols : [...target.columns].sort();
 
-  const srcIndex = buildIndex(source, srcKeyColNames, settings);
-  const tgtIndex = buildIndex(target, tgtKeyColNames, settings);
+  const srcIndex = buildIndex(source, srcKeyColNames, settings, onProgress, "indexing_source");
+  const tgtIndex = buildIndex(target, tgtKeyColNames, settings, onProgress, "indexing_target");
 
   const srcDups = [...srcIndex.values()].filter((e) => e.indices.length > 1);
   const tgtDups = [...tgtIndex.values()].filter((e) => e.indices.length > 1);
@@ -152,6 +159,8 @@ export function compareRecords(
         `${dupStats.targetDuplicateRows} rows — ${dupTail}`
     );
   }
+
+  onProgress?.({ phase: "matching", done: 0, total: 0 });
 
   const srcKeys = new Set(srcIndex.keys());
   const tgtKeys = new Set(tgtIndex.keys());
@@ -188,6 +197,10 @@ export function compareRecords(
   const sortedCommon = commonKeys
     .map((k) => ({ encoded: k, entry: srcIndex.get(k)! }))
     .sort((a, b) => compareKeyEntries(a.entry, b.entry));
+
+  const reportCompared = throttleByCount(onProgress);
+  const totalCommon = sortedCommon.length;
+  let comparedSoFar = 0;
 
   for (const { encoded: k, entry } of sortedCommon) {
     const sIdx = entry.indices[0];
@@ -239,6 +252,9 @@ export function compareRecords(
     }
     sourceStatus.set(k, status);
     targetStatus.set(k, status);
+
+    comparedSoFar++;
+    reportCompared({ phase: "comparing", done: comparedSoFar, total: totalCommon });
   }
 
   return {

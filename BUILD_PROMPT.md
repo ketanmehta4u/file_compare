@@ -309,7 +309,10 @@ All routes under `/api`, all JSON `snake_case`, all errors
 | GET | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset |
 | POST | `/api/files/upload` | Upload one file → `file_id` + metadata |
 | POST | `/api/files/list-sheets` | Sheet names in a workbook |
-| POST | `/api/compare/run` | Run a comparison → full result + `run_id` |
+| POST | `/api/compare/run` | Run a comparison synchronously → full result + `run_id` |
+| POST | `/api/compare/jobs` | Start a comparison in the background → `job_id` |
+| GET | `/api/compare/jobs/:jobId` | Live progress; the result once done |
+| DELETE | `/api/compare/jobs/:jobId` | Cancel a queued or running comparison |
 | GET | `/api/compare/:runId/report.xlsx` | Audit workbook |
 | GET | `/api/compare/:runId/annotated/:side` | Annotated source/target |
 
@@ -328,6 +331,60 @@ Upload metadata returns the file id (content hash prefix), filename,
 SHA-256, size, row and column counts, columns and inferred dtypes, sheet
 name, encoding, delimiter, and the hidden-data and uncalculated-formula
 notices.
+
+### Running the comparison off the main thread
+
+Node has one event loop, and this engine is CPU-bound: run it inline and a
+large comparison freezes the whole server. Measured on a 150k-row pair,
+the process answered *nothing* for the entire run -- health checks
+included, which is enough for an orchestrator to decide the container is
+dead and restart it mid-comparison.
+
+So run the engine in a `worker_threads` worker. The engine itself stays
+synchronous and unchanged; it just takes an optional progress reporter,
+and in the worker that reporter is a `postMessage`, which the main thread
+receives on its own loop. That is what makes live progress possible at
+all: the server can only tell you it is 60% done if it can still answer
+you while working.
+
+Two details that bite:
+
+- **A structured clone strips class prototypes.** Decimals arrive on the
+  other side as inert objects with no methods -- catastrophic for money
+  values, and silent. Box them into a tagged marker on the way out and
+  rebuild them on the way in, generically rather than field-by-field:
+  Decimals occur in the settings, the value differences, the control
+  totals *and* inside normalised row keys.
+- **Loading a TypeScript worker.** Compiled, the worker is a sibling .js
+  file. Under a TS runner (dev, tests) Node cannot load .ts in a worker by
+  itself -- resolve the entry by the extension of `__filename` and pass
+  the TS loader through `execArgv` when it is `.ts`, so dev and the test
+  suite exercise the real worker rather than a stand-in.
+
+Cloning the parsed tables into the worker is cheap enough to ignore
+(~0.4s per 150k-row side, against a comparison measured in minutes);
+don't contort the cache design to avoid it without measuring first.
+
+### Progress and long-running comparisons
+
+A comparison can take minutes, which is longer than intermediate proxies
+will hold a connection open, so expose it as a job: `POST` starts it and
+returns an id, a `GET` reports live progress and carries the result once
+finished, and a `DELETE` cancels it (terminate the worker and release its
+concurrency slot). Keep a synchronous route too if you have existing
+callers, but point large work at the job route.
+
+Report progress per phase with real counts -- indexing each side, then
+matched rows compared, then footing the control totals. Two things matter
+more than they sound:
+
+- **Every expensive phase needs its own count.** Footing the control
+  totals re-normalises every cell of every numeric column on both sides;
+  on a measured run it was 40% of the total time. Left uncounted, the bar
+  sat at 95% for the better part of a minute, which reads as a hang.
+- **Weight the phases from a measurement, not a guess**, and never let the
+  percentage go backwards -- a retreating progress bar reads as a bug even
+  when the run is healthy.
 
 ### Cross-cutting middleware
 

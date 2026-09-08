@@ -66,7 +66,7 @@ Every phase of the build is done, committed, and — critically — actually
 | Angular frontend (`frontend/src/app/`) | ✅ | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified |
 | Docker (`docker-compose.yml`) | ✅ | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express |
 
-**129 backend tests (vitest), 15 frontend tests (karma/jasmine), all
+**141 backend tests (vitest), 21 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
 `cd frontend && npm test`.
 
@@ -98,6 +98,22 @@ verified rather than assumed:
 
 One test (the `EXCEL_MAX_ROWS` spill case, which builds a >1M-row report)
 was also failing on vitest's 5s default timeout; the suite now allows 30s.
+
+### Live progress and worker threads
+
+The engine now runs in a `worker_threads` worker, and comparisons can be
+started as background jobs (`POST /api/compare/jobs`) that report live
+per-phase row counts, with cancellation. This began as a feature request
+("can we show how many rows have been compared in real time?") but the
+blocker was the measured one above: run inline, a 150k-row comparison
+answered *no* HTTP request for its entire 112s -- so no progress endpoint
+could have replied. The synchronous `/api/compare/run` route keeps its
+contract and now also runs in the worker.
+
+Watch out for two things if you touch this: Decimals do not survive a
+structured clone (see `worker/transfer.ts`), and the worker entry is
+resolved by the extension of `__filename` so dev/tests load the .ts
+worker through the tsx loader while production loads the compiled .js.
 
 **Full narrative of how it was built — including every bug found and
 how — is in the git log.** Each commit message is a detailed account of
