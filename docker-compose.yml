@@ -1,0 +1,48 @@
+# Local prod-shape topology: nginx-fronted Angular SPA + Express backend.
+# Usage:
+#   docker compose up --build
+#   open http://localhost:8080
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-}
+      MAX_CONCURRENT_COMPARISONS: ${MAX_CONCURRENT_COMPARISONS:-}
+      COMPARE_QUEUE_TIMEOUT_S: ${COMPARE_QUEUE_TIMEOUT_S:-}
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/livez', r => process.exit(r.statusCode===200?0:1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # 127.0.0.1, not localhost -- this nginx image only binds IPv4
+      # (0.0.0.0:8080, no IPv6 listener), and wget resolving "localhost"
+      # tries ::1 first inside the container, which gets refused. Verified
+      # directly: wget to localhost failed 4 healthchecks in a row while
+      # the exact same service was reachable and correct from the host the
+      # whole time via the port mapping.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped

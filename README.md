@@ -18,7 +18,68 @@ not a migration.
 
 ## Status
 
-Scaffolding in progress. See commit history for what's been built so far.
+**Complete.** Comparison engine, Express API, Angular frontend, and
+Docker packaging are all built and verified — see commit history for
+the phase-by-phase build log, including every bug caught along the way
+and how it was found.
+
+## Running it
+
+### Docker (recommended — this is what's actually verified end-to-end)
+
+```bash
+docker compose up --build
+# open http://localhost:8080
+```
+
+Two containers: `frontend` (nginx serving the built Angular app,
+proxying `/api/*` to `backend`) and `backend` (the Express API + engine).
+Both were built against the real pinned versions (`node:25.8-alpine`,
+`nginx:1.29-alpine`) and confirmed working — a real multipart file
+upload through nginx → Express → engine → back out, not just a build
+that compiles.
+
+### Native dev workflow (hot reload)
+
+```bash
+# Terminal 1 — backend
+cd backend
+npm install
+npm run dev          # tsx watch, :3000
+
+# Terminal 2 — frontend
+cd frontend
+npm install --legacy-peer-deps
+npm start             # ng serve, :4200, proxies /api/* to :3000
+```
+
+Open `http://localhost:4200/`.
+
+### Tests
+
+```bash
+cd backend && npm test    # vitest — engine + API, 112 tests
+cd frontend && npm test   # karma/jasmine (needs Chrome) — 3 tests
+```
+
+## Known Docker gotchas (found and fixed during the build)
+
+- **A Windows-host + Linux-container `npm install` against the same
+  shared `frontend/node_modules` corrupts the platform-specific esbuild
+  binary.** Running `npm install` inside a Linux container with the
+  Windows `frontend/` directory volume-mounted (e.g. to validate the
+  Node 25.8 build before committing to it) writes `esbuild-linux-64`
+  into `node_modules`; a subsequent Windows-side `ng build
+  --configuration production` then fails with `esbuild-wasm: The
+  service was stopped`. Fix: `rm -rf node_modules && npm install` on
+  whichever platform you're building on next — don't share
+  `node_modules` across host/container boundaries.
+- **This nginx image only binds IPv4.** Its healthcheck must target
+  `127.0.0.1`, not `localhost` — resolving `localhost` to `::1` inside
+  the container gets a genuine connection refused even though the
+  service is correctly up and reachable via the host's port mapping.
+  Already fixed in `docker-compose.yml`; worth knowing if you add more
+  healthchecks later.
 
 ## Known version notes
 
