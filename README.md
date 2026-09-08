@@ -43,6 +43,7 @@ parallel rebuild in its own repository, not a migration.
 - [Tests](#tests)
 - [Configuration](#configuration)
 - [HTTP API](#http-api)
+- [How it works](#how-it-works)
 - [Sizing and memory](#sizing-and-memory)
 - [Limitations](#limitations)
 - [Troubleshooting](#troubleshooting)
@@ -418,6 +419,11 @@ cd backend && npm test    # vitest — engine + API, 153 tests
 cd frontend && npm test   # karma/jasmine, needs Chrome — 33 tests
 ```
 
+Test files run one at a time (`fileParallelism: false`). Five of them run
+real comparisons in real worker threads, and running those in parallel
+oversubscribed the machine badly enough that one-second tests timed out at
+thirty. The suite takes about 90 seconds as a result.
+
 The backend suite includes an **anchor end-to-end test**: the sample
 fixtures compared through the whole pipeline against a hand-verified
 expected result (9 matched-equal, 2 matched-with-differences, 1
@@ -531,6 +537,30 @@ everything else is optional — `catalog_id` + `dataset_id`, `column_map`
 string), `decimal_precision`, `treat_blank_as_zero`,
 `fuzzy_column_names`, `control_total_columns`, `enforced_dtypes`. An
 explicit `column_map` takes precedence over the catalogue's mapping.
+
+---
+
+## How it works
+
+[ARCHITECTURE.md](ARCHITECTURE.md) walks the system end to end: what
+happens from page load to downloaded workbook, every HTTP call the Angular
+app makes and when, the middleware chain each request passes through, what
+the comparison worker does and how it reports progress, how frontend state
+is held, what lives in memory and for how long, and how errors travel back
+to the user.
+
+The short version:
+
+```
+Browser (Angular SPA) ──► nginx ──► Express main thread ──► worker thread
+   uploads, polls,          static    middleware, routes,     parse, map,
+   renders                  + /api    in-memory caches        compare, report
+```
+
+The main thread owns I/O and state and never parses a file or runs a
+comparison; the worker owns the CPU work and posts progress back as it
+goes. That split is what keeps the server responsive during a long run and
+makes the live progress bar possible.
 
 ---
 
@@ -780,6 +810,7 @@ frontend/         Angular 14 SPA
   nginx.conf        static serving + /api proxy (production image)
 fixtures/         sample CSV/XLSX used by tests and manual checks
 docker-compose.yml
+ARCHITECTURE.md   how it works: workflow, API calls, internals
 BUILD_PROMPT.md   full specification of this app, written from the code
 prompt.md         an earlier, rejected specification — kept for reference
 ```

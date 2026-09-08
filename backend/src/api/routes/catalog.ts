@@ -9,6 +9,20 @@ import type { CatalogUploadResponse, MappingView } from "../dto";
 
 export const catalogRouter = Router();
 
+/**
+ * The optional dataset catalogue: a workbook describing known datasets --
+ * canonical column names, which source column feeds each one, which are
+ * keys, per-column dtypes (including the `id` and `timestamp` overrides
+ * the engine enforces), and per-dataset comparison defaults.
+ *
+ * Entirely optional. Two files with matching column names compare without
+ * any of this; a catalogue just pre-fills the mapping, the key columns and
+ * the settings, and lets the run report where an uploaded file departs
+ * from what the catalogue says it should contain.
+ */
+
+/** Blank catalogue workbook, generated on the fly, for users starting from
+ * scratch rather than editing an existing one. */
 catalogRouter.get("/catalog/template", async (_req, res, next) => {
   try {
     const buffer = await buildCatalogTemplate();
@@ -21,6 +35,8 @@ catalogRouter.get("/catalog/template", async (_req, res, next) => {
   }
 });
 
+/** Parses an uploaded catalogue and caches it under a content hash, so a
+ * later compare request can name it by `catalog_id`. */
 catalogRouter.post("/catalog/upload", uploadRateLimit, uploadSingle("file"), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
@@ -44,6 +60,8 @@ catalogRouter.post("/catalog/upload", uploadRateLimit, uploadSingle("file"), asy
   }
 });
 
+/** The column mapping for one dataset: what the settings panel pre-fills
+ * itself from, and what the compare request refers to by dataset_id. */
 catalogRouter.get("/catalog/:catalogId/datasets/:datasetId/mapping", (req, res) => {
   const cached = catalogCache.get(req.params.catalogId);
   if (!cached) return res.status(404).json({ detail: "Catalog not found — re-upload." });

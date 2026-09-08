@@ -1,3 +1,12 @@
+/**
+ * The single NgModule for this app.
+ *
+ * There is no router: the whole flow -- upload, map, compare, read the
+ * result -- is one page, so the six feature components are composed
+ * directly by AppComponent rather than routed to. The APP_INITIALIZER
+ * applies the branding from theme.ts (CSS custom properties, page title,
+ * favicon) before the first render, so the page never flashes unthemed.
+ */
 import { APP_INITIALIZER, NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { HttpClientModule } from "@angular/common/http";
@@ -11,6 +20,8 @@ import { ResultsComponent } from "./features/results/results.component";
 import { HowToUseComponent } from "./features/how-to-use/how-to-use.component";
 import { ThemeService } from "./core/theme.service";
 
+/** APP_INITIALIZER factory: Angular waits for this before bootstrapping
+ * the root component. */
 export function initTheme(theme: ThemeService): () => void {
   return () => theme.apply();
 }

@@ -77,13 +77,14 @@ export class ApiService {
     return this.http.post<ExcelSheetsResponse>("/api/files/list-sheets", form);
   }
 
-  runCompare(req: CompareRequest): Observable<CompareResultResponse> {
-    return this.http.post<CompareResultResponse>("/api/compare/run", req);
-  }
-
   /** Starts a comparison in the background; returns as soon as the server
    * has queued it, rather than holding the connection open for the whole
-   * run. Poll compareJob() for progress. */
+   * run. Poll compareJob() for progress.
+   *
+   * The server also offers a synchronous POST /api/compare/run that
+   * returns the finished result in one response. This app does not use it
+   * -- a large comparison takes minutes, which is longer than intermediate
+   * proxies will hold a connection open, and it cannot report progress. */
   startCompareJob(req: CompareRequest): Observable<CompareJobStarted> {
     return this.http.post<CompareJobStarted>("/api/compare/jobs", req);
   }
