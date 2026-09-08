@@ -19,7 +19,8 @@ written to disk, nothing persisted after a restart.
 - **Express 5** + TypeScript backend, with the comparison engine written
   from scratch in TypeScript.
 - Two Docker containers: nginx serving the built SPA and proxying
-  `/api/*` to the backend.
+  `/api/*` to the backend — or, without Docker, a single Node process
+  that serves both.
 
 This is a from-scratch reimplementation of an earlier Python/FastAPI +
 React tool. That original is untouched and lives separately; this is a
@@ -64,7 +65,7 @@ Then open <http://localhost:8080>. Sample files to try it with are in
 | | Version | Needed for |
 |---|---|---|
 | **Docker Desktop** (or Docker Engine + Compose v2) | any current release | The Docker path — this is all you need |
-| **Node.js + npm** | Node 20+ (verified on 24.14.1 and, in the container, 25.8) | The native dev path |
+| **Node.js + npm** | Node 20+ (verified on 24.14.1 and, in the container, 25.8) | Running or developing without Docker |
 | **Git** | any | Cloning |
 | **Google Chrome** | any | Frontend tests only |
 
@@ -116,7 +117,31 @@ on <http://localhost:8081>. The `!override` tag matters — without it
 Compose *appends* to the port list rather than replacing it, and the
 original `8080` binding still conflicts.
 
-### 2b. Native setup (hot reload for development)
+### 2b. Without Docker — one process, no nginx
+
+The backend can serve the built Angular app itself, so the whole
+application runs as a single Node process with nothing else installed:
+
+```bash
+cd frontend && npm install --legacy-peer-deps && npm run build
+cd ../backend && npm install && npm run build
+npm run start:spa           # http://localhost:3000
+```
+
+That is a real production run: the built SPA (not a dev server), the API,
+and the engine in one process. `start:spa` passes `--serve-frontend`;
+`SERVE_FRONTEND=1` does the same thing if you prefer an env var, and
+`FRONTEND_DIST` points at a build somewhere other than
+`frontend/dist/frontend`.
+
+Serving the SPA is **off by default** — in the Docker topology nginx does
+it, and the API process should not. The two modes differ in what you give
+up without nginx: no gzip, no TLS termination, no separate upload cap in
+front of the app. For a handful of users on an internal network that is
+fine; for anything public, put a reverse proxy in front regardless of how
+you run this (and set `TRUST_PROXY` to match).
+
+### 2c. Native setup (hot reload for development)
 
 Two terminals, from the repository root:
 
@@ -146,7 +171,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 120 tests
+cd backend && npm test     # 129 tests
 cd ../frontend && npm test # 15 tests (opens Chrome)
 ```
 
@@ -203,6 +228,7 @@ deployment. Before putting it in front of users:
 | | Command | URL |
 |---|---|---|
 | Docker (prod shape) | `docker compose up --build` | <http://localhost:8080> |
+| Single process, no Docker | `cd backend && npm run start:spa` | <http://localhost:3000> |
 | Backend only (dev) | `cd backend && npm run dev` | <http://localhost:3000> |
 | Frontend only (dev) | `cd frontend && npm start` | <http://localhost:4200> |
 | Backend production build | `cd backend && npm run build && npm start` | <http://localhost:3000> |
@@ -239,7 +265,7 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 120 tests
+cd backend && npm test    # vitest — engine + API, 129 tests
 cd frontend && npm test   # karma/jasmine, needs Chrome — 15 tests
 ```
 
@@ -270,6 +296,8 @@ Backend environment variables (all optional):
 | `COMPARE_QUEUE_TIMEOUT_S` | `120` | How long a queued comparison waits for a slot before a 503. |
 | `TRUST_PROXY` | `1` | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed. |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging. `LOG_FORMAT=text` gives pretty-printed dev output. |
+| `SERVE_FRONTEND` | off | Serve the built SPA from this process too, for running without Docker/nginx. `1`/`true`/`yes`, or pass `--serve-frontend`. |
+| `FRONTEND_DIST` | `frontend/dist/frontend` | Where the built SPA lives, when `SERVE_FRONTEND` is on. |
 
 Every one of these except `PORT` (fixed by the container topology) is
 passed through in `docker-compose.yml`, so a `.env` file beside it
@@ -426,6 +454,11 @@ returned 503. Retry, or raise `MAX_CONCURRENT_COMPARISONS`.
 
 **Uploads fail with 413.** The file exceeds `MAX_UPLOAD_BYTES`, or
 nginx's `client_max_body_size` is below it. Raise both together.
+
+**`ng serve` is running but `http://127.0.0.1:4200` is refused.** The
+Angular dev server binds IPv6 loopback (`::1`) only — use
+`http://localhost:4200` instead, or `ng serve --host 0.0.0.0`. (Verified
+on this toolchain: `localhost` and `[::1]` answer, `127.0.0.1` does not.)
 
 **Frontend tests do nothing / cannot find a browser.** Karma needs
 Chrome. Install it, or point `CHROME_BIN` at a Chromium binary.

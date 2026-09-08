@@ -1,6 +1,6 @@
 import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
-import { corsOrigins, trustProxy } from "./config/env";
+import { corsOrigins, serveFrontendEnabled, trustProxy } from "./config/env";
 import { bodySizeGuard } from "./api/middleware/bodySizeGuard";
 import { securityHeaders } from "./api/middleware/securityHeaders";
 import { requestLog, log } from "./api/middleware/requestLog";
@@ -10,6 +10,7 @@ import { configRouter } from "./api/routes/config";
 import { catalogRouter } from "./api/routes/catalog";
 import { filesRouter } from "./api/routes/files";
 import { compareRouter } from "./api/routes/compare";
+import { serveFrontend } from "./api/serveFrontend";
 
 export function createApp(): Express {
   const app = express();
@@ -44,6 +45,11 @@ export function createApp(): Express {
   app.use("/api", catalogRouter);
   app.use("/api", filesRouter);
   app.use("/api", compareRouter);
+
+  // Optional single-process mode: also serve the built SPA from here, for
+  // running without Docker/nginx. Mounted after the API so it can never
+  // shadow /api; a no-op unless enabled.
+  if (serveFrontendEnabled()) serveFrontend(app);
 
   app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
     log.error({ ctx_request_id: req.requestId, err: err instanceof Error ? err.message : String(err) }, "http.exception");

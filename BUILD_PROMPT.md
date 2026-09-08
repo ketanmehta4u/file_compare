@@ -418,6 +418,16 @@ correctness safeguards in the engine report themselves that way.
 - **Frontend image**: multi-stage, `ng build --configuration production`
   under `node:25.8-alpine`, then serve `dist/` from `nginx:1.29-alpine`.
 
+Also provide an **optional single-process mode** so the app can run with
+no Docker and no nginx: a flag/env var that makes the backend serve the
+built SPA itself (static files plus a fallback to `index.html` for
+client-side routes), mounted *after* the API so it can never shadow
+`/api` — an unknown `/api/...` path must stay a 404 rather than being
+handed the HTML shell. Note that the API-wide CSP (`default-src 'none'`)
+is correct for JSON but would block the SPA's own bundles, so non-API
+responses need the SPA policy instead. Keep it off by default: where
+nginx is in front, static serving is nginx's job.
+
 nginx must:
 
 - set `client_max_body_size` at or above the backend's upload cap plus

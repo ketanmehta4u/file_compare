@@ -1,3 +1,5 @@
+import path from "node:path";
+
 const DEFAULT_MAX_UPLOAD_BYTES = 200 * 1024 * 1024; // 200 MB
 const MULTIPART_SLACK_BYTES = 1024 * 1024;
 const DEFAULT_MAX_CONCURRENT_COMPARISONS = 3;
@@ -69,6 +71,29 @@ export function trustProxy(): boolean | number | string {
   const n = Number(raw);
   if (Number.isInteger(n) && n >= 0) return n;
   return raw;
+}
+
+/**
+ * Whether this process should also serve the built Angular SPA (see
+ * api/serveFrontend.ts). Off by default: in the shipped Docker topology
+ * nginx serves the static files and this process is the API only. Turned
+ * on for a no-Docker, single-process deployment -- by env var or by the
+ * --serve-frontend argv flag, since setting an env var inline differs
+ * between cmd, PowerShell and POSIX shells.
+ */
+export function serveFrontendEnabled(): boolean {
+  const raw = (process.env.SERVE_FRONTEND ?? "").trim().toLowerCase();
+  if (raw === "1" || raw === "true" || raw === "yes") return true;
+  return process.argv.includes("--serve-frontend");
+}
+
+/** Directory holding the built SPA. The default is this repo's own layout
+ * (backend/dist/... -> ../../frontend/dist/frontend), so a checkout that
+ * has run `npm run build` in frontend/ needs no configuration. */
+export function frontendDist(): string {
+  const raw = (process.env.FRONTEND_DIST ?? "").trim();
+  if (raw !== "") return raw;
+  return path.resolve(__dirname, "..", "..", "..", "frontend", "dist", "frontend");
 }
 
 export function port(): number {
