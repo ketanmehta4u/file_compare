@@ -86,6 +86,20 @@ git log -1 <hash>          # full detail on any one phase
 `README.md` has the run instructions (Docker-first) and two Docker
 gotchas worth knowing before touching the Dockerfiles again.
 
+## About `prompt.md`
+
+There's a `prompt.md` in this repo root. **It does not describe this
+repo's actual architecture** — it's a separate, earlier specification
+(drafted by a different AI assistant) proposing a client-side-first
+design: Angular parsing/comparing in the browser via Web Workers, with
+an optional backend for large files only. The user confirmed the actual
+goal is simply "a frontend application where the user can upload files
+and compare them" — which the real, server-side architecture already
+satisfies (Angular uploads, Express's engine does all the work). No
+rearchitecture was done or requested; `prompt.md` is kept only for
+reference and carries its own warning banner at the top. Don't let it
+override anything in this file or the git log.
+
 ## What's NOT done
 
 - Nothing has been pushed to the GitHub remote — confirm current state,
