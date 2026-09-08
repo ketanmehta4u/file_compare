@@ -114,6 +114,16 @@ function normaliseInput(raw: unknown): { kind: "excel-serial"; value: number } |
   return { kind: "string", value: s };
 }
 
+/**
+ * NOTE for later phases (DTO serialisation, report generation): every Date
+ * returned by this module is constructed and must be read using *local*
+ * getters (getFullYear/getMonth/getDate), never `.toISOString()` or other
+ * UTC conversion -- a local-midnight Date shifts to the previous day once
+ * converted to UTC in any timezone ahead of UTC. Internally consistent as
+ * long as construction and reading both stay local; only becomes a bug if
+ * something downstream mixes in a UTC conversion.
+ */
+
 /** Returns midnight-truncated date-only value, or null. */
 export function parseDate(raw: unknown): Date | null {
   const dt = parseDatetime(raw);
