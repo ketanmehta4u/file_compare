@@ -7,7 +7,8 @@ import {
   mappingFromPairs,
   validateColumnsAgainstMapping,
 } from "../../engine/catalog";
-import { runComparisonInWorker } from "../../worker/runInWorker";
+import { loadBytes } from "../../engine/fileLoad/loadBytes";
+import { runComparisonInWorker, type WorkerComparison } from "../../worker/runInWorker";
 import { startCompareJob, getJob, cancelJob } from "../compareJobs";
 import { defaultSettings } from "../../engine/types";
 import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, Table } from "../../engine/types";
@@ -63,10 +64,11 @@ function prepareCompare(
     const srcCached = getFileOr404(body.source_file_id, "Source");
     const tgtCached = getFileOr404(body.target_file_id, "Target");
 
-    let srcTable: Table = srcCached.table;
-    let srcMeta: FileMeta = srcCached.meta;
-    let tgtTable: Table = tgtCached.table;
-    let tgtMeta: FileMeta = tgtCached.meta;
+    // Only the cached *metadata* is consulted here. Parsing and mapping
+    // both happen in the worker, from the cached bytes, so no table is
+    // ever built on this thread.
+    const srcMeta: FileMeta = srcCached.meta;
+    const tgtMeta: FileMeta = tgtCached.meta;
     let mapping: ColumnMapping | null = null;
     let complianceWarnings: string[] = [];
 
@@ -78,8 +80,6 @@ function prepareCompare(
         throw new HttpError(400, "Each target column can be mapped from at most one source column.");
       }
       mapping = mappingFromPairs(pairs);
-      ({ table: srcTable, meta: srcMeta } = applyMapping(srcTable, srcMeta, "source", mapping, body.drop_unmapped ?? false));
-      ({ table: tgtTable, meta: tgtMeta } = applyMapping(tgtTable, tgtMeta, "target", mapping, body.drop_unmapped ?? false));
     } else if (body.catalog_id && body.dataset_id) {
       const catCached = catalogCache.get(body.catalog_id);
       if (!catCached) throw new HttpError(404, "Catalog not in cache — re-upload.");
@@ -88,8 +88,6 @@ function prepareCompare(
         ...validateColumnsAgainstMapping(srcMeta, mapping, "source"),
         ...validateColumnsAgainstMapping(tgtMeta, mapping, "target"),
       ];
-      ({ table: srcTable, meta: srcMeta } = applyMapping(srcTable, srcMeta, "source", mapping, body.drop_unmapped ?? false));
-      ({ table: tgtTable, meta: tgtMeta } = applyMapping(tgtTable, tgtMeta, "target", mapping, body.drop_unmapped ?? false));
     }
 
     if (body.decimal_precision != null && body.decimal_precision < 0) {
@@ -125,12 +123,11 @@ function prepareCompare(
 
     return {
       input: {
-        source: srcTable,
-        sourceMeta: srcMeta,
-        target: tgtTable,
-        targetMeta: tgtMeta,
+        source: { bytes: srcCached.bytes, fileName: srcMeta.name, load: srcCached.load },
+        target: { bytes: tgtCached.bytes, fileName: tgtMeta.name, load: tgtCached.load },
         settings,
         mapping,
+        dropUnmapped: body.drop_unmapped ?? false,
         user,
       },
       complianceWarnings,
@@ -140,18 +137,26 @@ function prepareCompare(
 
 /** Caches a finished run so its report and annotated downloads stay
  * available, and shapes the HTTP response. */
-function storeRun(report: CompareReport, input: CompareJobInput, complianceWarnings: string[]): CompareResultResponse {
+export function storeRun(
+  outcome: WorkerComparison,
+  body: CompareRequest,
+  input: CompareJobInput,
+  complianceWarnings: string[]
+): CompareResultResponse {
   const runId = newRunId();
   runCache.set(runId, {
-    report,
-    sourceTable: input.source,
-    targetTable: input.target,
-    sourceMeta: input.sourceMeta,
-    targetMeta: input.targetMeta,
+    report: outcome.report,
+    // File ids, not tables: an annotated download re-parses from the file
+    // cache instead of this cache pinning two full tables per run.
+    sourceFileId: body.source_file_id,
+    targetFileId: body.target_file_id,
+    sourceMeta: outcome.sourceMeta,
+    targetMeta: outcome.targetMeta,
     mapping: input.mapping,
+    dropUnmapped: input.dropUnmapped,
     cachedAt: Date.now(),
   });
-  return compareToResponse(report, runId, complianceWarnings);
+  return compareToResponse(outcome.report, runId, complianceWarnings);
 }
 
 /**
@@ -180,8 +185,8 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res, next) => {
       });
     }
 
-    const report = await runComparisonInWorker(input);
-    res.json(storeRun(report, input, complianceWarnings));
+    const outcome = await runComparisonInWorker(input);
+    res.json(storeRun(outcome, req.body as CompareRequest, input, complianceWarnings));
   } catch (err) {
     if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
     if (err instanceof Error) return res.status(400).json({ detail: err.message });
@@ -195,8 +200,15 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res, next) => {
 compareRouter.post("/compare/jobs", compareRateLimit, (req, res, next) => {
   try {
     const user = currentUser(req);
-    const { input, complianceWarnings } = prepareCompare(req.body as CompareRequest, user);
-    const job = startCompareJob(input, { user, requestId: req.requestId, complianceWarnings });
+    const body = req.body as CompareRequest;
+    const { input, complianceWarnings } = prepareCompare(body, user);
+    const job = startCompareJob(input, {
+      user,
+      requestId: req.requestId,
+      complianceWarnings,
+      sourceFileId: body.source_file_id,
+      targetFileId: body.target_file_id,
+    });
     res.status(202).json({ job_id: job.id, status: job.status });
   } catch (err) {
     if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
@@ -252,8 +264,24 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
       return res.status(400).json({ detail: "side must be 'source' or 'target'." });
     }
     const cached = getRunOr404(String(req.params.runId));
-    const table = side === "source" ? cached.sourceTable : cached.targetTable;
     const meta = side === "source" ? cached.sourceMeta : cached.targetMeta;
+
+    // Re-parsed on demand from the cached upload rather than kept resident
+    // for the life of the run: annotated downloads are occasional, and
+    // holding two post-mapping tables per cached run was the process's
+    // largest memory consumer. The table lives only for this response.
+    const fileId = side === "source" ? cached.sourceFileId : cached.targetFileId;
+    const file = fileCache.get(fileId);
+    if (!file) {
+      throw new HttpError(
+        404,
+        `The ${side} file is no longer cached, so it cannot be annotated — re-upload it and run the comparison again.`
+      );
+    }
+    const loaded = await loadBytes(file.bytes, file.meta.name, file.load);
+    const table = cached.mapping
+      ? applyMapping(loaded.table, loaded.meta, side, cached.mapping, cached.dropUnmapped).table
+      : loaded.table;
 
     const annotated = annotateForExcel(table, side, cached.report, cached.report.audit.settings);
     const base = (meta.name.includes(".") ? meta.name.slice(0, meta.name.lastIndexOf(".")) : meta.name) + "_annotated";

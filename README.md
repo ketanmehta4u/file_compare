@@ -172,7 +172,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 146 tests
+cd backend && npm test     # 153 tests
 cd ../frontend && npm test # 25 tests (opens Chrome)
 ```
 
@@ -383,7 +383,7 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 146 tests
+cd backend && npm test    # vitest — engine + API, 153 tests
 cd frontend && npm test   # karma/jasmine, needs Chrome — 25 tests
 ```
 
@@ -409,11 +409,13 @@ Backend environment variables (all optional):
 |---|---|---|
 | `PORT` | `3000` | Listen port. |
 | `CORS_ORIGINS` | `http://localhost:4200` | Comma-separated allowed origins. |
-| `MAX_UPLOAD_BYTES` | `209715200` (200 MB) | Per-file upload cap. Keep nginx's `client_max_body_size` at or above this. |
+| `MAX_UPLOAD_BYTES` | half the cache budget, capped at 200 MB | Per-file upload cap. Unset, it follows the machine rather than promising 200 MB a small container could never parse (a 2 GB container lands at 140 MB). Keep nginx's `client_max_body_size` at or above it. |
 | `MAX_CONCURRENT_COMPARISONS` | `3` | Comparison concurrency cap (restart to change). |
 | `COMPARE_QUEUE_TIMEOUT_S` | `120` | How long a queued comparison waits for a slot before a 503. |
 | `TRUST_PROXY` | `1` | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed. |
 | `MAX_RESPONSE_ROWS` | `1000` | Rows per detail section put in a compare response. Downloads are never capped. |
+| `MAX_CACHE_BYTES` | 25% of the V8 heap limit | Bytes of uploaded files the cache may hold. Derived from the machine, so it self-sizes on a laptop and in a container. |
+| `MEM_LIMIT` (compose) | `2g` | The backend container's memory limit. V8 sizes its heap from this, and the cache budget and upload cap follow the heap. |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging. `LOG_FORMAT=text` gives pretty-printed dev output. |
 | `SERVE_FRONTEND` | off | Serve the built SPA from this process too, for running without Docker/nginx. `1`/`true`/`yes`, or pass `--serve-frontend`. |
 | `FRONTEND_DIST` | `frontend/dist/frontend` | Where the built SPA lives, when `SERVE_FRONTEND` is on. |
@@ -522,10 +524,18 @@ explicit `column_map` takes precedence over the catalogue's mapping.
 
 **Scale and memory**
 
-- Everything is in memory: the uploaded bytes, the parsed table, and the
-  result. Peak memory is a multiple of file size, not a fraction of it.
-  Very large files are limited by the container's memory, well before the
-  200 MB upload cap.
+- Everything is in memory. Uploads are cached as **raw bytes** and parsed
+  on demand in the worker, so a cached file costs roughly its own size
+  rather than the ~26 MB of heap per 5.4 MB file the earlier design held
+  (measured: each additional cached file now adds ~0 MB of heap). A
+  comparison still needs both files parsed at once, so peak memory is a
+  multiple of file size — it is just no longer paid for files sitting idle
+  in the cache.
+- The upload cache evicts on **bytes**, not entry count, against a budget
+  derived from V8's heap limit — which itself follows a container's memory
+  limit (measured: a 512 MB container gets ~259 MB of heap; a 2 GB one
+  gets 1120 MB, giving a 280 MB cache budget and a 140 MB upload cap).
+  `GET /api/readyz` reports all of these live.
 - Default caps: 200 MB per file, 3 concurrent comparisons (a fourth
   request queues, then gets a 503 after 120s). All tunable. Comparisons
   run in worker threads, so the cap now buys real parallelism rather than

@@ -32,6 +32,11 @@ export function encodeForTransfer<T>(value: T): unknown {
   if (value instanceof Decimal) return { [DECIMAL_TAG]: value.toString() };
   if (value === null || value === undefined) return value;
   if (value instanceof Date) return value;
+  // Binary data passes straight through: structured clone handles typed
+  // arrays natively, whereas the plain-object branch below would walk a
+  // Buffer byte by byte into {0: 72, 1: 105, ...} -- silently corrupting
+  // it, and enormously, since uploads travel this way.
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) return value;
   if (Array.isArray(value)) return value.map((v) => encodeForTransfer(v));
   if (value instanceof Map) {
     const out = new Map<unknown, unknown>();
@@ -60,6 +65,14 @@ export function decodeAfterTransfer<T = unknown>(value: unknown): T {
   if (isDecimalMarker(value)) return new Decimal(value[DECIMAL_TAG]) as unknown as T;
   if (value === null || value === undefined) return value as T;
   if (value instanceof Date) return value as unknown as T;
+  // A Buffer arrives as a plain Uint8Array (the clone keeps the bytes but
+  // not the subclass), so restore the Buffer view callers expect. Same
+  // memory -- a view over the transferred bytes, not a copy.
+  if (Buffer.isBuffer(value)) return value as unknown as T;
+  if (value instanceof Uint8Array) {
+    return Buffer.from(value.buffer, value.byteOffset, value.byteLength) as unknown as T;
+  }
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) return value as unknown as T;
   if (Array.isArray(value)) return value.map((v) => decodeAfterTransfer(v)) as unknown as T;
   if (value instanceof Map) {
     const out = new Map<unknown, unknown>();

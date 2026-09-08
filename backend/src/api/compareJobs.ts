@@ -19,6 +19,16 @@ import type { CompareResultResponse } from "./dto";
  * single-process caveat (see cache/stores.ts).
  */
 
+export interface JobContext {
+  user: string;
+  requestId?: string;
+  complianceWarnings: string[];
+  /** Kept so a finished run can point the annotated downloads back at the
+   * cached uploads instead of pinning parsed tables. */
+  sourceFileId: string;
+  targetFileId: string;
+}
+
 export type JobStatus = "queued" | "running" | "done" | "error" | "cancelled";
 
 export interface JobProgress {
@@ -94,10 +104,7 @@ export function jobCount(): number {
  * immediately. The concurrency slot is acquired inside the job, so a
  * queued job reports "queued" rather than blocking the caller.
  */
-export function startCompareJob(
-  input: CompareJobInput,
-  ctx: { user: string; requestId?: string; complianceWarnings: string[] }
-): CompareJob {
+export function startCompareJob(input: CompareJobInput, ctx: JobContext): CompareJob {
   const job: CompareJob = {
     id: randomUUID().replace(/-/g, "").slice(0, 16),
     status: "queued",
@@ -118,7 +125,7 @@ export function startCompareJob(
 async function run(
   job: CompareJob,
   input: CompareJobInput,
-  ctx: { user: string; requestId?: string; complianceWarnings: string[] }
+  ctx: JobContext
 ): Promise<void> {
   const queuedFrom = performance.now();
   const acquired = await acquireCompareSlot();
@@ -151,7 +158,7 @@ async function run(
 
   const startedAt = performance.now();
   try {
-    const report = await runComparisonInWorker(input, {
+    const outcome = await runComparisonInWorker(input, {
       onProgress: (u) => touch(job, { progress: toJobProgress(u) }),
       onStart: (worker) => {
         job.worker = worker;
@@ -160,18 +167,19 @@ async function run(
 
     const runId = newRunId();
     runCache.set(runId, {
-      report,
-      sourceTable: input.source,
-      targetTable: input.target,
-      sourceMeta: input.sourceMeta,
-      targetMeta: input.targetMeta,
+      report: outcome.report,
+      sourceFileId: ctx.sourceFileId,
+      targetFileId: ctx.targetFileId,
+      sourceMeta: outcome.sourceMeta,
+      targetMeta: outcome.targetMeta,
       mapping: input.mapping,
+      dropUnmapped: input.dropUnmapped,
       cachedAt: Date.now(),
     });
 
     touch(job, {
       status: "done",
-      result: compareToResponse(report, runId, ctx.complianceWarnings),
+      result: compareToResponse(outcome.report, runId, ctx.complianceWarnings),
       progress: { phase: "done", label: "Complete", done: 1, total: 1, percent: 100 },
     });
     log.info(

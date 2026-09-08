@@ -3,7 +3,7 @@ import path from "node:path";
 import { decodeAfterTransfer, encodeForTransfer } from "./transfer";
 import type { CompareJobInput, WorkerMessage } from "./compareWorker";
 import type { ProgressUpdate } from "../engine/progress";
-import type { CompareReport } from "../engine/types";
+import type { CompareReport, FileMeta } from "../engine/types";
 
 export interface RunInWorkerOptions {
   onProgress?: (update: ProgressUpdate) => void;
@@ -40,13 +40,20 @@ export class ComparisonCancelledError extends Error {
  * (see transfer.ts) -- a structured clone would otherwise strip Decimal's
  * prototype and leave money values as inert objects.
  */
+export interface WorkerComparison {
+  report: CompareReport;
+  /** Post-mapping metadata, as the worker saw it after parsing. */
+  sourceMeta: FileMeta;
+  targetMeta: FileMeta;
+}
+
 export function runComparisonInWorker(
   input: CompareJobInput,
   options: RunInWorkerOptions = {}
-): Promise<CompareReport> {
+): Promise<WorkerComparison> {
   const { file, execArgv } = workerEntry();
 
-  return new Promise<CompareReport>((resolve, reject) => {
+  return new Promise<WorkerComparison>((resolve, reject) => {
     const worker = new Worker(file, {
       workerData: encodeForTransfer(input),
       ...(execArgv ? { execArgv } : {}),
@@ -66,8 +73,12 @@ export function runComparisonInWorker(
         return;
       }
       if (message.type === "done") {
-        const report = decodeAfterTransfer<CompareReport>(message.report);
-        finish(() => resolve(report));
+        const result: WorkerComparison = {
+          report: decodeAfterTransfer<CompareReport>(message.report),
+          sourceMeta: decodeAfterTransfer<FileMeta>(message.sourceMeta),
+          targetMeta: decodeAfterTransfer<FileMeta>(message.targetMeta),
+        };
+        finish(() => resolve(result));
         return;
       }
       finish(() => reject(new Error(message.message)));

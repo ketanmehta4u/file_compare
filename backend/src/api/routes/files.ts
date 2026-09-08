@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { fileCache } from "../../cache/stores";
-import { loadCsv } from "../../engine/fileLoad/csv";
-import { loadExcel, listExcelSheets } from "../../engine/fileLoad/excel";
+import { listExcelSheets } from "../../engine/fileLoad/excel";
+import { loadBytes, type LoadOptions } from "../../engine/fileLoad/loadBytes";
 import { sha256Hex } from "../../engine/fileLoad/hash";
 import { uploadSingle } from "../upload";
 import { uploadRateLimit } from "../middleware/rateLimit";
@@ -11,42 +11,26 @@ import type { FileMeta, Table } from "../../engine/types";
 
 export const filesRouter = Router();
 
-function isExcel(fileName: string): boolean {
-  const ext = fileName.toLowerCase().split(".").pop();
-  return ext === "xlsx" || ext === "xls";
-}
-
-/** Port of the original's `_load_bytes` dispatch: extension picks CSV vs
- * Excel; for Excel, an unspecified sheet name falls back to the first
- * sheet in the workbook. */
-async function loadBytes(
-  data: Buffer,
-  fileName: string,
-  sheetName: string | undefined,
-  hasHeader: boolean,
-  delimiter: string | undefined
-): Promise<{ table: Table; meta: FileMeta }> {
-  if (isExcel(fileName)) {
-    const sheet = sheetName || (await listExcelSheets(data, fileName))[0];
-    if (!sheet) throw new Error(`${fileName}: workbook has no sheets.`);
-    return loadExcel(data, fileName, { sheetName: sheet, hasHeader });
-  }
-  return loadCsv(data, fileName, { hasHeader, delimiter: delimiter ?? null });
-}
-
 filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
     const data = req.file.buffer;
     if (data.length === 0) return res.status(400).json({ detail: "Uploaded file is empty." });
 
-    const sheetName = typeof req.body.sheet_name === "string" ? req.body.sheet_name : undefined;
-    const hasHeader = req.body.has_header !== "false";
-    const delimiter = typeof req.body.delimiter === "string" && req.body.delimiter ? req.body.delimiter : undefined;
+    const load: LoadOptions = {
+      sheetName: typeof req.body.sheet_name === "string" ? req.body.sheet_name : undefined,
+      hasHeader: req.body.has_header !== "false",
+      delimiter: typeof req.body.delimiter === "string" && req.body.delimiter ? req.body.delimiter : undefined,
+    };
 
-    const { table, meta } = await loadBytes(data, req.file.originalname, sheetName, hasHeader, delimiter);
+    // Parsed once here for the metadata the UI needs (columns, dtypes, row
+    // counts, hidden-data notices) -- then the table is dropped and only
+    // the bytes are cached. Everything downstream re-parses from those,
+    // which keeps steady-state memory close to what was uploaded rather
+    // than roughly twelve times it.
+    const { meta } = await loadBytes(data, req.file.originalname, load);
     const fileId = sha256Hex(data).slice(0, 16);
-    fileCache.set(fileId, { table, meta, cachedAt: Date.now() });
+    fileCache.set(fileId, { bytes: data, meta, load, cachedAt: Date.now() });
 
     const body: FileMetaView = fileMetaToView(meta, fileId);
     res.json(body);

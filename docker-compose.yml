@@ -19,6 +19,13 @@ services:
       MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-}
       MAX_CONCURRENT_COMPARISONS: ${MAX_CONCURRENT_COMPARISONS:-}
       COMPARE_QUEUE_TIMEOUT_S: ${COMPARE_QUEUE_TIMEOUT_S:-}
+    # A defined ceiling, rather than inheriting the host's memory and
+    # dying unpredictably under pressure. V8 sizes its heap from this (a
+    # 512 MB container gets ~259 MB of heap, measured), and the upload
+    # cache and default upload cap size themselves from the heap in turn --
+    # so raising or lowering this is the single knob for how big a file
+    # this deployment can handle. 2 GB comfortably covers ~20 MB files.
+    mem_limit: ${MEM_LIMIT:-2g}
     expose:
       - "3000"
     healthcheck:

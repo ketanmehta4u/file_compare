@@ -1,4 +1,5 @@
 import path from "node:path";
+import v8 from "node:v8";
 
 const DEFAULT_MAX_UPLOAD_BYTES = 200 * 1024 * 1024; // 200 MB
 const MULTIPART_SLACK_BYTES = 1024 * 1024;
@@ -13,10 +14,42 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-/** Effective per-file upload cap. Read on each call so a bad value can be
+/**
+ * Memory the upload cache may hold, in bytes.
+ *
+ * Derived from V8's heap ceiling rather than a fixed number, because that
+ * ceiling is what actually differs between machines: measured, the same
+ * build gets ~2.1 GB of heap on a developer laptop and ~259 MB inside a
+ * 512 MB container, and V8 adjusts itself to a cgroup limit without being
+ * told. `os.totalmem()` is deliberately NOT used -- inside that same
+ * container it reports the *host's* 3.8 GB and would size this cache
+ * roughly seven times too large.
+ *
+ * A quarter of the heap is a deliberately conservative share: the cache
+ * holds raw bytes, but a comparison then parses two of those files into
+ * tables costing roughly 12x their bytes each, and that working set needs
+ * the rest of the heap.
+ */
+export function cacheBudgetBytes(): number {
+  const explicit = process.env.MAX_CACHE_BYTES;
+  if (explicit) {
+    const n = Number(explicit);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return Math.floor(v8.getHeapStatistics().heap_size_limit * 0.25);
+}
+
+/** Effective per-file upload cap./** Effective per-file upload cap. Read on each call so a bad value can be
  * corrected without a restart, matching the original's `_max_upload_bytes`. */
 export function maxUploadBytes(): number {
-  return envInt("MAX_UPLOAD_BYTES", DEFAULT_MAX_UPLOAD_BYTES);
+  const explicit = process.env.MAX_UPLOAD_BYTES;
+  if (explicit) return envInt("MAX_UPLOAD_BYTES", DEFAULT_MAX_UPLOAD_BYTES);
+  // Unset, the cap follows the machine instead of promising 200 MB that a
+  // small container could never parse: half the cache budget, so a source
+  // and a target of that size both fit. On a laptop this still lands at
+  // the 200 MB ceiling; in a 512 MB container it lands near 32 MB, which
+  // is much closer to what that heap can actually process.
+  return Math.min(DEFAULT_MAX_UPLOAD_BYTES, Math.floor(cacheBudgetBytes() / 2));
 }
 
 export function multipartSlackBytes(): number {

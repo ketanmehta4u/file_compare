@@ -66,7 +66,7 @@ Every phase of the build is done, committed, and — critically — actually
 | Angular frontend (`frontend/src/app/`) | ✅ | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified |
 | Docker (`docker-compose.yml`) | ✅ | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express |
 
-**146 backend tests (vitest), 25 frontend tests (karma/jasmine), all
+**153 backend tests (vitest), 25 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
 `cd frontend && npm test`.
 
@@ -109,6 +109,23 @@ blocker was the measured one above: run inline, a 150k-row comparison
 answered *no* HTTP request for its entire 112s -- so no progress endpoint
 could have replied. The synchronous `/api/compare/run` route keeps its
 contract and now also runs in the worker.
+
+### Memory: bytes in the cache, parsing in the worker
+
+Uploads are cached as raw bytes and parsed on demand inside the worker;
+runs hold file ids rather than tables, and annotated downloads re-parse.
+Measured, each cached 150k-row file used to retain ~26 MB of heap and now
+retains ~0 (5.4 MB of external buffer). The cache evicts on bytes against
+a budget taken from V8's heap limit, so it self-sizes per machine, and the
+default upload cap follows it (a 2 GB container advertises 140 MB rather
+than a 200 MB it could not parse). `GET /api/readyz` reports heap, budget
+and occupancy.
+
+Two traps worth remembering here: `os.totalmem()` reports the *host's*
+memory inside a container and must not be used for sizing, and the
+worker's transfer encoder has to pass binary through untouched -- it once
+walked Buffers generically into `{0: 105, 1: 100, ...}`, corrupting every
+upload it touched.
 
 Watch out for two things if you touch this: Decimals do not survive a
 structured clone (see `worker/transfer.ts`), and the worker entry is

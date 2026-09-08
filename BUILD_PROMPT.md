@@ -444,6 +444,34 @@ JSON body parsing → routes → error handler.
   can turn it off rather than believe a client-supplied
   `X-Forwarded-For`.
 
+### Caching: keep bytes, not parses
+
+Cache the **uploaded bytes**, not the parsed table, and re-parse on demand
+in whichever worker needs the data. A parsed table costs an order of
+magnitude more than the file it came from (measured: each cached 5.4 MB /
+150k-row file retained ~26 MB of heap; caching bytes instead costs ~0 MB
+of heap and 5.4 MB of external buffer), and re-parsing takes ~200ms
+against comparisons measured in minutes. Parse once at upload for the
+metadata the UI needs -- columns, dtypes, row counts, hidden-data notices
+-- then keep the bytes and the metadata and drop the table. Store the load
+options alongside, so every later parse yields exactly the columns the
+user was shown.
+
+The same principle applies to finished runs: hold the report and the file
+ids, not the tables. An annotated download re-parses; pinning two
+post-mapping tables per cached run made that cache the largest consumer in
+the process, for data usually never downloaded.
+
+**Size the cache in bytes, from the machine.** Evicting by entry count
+means "50 files" whether they are 20 KB or 50 MB. Derive the budget from
+`v8.getHeapStatistics().heap_size_limit`, which follows a container's
+memory limit on its own -- and do **not** use `os.totalmem()`, which
+reports the *host's* memory inside a container (measured: 3.8 GB reported
+in a 512 MB container, which would size the cache seven times too large).
+Let the default upload cap follow the same budget rather than promising a
+fixed size the machine cannot process, and report heap, budget and cache
+occupancy from the readiness endpoint so an operator can see all of it.
+
 ### Caching
 
 Three LRU caches, keyed by content hash so identical uploads from
