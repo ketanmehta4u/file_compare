@@ -12,7 +12,10 @@ Built for financial reconciliation, so the money math is decimal-exact
 SHA-256 of the exact bytes that were uploaded.
 
 Everything happens **in memory** on the server: no database, no files
-written to disk, nothing persisted after a restart.
+written to disk, nothing persisted after a restart. Uploads are held as
+raw bytes and parsed on demand, and the comparison runs in a **worker
+thread**, so the server stays responsive and the page shows live progress
+— "Comparing matched rows: 132,000 / 150,000" — with a working Cancel.
 
 - Angular **14.3.0** SPA (built with Angular CLI 14.2.13, the last CLI
   release on the 14.x line).
@@ -21,6 +24,8 @@ written to disk, nothing persisted after a restart.
 - Two Docker containers: nginx serving the built SPA and proxying
   `/api/*` to the backend — or, without Docker, a single Node process
   that serves both.
+- Memory limits **size themselves to the machine**, so the same build
+  behaves sensibly on a laptop and in a small container.
 
 This is a from-scratch reimplementation of an earlier Python/FastAPI +
 React tool. That original is untouched and lives separately; this is a
@@ -38,6 +43,7 @@ parallel rebuild in its own repository, not a migration.
 - [Tests](#tests)
 - [Configuration](#configuration)
 - [HTTP API](#http-api)
+- [Sizing and memory](#sizing-and-memory)
 - [Limitations](#limitations)
 - [Troubleshooting](#troubleshooting)
 - [Project layout](#project-layout)
@@ -221,6 +227,10 @@ deployment. Before putting it in front of users:
   front of the backend.
 - Run **one backend process**. The caches are in-process; replicas break
   file lookups (see [Limitations](#limitations)).
+- Set the container's memory limit deliberately (`MEM_LIMIT`, default
+  `2g`). It is the single knob that decides how big a file the deployment
+  can handle — the heap, the cache budget and the upload cap all follow
+  it. See [Sizing and memory](#sizing-and-memory).
 
 ---
 
@@ -295,8 +305,8 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 129 tests
-cd frontend && npm test                            # karma/jasmine, 15 tests
+cd backend  && npm test                            # vitest, 153 tests
+cd frontend && npm test                            # karma/jasmine, 25 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -336,13 +346,21 @@ instead.
 
 ```bash
 curl http://localhost:3000/api/livez     # liveness
-curl http://localhost:3000/api/readyz    # readiness + cache sizes
+curl http://localhost:3000/api/readyz    # readiness, cache sizes, memory
 curl http://localhost:3000/api/config    # limits the UI reads
 curl -I http://localhost:8080/           # SPA headers through nginx
 ```
 
 Use `:8080` for Docker, `:3000` for the single-process run, `:4200` for
 the dev server.
+
+`/api/readyz` is the one to check on a deployed instance — it reports what
+the process actually gave itself on that machine:
+
+```json
+"memory": { "heap_used_mb": 36, "heap_limit_mb": 1120, "rss_mb": 103,
+            "upload_cache_mb": 0, "upload_cache_budget_mb": 280 }
+```
 
 ### Git
 
@@ -369,9 +387,20 @@ git status --short
 6. Adjust settings if needed: numeric tolerance, decimal precision, case
    sensitivity, whitespace trimming, blank-as-zero, control-total
    columns.
-7. **Run comparison**, and read the verdict, summary, differences and
-   control totals. Download the audit workbook, or an annotated copy of
-   either input file with differing cells highlighted.
+7. **Run comparison.** A progress bar shows the phase and the row counts
+   as it works — indexing each side, comparing matched rows, footing the
+   control totals — and **Cancel** stops it for real, freeing the slot on
+   the server rather than just hiding the result.
+8. Read the verdict, summary, differences and control totals. Download the
+   audit workbook, or an annotated copy of either input file with
+   differing cells highlighted.
+
+**The tables on screen are a preview.** Each detail section is capped
+(1,000 rows by default) so a large reconciliation does not have to ship
+tens of megabytes to draw a page. When a section is trimmed the page says
+so, with the real totals, and points at the downloads — which always
+contain **every** row. The counts in the summary and on the tabs are
+always the true ones.
 
 **Read the warnings.** Several correctness safeguards report themselves
 that way — hidden Excel rows or columns, uncalculated formulas read as
@@ -440,7 +469,7 @@ as `{"detail": "..."}`. Decimal values cross the wire as strings.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/health`, `/api/livez` | Liveness |
-| GET | `/api/readyz` | Readiness + cache sizes |
+| GET | `/api/readyz` | Readiness, cache sizes, and live memory/budget figures |
 | GET | `/api/auth/me` | Current user, from proxy SSO headers |
 | GET | `/api/config` | Upload cap, Excel row cap, feature flags |
 | GET | `/api/catalog/template` | Blank catalogue template `.xlsx` |
@@ -503,6 +532,79 @@ explicit `column_map` takes precedence over the catalogue's mapping.
 
 ---
 
+## Sizing and memory
+
+All figures below were measured on this codebase, not estimated.
+
+### What it uses
+
+Idle, the backend sits at about **20 MB of heap**. From there, memory
+follows two things: what is cached, and what a comparison is working on.
+
+- **A cached upload costs its own size.** Uploads are kept as raw bytes
+  and parsed on demand, so caching a 5.4 MB file adds ~5 MB — not the
+  ~26 MB of heap the same file cost when parsed tables were cached
+  (measured: four cached files went 41 → 67 → 93 → 119 MB before, and
+  stay flat at 41 MB now).
+- **A comparison parses both files at once.** A parsed table costs roughly
+  9–17× the file's bytes — worst for narrow files with many rows, where
+  per-row object overhead dominates. That working set exists only while
+  the run is in flight, and it lives in the worker thread.
+
+A guide for a comparison of two files of size *S* each. Only the first
+row is measured; the others scale it by parsed size:
+
+| Files (each) | Peak process memory | Give the container |
+|---|---|---|
+| ~5 MB (150k rows) | **372 MB** — measured (was 534 MB before uploads were cached as bytes) | 1 GB |
+| ~20 MB | ~700 MB — estimated | 2 GB (the default) |
+| ~50 MB | >2 GB — estimated | 4 GB, and raise `--max-old-space-size` |
+
+> Resident memory (RSS) overstates what is actually held: V8 does not
+> return freed heap to the OS, so a process that has parsed a large file
+> keeps looking large until pressure forces a collection. `heap_used_mb`
+> from `/api/readyz` is the number to watch, and the per-file retention
+> figures above were taken after forcing collection.
+
+### How it sizes itself
+
+Nothing here is a fixed constant, which is what makes the same build safe
+to move between machines:
+
+1. **V8 sizes its heap from the container's memory limit.** Measured: a
+   512 MB container gets a ~259 MB heap; a 2 GB container gets 1120 MB.
+2. **The upload cache budget is a quarter of that heap** (override with
+   `MAX_CACHE_BYTES`), and it evicts on **bytes**, not on a file count.
+3. **The default upload cap is half the cache budget**, capped at 200 MB —
+   so a 2 GB container advertises a 140 MB limit rather than a 200 MB one
+   it could never parse. `MAX_UPLOAD_BYTES` still overrides it.
+
+So the one knob that matters when deploying is the container's memory
+limit (`MEM_LIMIT`, default `2g`); everything else follows from it. Check
+where an instance actually landed with `GET /api/readyz`.
+
+> `os.totalmem()` is deliberately not used for any of this. Inside that
+> 512 MB container it reports the **host's** 3.8 GB, which would have
+> sized the cache roughly seven times too large.
+
+### If files are bigger than the machine
+
+Two options were considered and deliberately deferred, because the change
+above may make them unnecessary — measure your own files first:
+
+- **Streaming the probe side**: index one file, read the other in chunks.
+  Cuts the resident cost of the second file, at the price of a second join
+  implementation to keep correct.
+- **Columnar row storage**: the 9–17× multiplier is per-row JS objects;
+  columns as arrays would cut it several-fold, but it touches the whole
+  engine.
+
+Spilling to disk (external sort-merge) is the one approach ruled out
+rather than deferred: it would put financial data at rest, which this
+design otherwise avoids entirely.
+
+---
+
 ## Limitations
 
 **File formats**
@@ -524,22 +626,14 @@ explicit `column_map` takes precedence over the catalogue's mapping.
 
 **Scale and memory**
 
-- Everything is in memory. Uploads are cached as **raw bytes** and parsed
-  on demand in the worker, so a cached file costs roughly its own size
-  rather than the ~26 MB of heap per 5.4 MB file the earlier design held
-  (measured: each additional cached file now adds ~0 MB of heap). A
-  comparison still needs both files parsed at once, so peak memory is a
-  multiple of file size — it is just no longer paid for files sitting idle
-  in the cache.
-- The upload cache evicts on **bytes**, not entry count, against a budget
-  derived from V8's heap limit — which itself follows a container's memory
-  limit (measured: a 512 MB container gets ~259 MB of heap; a 2 GB one
-  gets 1120 MB, giving a 280 MB cache budget and a 140 MB upload cap).
-  `GET /api/readyz` reports all of these live.
-- Default caps: 200 MB per file, 3 concurrent comparisons (a fourth
-  request queues, then gets a 503 after 120s). All tunable. Comparisons
-  run in worker threads, so the cap now buys real parallelism rather than
-  just bounding memory.
+- Everything is in memory, and a comparison needs both files parsed at
+  once — so file size is bounded by the machine. See
+  [Sizing and memory](#sizing-and-memory) for the measured numbers and how
+  the limits size themselves.
+- Default caps: 3 concurrent comparisons (a fourth request queues, then
+  gets a 503 after 120s), and a per-file upload cap that follows the
+  machine. Comparisons run in worker threads, so the concurrency cap buys
+  real parallelism rather than merely bounding memory.
 - **The on-screen result is a preview; the downloads are complete.** Each
   detail section in a compare response is capped at `MAX_RESPONSE_ROWS`
   (default 1,000). The summary counts stay true, the UI says plainly when
@@ -560,9 +654,16 @@ explicit `column_map` takes precedence over the catalogue's mapping.
 **State and deployment**
 
 - **Nothing is persisted.** Uploaded files, catalogues and completed runs
-  live in in-process LRU caches (≈50 files, ≈60 catalogues, ≈10 runs). A
-  restart loses everything, and a busy session can evict an older upload
-  — hence the "re-upload" errors, which are expected behaviour.
+  live in in-process caches — uploads against a byte budget, catalogues
+  and runs by count (≈60 and ≈10). A restart loses everything, and a busy
+  session can evict an older upload; the "re-upload" errors that follow
+  are expected behaviour, not a fault.
+- An annotated download re-parses its source file, so if that upload has
+  been evicted the download fails with a message asking you to re-upload
+  and re-run, even though the run itself is still cached. The trade buys
+  a large reduction in resident memory (see
+  [Sizing and memory](#sizing-and-memory)), and eviction is much less
+  likely now that the cache holds bytes rather than parsed tables.
 - **Single process only.** The caches are module-level singletons, so
   multiple replicas or a clustered process would leave a file uploaded to
   one process invisible to another. Scale up, not out, or add shared
@@ -638,7 +739,19 @@ bug.
 returned 503. Retry, or raise `MAX_CONCURRENT_COMPARISONS`.
 
 **Uploads fail with 413.** The file exceeds `MAX_UPLOAD_BYTES`, or
-nginx's `client_max_body_size` is below it. Raise both together.
+nginx's `client_max_body_size` is below it. Raise both together. Note the
+default cap follows the machine's heap, so a smaller container advertises
+a smaller limit — `GET /api/config` reports the one in force.
+
+**The backend runs out of memory, or the container is killed.** A
+comparison parses both files at once, so peak memory is a multiple of
+file size. Check `GET /api/readyz` for the heap the process actually has,
+raise the container's `MEM_LIMIT`, and see
+[Sizing and memory](#sizing-and-memory).
+
+**An annotated download says the file is no longer cached.** The upload
+was evicted, and annotated files are re-parsed from it on demand. Upload
+the file again and re-run the comparison.
 
 **`ng serve` is running but `http://127.0.0.1:4200` is refused.** The
 Angular dev server binds IPv6 loopback (`::1`) only — use
@@ -655,8 +768,10 @@ Chrome. Install it, or point `CHROME_BIN` at a Chromium binary.
 ```
 backend/          Express API + comparison engine (TypeScript)
   src/engine/     the comparison engine — no HTTP awareness
-  src/api/        routes, DTOs, middleware
-  test/           vitest suites (engine + API)
+  src/worker/     runs a comparison off the main thread
+  src/api/        routes, DTOs, middleware, background jobs
+  src/cache/      in-memory stores (byte-budgeted uploads, runs)
+  test/           vitest suites (engine, API, worker)
 frontend/         Angular 14 SPA
   src/app/core/     shared services (API client, state)
   src/app/features/ file input, catalogue picker, settings, results
