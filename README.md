@@ -33,6 +33,7 @@ parallel rebuild in its own repository, not a migration.
 - [Quick start](#quick-start)
 - [Setting up on a new machine](#setting-up-on-a-new-machine)
 - [Running the app](#running-the-app)
+- [Command reference](#command-reference)
 - [Using it](#using-it)
 - [Tests](#tests)
 - [Configuration](#configuration)
@@ -233,6 +234,123 @@ deployment. Before putting it in front of users:
 | Frontend only (dev) | `cd frontend && npm start` | <http://localhost:4200> |
 | Backend production build | `cd backend && npm run build && npm start` | <http://localhost:3000> |
 | Frontend production build | `cd frontend && npm run build` | output in `frontend/dist/frontend` |
+
+---
+
+## Command reference
+
+Every command in one place. All paths are relative to the repository
+root, and `cd` back to the root between blocks.
+
+### Install
+
+```bash
+cd backend  && npm install                     # backend deps
+cd frontend && npm install --legacy-peer-deps  # frontend deps (flag required)
+```
+
+### Run — Docker
+
+```bash
+docker compose up --build        # build + start, foreground        -> :8080
+docker compose up -d             # start detached
+docker compose down              # stop and remove containers
+docker compose ps                # what is running
+docker compose logs -f backend   # follow backend logs
+docker compose logs -f frontend  # follow nginx logs
+docker compose up --build --force-recreate   # rebuild from changed source
+```
+
+### Run — no Docker, single process
+
+```bash
+cd frontend && npm run build     # build the SPA first
+cd ../backend && npm run build   # compile the backend
+npm run start:spa                # serves SPA + API together        -> :3000
+```
+
+### Run — development, hot reload
+
+```bash
+# terminal 1
+cd backend && npm run dev        # tsx watch                        -> :3000
+
+# terminal 2
+cd frontend && npm start         # ng serve, proxies /api to :3000  -> :4200
+```
+
+Open <http://localhost:4200> — **not** `127.0.0.1:4200`, which the
+Angular dev server does not listen on (see
+[Troubleshooting](#troubleshooting)).
+
+### Build
+
+```bash
+cd backend  && npm run build                       # tsc -> backend/dist
+cd frontend && npm run build                       # -> frontend/dist/frontend
+cd frontend && npm run build -- --configuration=production
+cd frontend && npm run watch                       # rebuild on change
+```
+
+### Test
+
+```bash
+cd backend  && npm test                            # vitest, 129 tests
+cd frontend && npm test                            # karma/jasmine, 15 tests
+
+cd backend  && npx vitest run test/engine          # one directory
+cd backend  && npx vitest run test/api/contract.spec.ts   # one file
+cd backend  && npx vitest watch                    # watch mode
+cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
+```
+
+### Setting environment variables
+
+The app reads plain environment variables, but the syntax for setting one
+inline differs by shell:
+
+```bash
+# bash / zsh / git-bash
+SERVE_FRONTEND=1 PORT=8090 node dist/server.js
+```
+
+```powershell
+# PowerShell
+$env:SERVE_FRONTEND="1"; $env:PORT="8090"; node dist/server.js
+```
+
+```bat
+:: cmd.exe — one per line; chaining with && would fold the trailing
+:: space into the value ("1 " rather than "1")
+set SERVE_FRONTEND=1
+set PORT=8090
+node dist/server.js
+```
+
+`npm run start:spa` avoids the issue entirely — it passes
+`--serve-frontend` as an argument, which is identical in every shell. For
+Docker, put the variables in a `.env` file beside `docker-compose.yml`
+instead.
+
+### Health and diagnostics
+
+```bash
+curl http://localhost:3000/api/livez     # liveness
+curl http://localhost:3000/api/readyz    # readiness + cache sizes
+curl http://localhost:3000/api/config    # limits the UI reads
+curl -I http://localhost:8080/           # SPA headers through nginx
+```
+
+Use `:8080` for Docker, `:3000` for the single-process run, `:4200` for
+the dev server.
+
+### Git
+
+```bash
+git log --oneline                # phase-by-phase build history
+git log -1 <hash>                # full detail on one commit
+git status --short
+```
 
 ---
 
