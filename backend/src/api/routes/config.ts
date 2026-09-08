@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { maxUploadBytes } from "../../config/env";
+import { maxUploadBytes, maxResponseRows } from "../../config/env";
 import { EXCEL_MAX_ROWS } from "../../engine/report/buildExcelReport";
 import type { ConfigInfo } from "../dto";
 
@@ -15,6 +15,7 @@ configRouter.get("/config", (_req, res) => {
     blob_output_container_url: "",
     excel_max_rows: EXCEL_MAX_ROWS,
     max_upload_bytes: maxUploadBytes(),
+    max_response_rows: maxResponseRows(),
   };
   res.json(body);
 });

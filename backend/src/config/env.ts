@@ -4,6 +4,7 @@ const DEFAULT_MAX_UPLOAD_BYTES = 200 * 1024 * 1024; // 200 MB
 const MULTIPART_SLACK_BYTES = 1024 * 1024;
 const DEFAULT_MAX_CONCURRENT_COMPARISONS = 3;
 const DEFAULT_COMPARE_QUEUE_TIMEOUT_S = 120;
+const DEFAULT_MAX_RESPONSE_ROWS = 1000;
 
 function envInt(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -30,6 +31,22 @@ export function maxConcurrentComparisons(): number {
 
 export function compareQueueTimeoutMs(): number {
   return envInt("COMPARE_QUEUE_TIMEOUT_S", DEFAULT_COMPARE_QUEUE_TIMEOUT_S) * 1000;
+}
+
+/**
+ * How many rows of each detail section (source-only, target-only, cell
+ * differences) the JSON response carries.
+ *
+ * The full result stays on the server and every download returns all of
+ * it -- this caps only what is shipped to the browser to draw a table.
+ * Uncapped, a reconciliation with hundreds of thousands of breaks
+ * serialised into a ~28 MB response (measured) that the UI then rendered
+ * 100 rows of, and a large enough run would fail outright: V8 refuses to
+ * build a single string over 512 MB, so JSON.stringify would throw rather
+ * than return a result the user could still have downloaded.
+ */
+export function maxResponseRows(): number {
+  return envInt("MAX_RESPONSE_ROWS", DEFAULT_MAX_RESPONSE_ROWS);
 }
 
 export function corsOrigins(): string[] {

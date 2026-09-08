@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import { auditHeaderToRows } from "../engine/report/auditRows";
+import { maxResponseRows } from "../config/env";
 import type {
   CellValue,
   ColumnDifferences,
@@ -12,6 +13,8 @@ import type {
 } from "../engine/types";
 import type {
   AuditView,
+  ResponseTruncation,
+  SectionTruncation,
   CatalogUploadResponse,
   ColumnDifferencesView,
   CompareResultResponse,
@@ -147,6 +150,15 @@ export function catalogUploadToView(r: CatalogDatasetsResult): CatalogUploadResp
 
 /** Port of models.py's `compare_to_response` -- assembles the full
  * CompareResultResponse from an engine CompareReport. */
+/** Caps one detail section, recording what was left behind. */
+function capSection<T>(rows: readonly T[], limit: number): { rows: T[]; info: SectionTruncation } {
+  const returned = Math.min(rows.length, limit);
+  return {
+    rows: rows.length > limit ? rows.slice(0, limit) : [...rows],
+    info: { returned, total: rows.length, truncated: rows.length > limit },
+  };
+}
+
 export function compareToResponse(
   report: CompareReport,
   runId: string,
@@ -193,16 +205,33 @@ export function compareToResponse(
       : null,
   };
 
+  // Only the detail sections are capped, and only for the wire: the full
+  // report stays in the run cache, so report.xlsx and the annotated files
+  // still contain every row. `summary` keeps the true totals either way.
+  const limit = maxResponseRows();
+  const sourceOnly = capSection(report.sourceOnlyRows, limit);
+  const targetOnly = capSection(report.targetOnlyRows, limit);
+  const differences = capSection(report.valueDifferences, limit);
+
+  const truncation: ResponseTruncation = {
+    limit,
+    any_truncated: sourceOnly.info.truncated || targetOnly.info.truncated || differences.info.truncated,
+    source_only_rows: sourceOnly.info,
+    target_only_rows: targetOnly.info,
+    value_differences: differences.info,
+  };
+
   return {
     run_id: runId,
     summary,
     column_diff: columnDiffToView(cd),
-    source_only_rows: rowsToJsonable(report.sourceOnlyRows),
-    target_only_rows: rowsToJsonable(report.targetOnlyRows),
-    value_differences: report.valueDifferences.map(valueDiffToView),
+    source_only_rows: rowsToJsonable(sourceOnly.rows),
+    target_only_rows: rowsToJsonable(targetOnly.rows),
+    value_differences: differences.rows.map(valueDiffToView),
     control_totals: report.controlTotals.map(controlTotalToView),
     warnings: [...report.warnings],
     audit,
     catalog_compliance_warnings: catalogComplianceWarnings,
+    truncation,
   };
 }

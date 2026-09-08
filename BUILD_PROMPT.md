@@ -386,6 +386,30 @@ more than they sound:
   percentage go backwards -- a retreating progress bar reads as a bug even
   when the run is healthy.
 
+### Trim the screen, never the download
+
+Return the detail sections (source-only rows, target-only rows, cell
+differences) capped to a configurable number of rows, and say so in the
+payload: a `truncation` block giving the limit, and per section how many
+were returned out of how many exist. Two rules make this safe:
+
+- **The summary counts stay true.** They come from the full result, so a
+  capped preview never understates the reconciliation itself. Anything the
+  UI labels with a count -- tab headings included -- must read the summary,
+  not the length of the array it was handed.
+- **Downloads are never capped.** The complete report stays server-side,
+  so the workbook and the annotated files contain every row. The UI must
+  say plainly that the on-screen tables are partial and point at the
+  downloads; a user who does not know the view is trimmed will read a
+  reconciliation as complete when it is not, which in this domain is the
+  worst failure the product can have.
+
+This is not only about payload size. Uncapped, a 150k-row all-different
+run returned ~28 MB to draw 100 rows -- but worse, V8 refuses to build a
+single string over 512 MB, so a large enough result would have thrown
+while serialising rather than returning anything at all, when the user
+could perfectly well have downloaded it.
+
 ### Cross-cutting middleware
 
 Order matters: body-size guard → security headers → request logging →

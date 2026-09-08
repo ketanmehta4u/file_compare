@@ -67,7 +67,7 @@
     <input type="number" min="0" [ngModel]="state.decimalPrecision" (ngModelChange)="setDecimalPrecision($event.toString())" />
   </label>
   <label>
-    Preview rows per section
+    Preview rows per section <span class="muted">(on-screen only — downloads always contain every row)</span>
     <input type="number" min="10" [ngModel]="state.previewRows" (ngModelChange)="setPreviewRows($event.toString())" />
   </label>
 </div>

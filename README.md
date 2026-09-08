@@ -172,8 +172,8 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 141 tests
-cd ../frontend && npm test # 21 tests (opens Chrome)
+cd backend && npm test     # 146 tests
+cd ../frontend && npm test # 25 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -383,8 +383,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 141 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 21 tests
+cd backend && npm test    # vitest — engine + API, 146 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 25 tests
 ```
 
 The backend suite includes an **anchor end-to-end test**: the sample
@@ -413,6 +413,7 @@ Backend environment variables (all optional):
 | `MAX_CONCURRENT_COMPARISONS` | `3` | Comparison concurrency cap (restart to change). |
 | `COMPARE_QUEUE_TIMEOUT_S` | `120` | How long a queued comparison waits for a slot before a 503. |
 | `TRUST_PROXY` | `1` | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed. |
+| `MAX_RESPONSE_ROWS` | `1000` | Rows per detail section put in a compare response. Downloads are never capped. |
 | `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging. `LOG_FORMAT=text` gives pretty-printed dev output. |
 | `SERVE_FRONTEND` | off | Serve the built SPA from this process too, for running without Docker/nginx. `1`/`true`/`yes`, or pass `--serve-frontend`. |
 | `FRONTEND_DIST` | `frontend/dist/frontend` | Where the built SPA lives, when `SERVE_FRONTEND` is on. |
@@ -471,6 +472,18 @@ and carries the finished result once `status` is `done`:
 `DELETE` on the same URL cancels it, terminating the worker and freeing
 its concurrency slot. The UI uses this path, polling every 400ms.
 
+A result's detail sections (source-only rows, target-only rows, cell
+differences) are capped at `MAX_RESPONSE_ROWS` for the wire. The response
+carries a `truncation` block saying what was cut:
+
+```json
+"truncation": { "limit": 1000, "any_truncated": true,
+  "source_only_rows": { "returned": 1000, "total": 150000, "truncated": true } }
+```
+
+`summary` always holds the true totals, and `report.xlsx` and the
+annotated files always contain every row.
+
 `POST /api/compare/run` still does the whole thing in one request and
 returns the full result, unchanged. It also runs in a worker now, so it
 no longer blocks the server — but it holds the connection open for the
@@ -517,12 +530,19 @@ explicit `column_map` takes precedence over the catalogue's mapping.
   request queues, then gets a 503 after 120s). All tunable. Comparisons
   run in worker threads, so the cap now buys real parallelism rather than
   just bounding memory.
-- A comparison's whole result is returned in one response: every
-  source-only row, target-only row and cell difference, even though the
-  UI shows the first 100 of each. On a run with hundreds of thousands of
-  breaks that is a large payload (a 150k-row all-different run produced
-  roughly 28 MB) — the Excel report is the better route for the full
-  detail.
+- **The on-screen result is a preview; the downloads are complete.** Each
+  detail section in a compare response is capped at `MAX_RESPONSE_ROWS`
+  (default 1,000). The summary counts stay true, the UI says plainly when
+  a section was cut, and the audit workbook and annotated files still
+  contain every row. Measured on a 150k-row all-different run: the
+  response went from ~28 MB to 188 KB while the workbook still carried all
+  150,000 rows per side. Uncapped this was also a hard failure waiting to
+  happen — V8 will not build a single string over 512 MB, so a large
+  enough run would have thrown while serialising instead of returning
+  anything.
+- Building the workbook for a very large result is itself slow: 300,000
+  rows across the two sheets took about 135 seconds and produced a 10 MB
+  file.
 - The audit workbook respects Excel's 1,048,576-row limit by spilling
   oversized sheets to CSV attachments; oversized annotated exports stream
   as CSV instead of `.xlsx`.

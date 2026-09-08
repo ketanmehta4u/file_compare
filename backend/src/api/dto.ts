@@ -17,6 +17,9 @@ export interface ConfigInfo {
   blob_output_container_url: string;
   excel_max_rows: number;
   max_upload_bytes: number;
+  /** Rows per detail section carried in a compare response; the downloads
+   * are not capped. */
+  max_response_rows: number;
 }
 
 export interface MappingEntryView {
@@ -167,6 +170,27 @@ export interface CompareSummary {
   target_duplicate_rows: number;
 }
 
+/** How much of one detail section made it into the response. */
+export interface SectionTruncation {
+  returned: number;
+  total: number;
+  truncated: boolean;
+}
+
+/**
+ * Tells the client that the on-screen detail is a preview. The counts in
+ * `summary` are always the true totals; these say how much of each
+ * section was actually shipped, so the UI can say so plainly and point at
+ * the downloads, which always contain everything.
+ */
+export interface ResponseTruncation {
+  limit: number;
+  any_truncated: boolean;
+  source_only_rows: SectionTruncation;
+  target_only_rows: SectionTruncation;
+  value_differences: SectionTruncation;
+}
+
 export interface CompareResultResponse {
   run_id: string;
   summary: CompareSummary;
@@ -178,6 +202,7 @@ export interface CompareResultResponse {
   warnings: string[];
   audit: AuditView;
   catalog_compliance_warnings: string[];
+  truncation: ResponseTruncation;
 }
 
 export interface WriteToBlobResponse {

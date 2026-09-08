@@ -62,11 +62,28 @@
     <tbody><tr *ngFor="let m of result.column_diff.dtype_mismatches"><td>{{ m.column }}</td><td>{{ m.source_dtype }}</td><td>{{ m.target_dtype }}</td></tr></tbody>
   </table>
 
-  <h3>Record differences <span class="muted">(preview — first {{ previewRows }} rows; full set in the downloadable workbook)</span></h3>
+  <h3>Record differences <span class="muted">(preview — full set in the downloads below)</span></h3>
+
+  <!-- Counts come from the summary, which always holds the true totals:
+       the arrays themselves may be a capped preview. -->
   <div class="tabs">
-    <button type="button" [class.active]="rowTab === 'source_only'" (click)="rowTab = 'source_only'">Source-only ({{ result.source_only_rows.length }})</button>
-    <button type="button" [class.active]="rowTab === 'target_only'" (click)="rowTab = 'target_only'">Target-only ({{ result.target_only_rows.length }})</button>
-    <button type="button" [class.active]="rowTab === 'value_diffs'" (click)="rowTab = 'value_diffs'">Value differences ({{ result.value_differences.length }})</button>
+    <button type="button" [class.active]="rowTab === 'source_only'" (click)="rowTab = 'source_only'">Source-only ({{ result.summary.source_only_rows | number }})</button>
+    <button type="button" [class.active]="rowTab === 'target_only'" (click)="rowTab = 'target_only'">Target-only ({{ result.summary.target_only_rows | number }})</button>
+    <button type="button" [class.active]="rowTab === 'value_diffs'" (click)="rowTab = 'value_diffs'">Value differences ({{ result.summary.cell_diffs | number }})</button>
+  </div>
+
+  <div *ngIf="isTruncated" class="alert alert-warn">
+    <strong>This is a partial view — not the complete result.</strong>
+    <ul>
+      <li *ngFor="let s of truncatedSections">
+        {{ s.name }}: showing {{ s.returned | number }} of {{ s.total | number }}
+      </li>
+    </ul>
+    <p>
+      Every row is in the downloads below — use
+      <a [href]="reportUrl()">the audit workbook</a> or the annotated files
+      for the complete data. Only what is drawn on this page is limited.
+    </p>
   </div>
 
   <div class="table-scroll" *ngIf="rowTab === 'source_only'">
@@ -117,6 +134,10 @@
   <ng-template #noCT><p class="muted">No control totals were computed.</p></ng-template>
 
   <h3>Downloads</h3>
+  <p class="muted">
+    These contain the <strong>complete</strong> result — every row, however
+    many the tables above showed.
+  </p>
   <p>
     <a [href]="annotatedUrl('source')">Annotated source file</a> ·
     <a [href]="annotatedUrl('target')">Annotated target file</a>

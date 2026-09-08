@@ -43,6 +43,27 @@ export class ResultsComponent {
     return this.result.value_differences.slice(0, this.previewRows);
   }
 
+  /** True when the server sent only a preview of at least one detail
+   * section, so the on-screen tables are incomplete. */
+  get isTruncated(): boolean {
+    return this.result.truncation?.any_truncated ?? false;
+  }
+
+  /** Per-section wording for the truncation notice, listing only the
+   * sections that were actually cut. */
+  get truncatedSections(): Array<{ name: string; returned: number; total: number }> {
+    const t = this.result.truncation;
+    if (!t) return [];
+    const sections: Array<{ name: string; info: { returned: number; total: number; truncated: boolean } }> = [
+      { name: "source-only rows", info: t.source_only_rows },
+      { name: "target-only rows", info: t.target_only_rows },
+      { name: "cell differences", info: t.value_differences },
+    ];
+    return sections
+      .filter((s) => s.info.truncated)
+      .map((s) => ({ name: s.name, returned: s.info.returned, total: s.info.total }));
+  }
+
   keyColumnsOf(vd: { key: Record<string, unknown> }): string[] {
     return Object.keys(vd.key);
   }
