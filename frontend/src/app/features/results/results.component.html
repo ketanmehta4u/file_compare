@@ -1,0 +1,136 @@
+<div class="panel">
+  <div *ngIf="result.catalog_compliance_warnings.length" class="alert alert-warn">
+    <div *ngFor="let w of result.catalog_compliance_warnings">{{ w }}</div>
+  </div>
+  <div *ngIf="result.warnings.length" class="alert alert-warn">
+    <div *ngFor="let w of result.warnings">{{ w }}</div>
+  </div>
+
+  <div *ngIf="result.audit.outcome as outcome" class="verdict-banner" [class.verdict-ok]="outcome.reconciled" [class.verdict-bad]="!outcome.reconciled">
+    <span class="verdict-badge">{{ outcome.reconciled ? '✓' : '!' }}</span>
+    <strong>{{ outcome.verdict }}</strong>
+    <div class="muted">
+      source-only: {{ outcome.source_only_rows }} · target-only: {{ outcome.target_only_rows }} ·
+      matched with differences: {{ outcome.matched_with_differences }} · cell diffs: {{ outcome.cell_differences }}
+      <span *ngIf="outcome.control_totals_not_tied_out"> · control totals NOT tied out: {{ outcome.control_totals_not_tied_out }}</span>
+    </div>
+  </div>
+
+  <h3>Summary</h3>
+  <div class="metric-grid">
+    <div class="metric"><span class="metric-label">Source rows</span><span class="metric-value">{{ result.summary.source_rows }}</span></div>
+    <div class="metric"><span class="metric-label">Target rows</span><span class="metric-value">{{ result.summary.target_rows }}</span></div>
+    <div class="metric"><span class="metric-label">Matched & equal</span><span class="metric-value">{{ result.summary.matched_equal }}</span></div>
+    <div class="metric"><span class="metric-label">Matched w/ differences</span><span class="metric-value">{{ result.summary.matched_with_differences }}</span></div>
+    <div class="metric"><span class="metric-label">Matched w/ tolerance</span><span class="metric-value">{{ result.summary.matched_with_tolerance }}</span></div>
+    <div class="metric"><span class="metric-label">Source-only rows</span><span class="metric-value">{{ result.summary.source_only_rows }}</span></div>
+    <div class="metric"><span class="metric-label">Target-only rows</span><span class="metric-value">{{ result.summary.target_only_rows }}</span></div>
+    <div class="metric"><span class="metric-label">Cell diffs</span><span class="metric-value">{{ result.summary.cell_diffs }}</span></div>
+    <div class="metric"><span class="metric-label">Control totals tied out</span><span class="metric-value">{{ result.summary.control_totals_tied_out }}</span></div>
+    <div class="metric"><span class="metric-label">Control totals NOT tied out</span><span class="metric-value">{{ result.summary.control_totals_not_tied_out }}</span></div>
+  </div>
+
+  <details>
+    <summary>Audit header</summary>
+    <table class="simple-table">
+      <tbody>
+        <tr *ngFor="let row of result.audit.rows">
+          <td>{{ row[0] }}</td>
+          <td>{{ row[1] }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <h3>Column differences</h3>
+  <div class="tabs">
+    <button type="button" [class.active]="colTab === 'source_only'" (click)="colTab = 'source_only'">Source-only ({{ result.column_diff.source_only.length }})</button>
+    <button type="button" [class.active]="colTab === 'target_only'" (click)="colTab = 'target_only'">Target-only ({{ result.column_diff.target_only.length }})</button>
+    <button type="button" [class.active]="colTab === 'common'" (click)="colTab = 'common'">Common ({{ result.column_diff.common.length }})</button>
+    <button type="button" [class.active]="colTab === 'sequence'" (click)="colTab = 'sequence'">Sequence ({{ result.column_diff.sequence_mismatches.length }})</button>
+    <button type="button" [class.active]="colTab === 'dtype'" (click)="colTab = 'dtype'">Dtype ({{ result.column_diff.dtype_mismatches.length }})</button>
+  </div>
+  <ul *ngIf="colTab === 'source_only'"><li *ngFor="let c of result.column_diff.source_only">{{ c }}</li></ul>
+  <ul *ngIf="colTab === 'target_only'"><li *ngFor="let c of result.column_diff.target_only">{{ c }}</li></ul>
+  <ul *ngIf="colTab === 'common'"><li *ngFor="let c of result.column_diff.common">{{ c }}</li></ul>
+  <table *ngIf="colTab === 'sequence'" class="simple-table">
+    <thead><tr><th>Column</th><th>Source index</th><th>Target index</th></tr></thead>
+    <tbody><tr *ngFor="let m of result.column_diff.sequence_mismatches"><td>{{ m.column }}</td><td>{{ m.source_index }}</td><td>{{ m.target_index }}</td></tr></tbody>
+  </table>
+  <table *ngIf="colTab === 'dtype'" class="simple-table">
+    <thead><tr><th>Column</th><th>Source dtype</th><th>Target dtype</th></tr></thead>
+    <tbody><tr *ngFor="let m of result.column_diff.dtype_mismatches"><td>{{ m.column }}</td><td>{{ m.source_dtype }}</td><td>{{ m.target_dtype }}</td></tr></tbody>
+  </table>
+
+  <h3>Record differences <span class="muted">(preview — first {{ previewRows }} rows; full set in the downloadable workbook)</span></h3>
+  <div class="tabs">
+    <button type="button" [class.active]="rowTab === 'source_only'" (click)="rowTab = 'source_only'">Source-only ({{ result.source_only_rows.length }})</button>
+    <button type="button" [class.active]="rowTab === 'target_only'" (click)="rowTab = 'target_only'">Target-only ({{ result.target_only_rows.length }})</button>
+    <button type="button" [class.active]="rowTab === 'value_diffs'" (click)="rowTab = 'value_diffs'">Value differences ({{ result.value_differences.length }})</button>
+  </div>
+
+  <div class="table-scroll" *ngIf="rowTab === 'source_only'">
+    <table class="simple-table">
+      <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
+      <tbody><tr *ngFor="let r of previewedSourceOnly"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+    </table>
+  </div>
+  <div class="table-scroll" *ngIf="rowTab === 'target_only'">
+    <table class="simple-table">
+      <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
+      <tbody><tr *ngFor="let r of previewedTargetOnly"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+    </table>
+  </div>
+  <div class="table-scroll" *ngIf="rowTab === 'value_diffs'">
+    <table class="simple-table">
+      <thead>
+        <tr>
+          <th *ngFor="let k of (previewedValueDiffs[0] ? keyColumnsOf(previewedValueDiffs[0]) : [])">key.{{ k }}</th>
+          <th>Source row</th><th>Target row</th><th>Column</th><th>Source value</th><th>Target value</th><th>Delta</th><th>Within tolerance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let vd of previewedValueDiffs">
+          <td *ngFor="let k of keyColumnsOf(vd)">{{ vd.key[k] }}</td>
+          <td>{{ vd.source_row }}</td>
+          <td>{{ vd.target_row }}</td>
+          <td>{{ vd.column }}</td>
+          <td>{{ vd.source_value }}</td>
+          <td>{{ vd.target_value }}</td>
+          <td>{{ vd.delta }}</td>
+          <td>{{ vd.within_tolerance ? 'yes' : 'no' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Control totals</h3>
+  <table *ngIf="result.control_totals.length; else noCT" class="simple-table">
+    <thead><tr><th>Column</th><th>Source total</th><th>Target total</th><th>Delta</th><th>Ties out</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let ct of result.control_totals">
+        <td>{{ ct.column }}</td><td>{{ ct.source_total }}</td><td>{{ ct.target_total }}</td><td>{{ ct.delta }}</td>
+        <td [class.good]="ct.ties_out" [class.bad]="!ct.ties_out">{{ ct.ties_out ? 'yes' : 'no' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <ng-template #noCT><p class="muted">No control totals were computed.</p></ng-template>
+
+  <h3>Downloads</h3>
+  <p>
+    <a [href]="annotatedUrl('source')">Annotated source file</a> ·
+    <a [href]="annotatedUrl('target')">Annotated target file</a>
+  </p>
+  <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
+
+  <div *ngIf="config.blob_write_enabled">
+    <h4>Write outputs to blob</h4>
+    <p class="muted">{{ config.blob_output_container_url }}</p>
+    <button type="button" (click)="writeToBlob()" [disabled]="blobWriting">Write all outputs to blob</button>
+    <div *ngIf="blobWriteError" class="alert alert-error">{{ blobWriteError }}</div>
+    <div *ngIf="blobWriteResult">
+      <p>{{ blobWriteResult.written.length }} written, {{ blobWriteResult.failed.length }} failed.</p>
+      <ul class="table-scroll"><li *ngFor="let w of blobWriteResult.written">{{ w }}</li></ul>
+    </div>
+  </div>
+</div>

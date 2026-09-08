@@ -1,0 +1,73 @@
+<div class="panel">
+  <h3>Comparison settings</h3>
+
+  <div *ngIf="bothFilesLoaded">
+    <h4>Column mapping</h4>
+    <button type="button" (click)="autoMatch()">Auto-match by name</button>
+    <table class="simple-table">
+      <thead><tr><th>Source column</th><th>Compare against (target)</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let col of state.sourceFile!.columns">
+          <td>{{ col }}</td>
+          <td>
+            <select [ngModel]="state.columnMap[col] || ''" (ngModelChange)="onColumnMapChange(col, $event)">
+              <option value="">(ignore)</option>
+              <option
+                *ngFor="let t of state.targetFile!.columns"
+                [value]="t"
+                [disabled]="usedTargets.has(t) && state.columnMap[col] !== t"
+              >
+                {{ t }}
+              </option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="commonColumns.length">
+    <h4>Key columns <span class="muted">(empty = compare full row)</span></h4>
+    <label *ngFor="let col of commonColumns" class="checkbox-row">
+      <input type="checkbox" [checked]="state.keyColumns.includes(col)" (change)="toggleKeyColumn(col, $any($event.target).checked)" />
+      {{ col }}
+    </label>
+
+    <h4>Control-total columns <span class="muted">(empty = auto, all numeric)</span></h4>
+    <label *ngFor="let col of numericColumns" class="checkbox-row">
+      <input type="checkbox" [checked]="state.controlTotalColumns.includes(col)" (change)="toggleControlTotalColumn(col, $any($event.target).checked)" />
+      {{ col }}
+    </label>
+  </div>
+
+  <h4>Options</h4>
+  <label class="checkbox-row">
+    <input type="checkbox" [checked]="state.caseSensitive" (change)="setCaseSensitive($any($event.target).checked)" />
+    Case sensitive
+  </label>
+  <label class="checkbox-row">
+    <input type="checkbox" [checked]="state.trimWhitespace" (change)="setTrimWhitespace($any($event.target).checked)" />
+    Trim whitespace
+  </label>
+  <label class="checkbox-row">
+    <input type="checkbox" [checked]="state.treatBlankAsZero" (change)="setTreatBlankAsZero($any($event.target).checked)" />
+    Blank == 0.00
+  </label>
+  <label class="checkbox-row">
+    <input type="checkbox" [checked]="state.fuzzyColumnNames" (change)="setFuzzyColumnNames($any($event.target).checked)" />
+    Fuzzy column names
+  </label>
+
+  <label>
+    Numeric tolerance
+    <input type="text" [ngModel]="state.numericTolerance" (ngModelChange)="setNumericTolerance($event)" />
+  </label>
+  <label>
+    Decimal precision <span class="muted">(blank = exact)</span>
+    <input type="number" min="0" [ngModel]="state.decimalPrecision" (ngModelChange)="setDecimalPrecision($event.toString())" />
+  </label>
+  <label>
+    Preview rows per section
+    <input type="number" min="10" [ngModel]="state.previewRows" (ngModelChange)="setPreviewRows($event.toString())" />
+  </label>
+</div>

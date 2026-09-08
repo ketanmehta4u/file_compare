@@ -1,0 +1,41 @@
+<div class="panel">
+  <h3>Dataset catalogue <span class="muted">(optional)</span></h3>
+  <p class="muted">
+    Upload a catalogue workbook to pre-fill key columns, column mapping, and comparison settings for a known dataset.
+    <a [href]="templateUrl()" target="_blank" rel="noopener">Download template</a>.
+  </p>
+
+  <input type="file" accept=".xlsx,.xls,.csv" (change)="onFileChosen($event)" [disabled]="uploading" />
+  <span *ngIf="uploading">Uploading…</span>
+  <div *ngIf="uploadError" class="alert alert-error">{{ uploadError }}</div>
+
+  <div *ngIf="catalog">
+    <label>
+      Dataset
+      <select [ngModel]="datasetId" (ngModelChange)="onDatasetChange($event)">
+        <option value="">(none)</option>
+        <option *ngFor="let d of catalog.datasets" [value]="d.dataset_id">{{ d.dataset_id }} — {{ d.dataset_name }}</option>
+      </select>
+    </label>
+    <span *ngIf="mappingLoading">Loading mapping…</span>
+    <div *ngIf="mappingError" class="alert alert-error">{{ mappingError }}</div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" [checked]="state.value.dropUnmapped" (change)="onDropUnmappedChange($any($event.target).checked)" />
+      Drop columns not declared in the catalogue
+    </label>
+
+    <table *ngIf="mapping" class="simple-table">
+      <thead><tr><th>Canonical</th><th>Source column</th><th>Key role</th><th>Dtype</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let e of mapping.entries">
+          <td>{{ e.canonical_name }}</td>
+          <td>{{ e.source_column || '(same name)' }}</td>
+          <td>{{ e.key_role || (e.is_key ? 'key' : '') }}</td>
+          <td>{{ e.dtype }}</td>
+          <td class="muted">{{ e.description }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

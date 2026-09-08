@@ -1,0 +1,51 @@
+<div class="panel">
+  <h3>{{ label }}</h3>
+
+  <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileChosen($event)" />
+  <div *ngIf="sizeError" class="alert alert-error">{{ sizeError }}</div>
+  <div *ngIf="loadError" class="alert alert-error">{{ loadError }}</div>
+
+  <div *ngIf="pickedFile && !sizeError">
+    <label class="checkbox-row">
+      <input type="checkbox" [(ngModel)]="hasHeader" />
+      First row is header
+    </label>
+
+    <label *ngIf="!isExcel">
+      Delimiter
+      <select [(ngModel)]="delimiter">
+        <option value="">auto-detect</option>
+        <option value=",">comma</option>
+        <option value=";">semicolon</option>
+        <option value="\t">tab</option>
+        <option value="|">pipe</option>
+      </select>
+    </label>
+
+    <label *ngIf="isExcel">
+      Sheet
+      <select [(ngModel)]="chosenSheet" [disabled]="sheetsLoading">
+        <option *ngFor="let s of sheets" [value]="s">{{ s }}</option>
+      </select>
+      <span *ngIf="sheetsLoading">Loading sheets…</span>
+    </label>
+
+    <button type="button" (click)="load()" [disabled]="progress !== null">Load {{ label }}</button>
+
+    <div *ngIf="progress !== null" class="progress-bar">
+      <div class="progress-bar-fill" [style.width.%]="progress"></div>
+      <span>{{ progress }}%</span>
+    </div>
+  </div>
+
+  <div *ngIf="meta" class="alert alert-success">
+    Loaded {{ meta.filename }} — {{ meta.row_count }} rows × {{ meta.column_count }} columns
+    <span *ngIf="meta.sheet_name">(sheet: {{ meta.sheet_name }})</span>
+    <div *ngIf="meta.hidden_columns.length || meta.hidden_row_count" class="alert alert-warn">
+      Contains hidden data ({{ meta.hidden_columns.length }} column(s), {{ meta.hidden_row_count }} row(s)) — included in the comparison, not skipped.
+    </div>
+    <div *ngIf="meta.formula_blank_count" class="alert alert-warn">
+      {{ meta.formula_blank_count }} uncalculated formula cell(s) read as blank in: {{ meta.formula_blank_columns.join(', ') }}.
+    </div>
+  </div>
+</div>

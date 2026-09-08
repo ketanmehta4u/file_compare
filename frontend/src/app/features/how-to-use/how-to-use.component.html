@@ -1,0 +1,33 @@
+<div class="panel">
+  <button type="button" class="link-button" (click)="toggle()">
+    {{ open ? 'Hide guide ▴' : 'Show guide ▾' }} How to use this application
+  </button>
+
+  <div *ngIf="open" class="howto-body">
+    <ol>
+      <li>Optionally upload a dataset catalogue and pick a dataset — it pre-fills key columns and comparison settings.</li>
+      <li>Upload your Source file (CSV or Excel).</li>
+      <li>Upload your Target file (CSV or Excel).</li>
+      <li>Review the column mapping and comparison settings below; adjust as needed.</li>
+      <li>Click "Run comparison" and review the results.</li>
+    </ol>
+    <p *ngIf="maxUploadBytes">Per-file upload limit: {{ (maxUploadBytes / (1024 * 1024)) | number:'1.0-0' }} MB.</p>
+
+    <h4>Supported data types (dtype)</h4>
+    <table class="simple-table">
+      <thead><tr><th>Type</th><th>Meaning</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let d of dtypes">
+          <td><code>{{ d.name }}</code></td>
+          <td>{{ d.meaning }}</td>
+          <td class="muted">{{ d.examples }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Good to know</h4>
+    <ul>
+      <li *ngFor="let g of gotchas"><strong>{{ g.name }}:</strong> {{ g.meaning }}</li>
+    </ul>
+  </div>
+</div>
