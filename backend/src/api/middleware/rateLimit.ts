@@ -1,11 +1,17 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import type { Request } from "express";
 import { currentUser } from "./currentUser";
 
 /** Port of the original's `_rate_limit_key`: keyed by the authenticated
- * SSO user when present, else client IP. */
+ * SSO user when present, else client IP. IPv6 addresses must go through
+ * ipKeyGenerator's normalisation (not used as the raw string) -- without
+ * it, two different textual representations of the same IPv6 address
+ * would count as different rate-limit buckets, letting a client bypass
+ * the limit just by varying how it writes its own address. */
 function keyGenerator(req: Request): string {
-  return currentUser(req) || req.ip || "unknown";
+  const user = currentUser(req);
+  if (user) return user;
+  return req.ip ? ipKeyGenerator(req.ip) : "unknown";
 }
 
 function limiter(max: number) {
