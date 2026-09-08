@@ -16,11 +16,15 @@
   "dependencies": {
     "date-fns": "^4.4.0",
     "decimal.js": "^10.6.0",
-    "express": "^5.2.1"
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "iconv-lite": "^0.7.3",
+    "papaparse": "^5.7.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.5.0",
+    "@types/papaparse": "^5.5.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
