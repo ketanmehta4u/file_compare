@@ -150,15 +150,63 @@ export interface ReconciliationOutcome {
   controlTotalsNotTiedOut: number;
 }
 
-/** Port of comparison.py's AuditHeader dataclass. `mapping` is typed loosely
- * here (catalog/mapping types land in engine phase 2.6) and narrowed once
- * that module exists. */
+/** Port of comparison.py's MappingEntry dataclass: one row of the
+ * catalogue's Columns sheet. */
+export interface MappingEntry {
+  canonicalName: string;
+  sourceColumn: string | null;
+  isKey: boolean;
+  /** "" | "primary" | "composite" | "surrogate" */
+  keyRole: string;
+  dtype: string | null;
+  description: string;
+}
+
+/** Port of comparison.py's DatasetEntry dataclass: one row of the
+ * catalogue's Datasets sheet. All settings fields are optional defaults
+ * for the UI -- the user can still override them. */
+export interface DatasetEntry {
+  datasetId: string;
+  datasetName: string;
+  owner: string;
+  sourceSystem: string;
+  frequency: string;
+  numericTolerance: Decimal | null;
+  caseSensitive: boolean | null;
+  trimWhitespace: boolean | null;
+  treatBlankAsZero: boolean | null;
+  description: string;
+}
+
+/** Port of comparison.py's ColumnMapping dataclass -- the engine-facing
+ * view of a mapping, source-centric (target is expected to already use
+ * canonical names). */
+export interface ColumnMapping {
+  entries: readonly MappingEntry[];
+  sha256: string;
+  sourceName: string;
+  dataset: DatasetEntry | null;
+}
+
+/** Port of comparison.py's DatasetCatalog dataclass -- a parsed catalogue
+ * workbook holding many datasets, each with its own metadata and column
+ * list. */
+export interface DatasetCatalog {
+  datasets: readonly DatasetEntry[];
+  /** Each entry: (datasetId, MappingEntry). Flat, not grouped, so workbook
+   * order is preserved (relevant for composite-key ordering). */
+  columns: ReadonlyArray<readonly [string, MappingEntry]>;
+  sha256: string;
+  sourceName: string;
+}
+
+/** Port of comparison.py's AuditHeader dataclass. */
 export interface AuditHeader {
   generatedAtUtc: string;
   source: FileMeta;
   target: FileMeta;
   settings: CompareSettings;
-  mapping: unknown;
+  mapping: ColumnMapping | null;
   user: string;
   outcome: ReconciliationOutcome;
 }

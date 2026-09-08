@@ -1,7 +1,7 @@
 import { compareColumns } from "./columnDiff";
 import { compareRecords } from "./compareRecords";
 import { controlTotals as computeControlTotals } from "./controlTotals";
-import type { CompareReport, CompareSettings, FileMeta, ReconciliationOutcome, Table } from "./types";
+import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, ReconciliationOutcome, Table } from "./types";
 
 /** Port of comparison.py's `_file_notice_warnings`. Surfaces a file's
  * load-time notices (hidden Excel data, uncalculated formulas) as run
@@ -81,7 +81,7 @@ export function runComparison(
   target: Table,
   targetMeta: FileMeta,
   settings: CompareSettings,
-  mapping: unknown = null,
+  mapping: ColumnMapping | null = null,
   user = ""
 ): CompareReport {
   const columnDiff = compareColumns(sourceMeta, targetMeta, settings);
