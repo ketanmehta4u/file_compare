@@ -85,3 +85,98 @@ export type RowStatus =
   | "matched_equal"
   | "matched_with_differences"
   | "matched_with_tolerance";
+
+/** Port of comparison.py's FileMeta dataclass. */
+export interface FileMeta {
+  name: string;
+  sha256: string;
+  sizeBytes: number;
+  rowCount: number;
+  columnCount: number;
+  columns: readonly string[];
+  /** (column, inferred dtype label) */
+  dtypes: ReadonlyArray<readonly [string, string]>;
+  sheetName?: string | null;
+  encoding?: string | null;
+  delimiter?: string | null;
+  originalColumns?: readonly string[];
+  hiddenColumns?: readonly string[];
+  hiddenRowCount?: number;
+  formulaBlankColumns?: readonly string[];
+  formulaBlankCount?: number;
+  hasHeader?: boolean;
+}
+
+export interface SequenceMismatch {
+  column: string;
+  sourceIndex: number;
+  targetIndex: number;
+}
+
+export interface DtypeMismatch {
+  column: string;
+  sourceDtype: string;
+  targetDtype: string;
+}
+
+/** Port of comparison.py's ColumnDifferences dataclass. */
+export interface ColumnDifferences {
+  sourceOnly: string[];
+  targetOnly: string[];
+  common: string[];
+  sequenceMismatches: SequenceMismatch[];
+  dtypeMismatches: DtypeMismatch[];
+}
+
+/** Port of comparison.py's ControlTotal dataclass. */
+export interface ControlTotal {
+  column: string;
+  sourceTotal: Decimal;
+  targetTotal: Decimal;
+  delta: Decimal;
+  tiesOut: boolean;
+}
+
+/** Port of comparison.py's ReconciliationOutcome dataclass +
+ * from_counts classmethod. */
+export interface ReconciliationOutcome {
+  verdict: string;
+  reconciled: boolean;
+  sourceOnlyRows: number;
+  targetOnlyRows: number;
+  matchedWithDifferences: number;
+  matchedWithinTolerance: number;
+  cellDifferences: number;
+  controlTotalsNotTiedOut: number;
+}
+
+/** Port of comparison.py's AuditHeader dataclass. `mapping` is typed loosely
+ * here (catalog/mapping types land in engine phase 2.6) and narrowed once
+ * that module exists. */
+export interface AuditHeader {
+  generatedAtUtc: string;
+  source: FileMeta;
+  target: FileMeta;
+  settings: CompareSettings;
+  mapping: unknown;
+  user: string;
+  outcome: ReconciliationOutcome;
+}
+
+/** Port of comparison.py's CompareReport dataclass -- the single object the
+ * API/report layers consume. */
+export interface CompareReport {
+  audit: AuditHeader;
+  columnDiff: ColumnDifferences;
+  sourceOnlyRows: Array<Record<string, unknown>>;
+  targetOnlyRows: Array<Record<string, unknown>>;
+  matchedEqualCount: number;
+  matchedWithDifferencesCount: number;
+  matchedWithToleranceCount: number;
+  valueDifferences: ValueDifference[];
+  controlTotals: ControlTotal[];
+  warnings: string[];
+  sourceRowStatus: Map<string, RowStatus>;
+  targetRowStatus: Map<string, RowStatus>;
+  duplicates: DuplicateStats;
+}
