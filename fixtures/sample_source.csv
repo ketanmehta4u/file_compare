@@ -1,0 +1,13 @@
+txn_id,posting_date,description,debit,credit,amount,currency,gl_account
+TXN-001,2026-01-03,Opening balance brought forward,"$10,000.00",,"$10,000.00",USD,1000
+TXN-002,2026-01-05,Vendor payment - Acme Corp,,"$1,250.00","($1,250.00)",USD,2100
+TXN-003,2026-01-08,Customer receipt - Widgets Inc,"$3,500.00",,"$3,500.00",USD,4000
+TXN-004,2026-01-12,Payroll - January batch 1,,"$8,400.50","($8,400.50)",USD,5000
+TXN-005,2026-01-15,Office supplies,,$425.75,($425.75),USD,5200
+TXN-006,2026-01-18,Customer receipt - Globex,"$2,750.00",,"$2,750.00",USD,4000
+TXN-007,2026-01-22,Interest income,$125.40,,$125.40,USD,4100
+TXN-008,2026-01-25,Rent - January,,"$4,500.00","($4,500.00)",USD,5300
+TXN-009,2026-01-28,Customer receipt - Initech,"$1,890.00",,"$1,890.00",USD,4000
+TXN-010,2026-01-30,Bank fees,,$45.00,($45.00),USD,5400
+TXN-011,2026-01-31,FX adjustment,$87.20,,$87.20,USD,4200
+TXN-012,2026-01-31,Manual journal - reclass,"$500.00",,"$500.00",USD,1000

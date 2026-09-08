@@ -1,0 +1,14 @@
+transaction_id,accounting_date,gl_account,description,amount_local,currency_code,memo
+TXN-001,03/01/2026,1000,Opening balance brought forward,10000.00,USD,
+TXN-002,05/01/2026,2100,Vendor payment - Acme Corp,-1250.00,USD,
+TXN-003,08/01/2026,4000,Customer receipt - Widgets Inc,3500.00,USD,
+TXN-004,12/01/2026,5000,Payroll - January batch 1,-8410.50,USD,reissued check
+TXN-005,15/01/2026,5200,Office supplies,-425.75,USD,
+TXN-006,18/01/2026,4000,Customer receipt - Globex Corporation,2750.00,USD,name updated
+TXN-007,22/01/2026,4100,Interest income,125.40,USD,
+TXN-008,25/01/2026,5300,Rent - January,-4500.00,USD,
+TXN-009,28/01/2026,4000,Customer receipt - Initech,1890.00,USD,
+TXN-010,30/01/2026,5400,Bank fees,-45.00,USD,
+TXN-011,31/01/2026,4200,FX adjustment,87.20,USD,
+TXN-013,31/01/2026,2400,Accrued tax,-1750.00,USD,added in target
+TXN-014,31/01/2026,4500,Other income,250.00,USD,added in target
