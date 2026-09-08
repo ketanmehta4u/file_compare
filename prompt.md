@@ -9,8 +9,8 @@
 > server-side. The Express backend (`backend/src/engine/`) does 100% of
 > the parsing, normalisation, and comparison; Angular is a thin client
 > that uploads files and renders results — no Web Workers, no
-> client-side parsing at all. See `CLAUDE.md` for the real project
-> history and requirements, and the `git log` for what was actually
+> client-side parsing at all. See `BUILD_PROMPT.md` for the real
+> architecture and requirements, and the `git log` for what was actually
 > built, phase by phase.
 >
 > **For a specification that does match this repo, see

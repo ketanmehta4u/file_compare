@@ -781,7 +781,6 @@ frontend/         Angular 14 SPA
 fixtures/         sample CSV/XLSX used by tests and manual checks
 docker-compose.yml
 BUILD_PROMPT.md   full specification of this app, written from the code
-CLAUDE.md         project context and history for AI-assisted sessions
 prompt.md         an earlier, rejected specification — kept for reference
 ```
 

@@ -5,3 +5,6 @@ backend/dist/
 *.log
 .env
 coverage/
+
+# Session context for AI-assisted work -- kept locally, not published.
+CLAUDE.md
