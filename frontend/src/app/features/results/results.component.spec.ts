@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { TestBed, ComponentFixture } from "@angular/core/testing";
 import { HttpClientTestingModule } from "@angular/common/http/testing";
 import { ResultsComponent } from "./results.component";
-import type { CompareResultResponse, ConfigInfo, ResponseTruncation } from "../../shared/models/dto";
+import type { CompareResultResponse, ResponseTruncation } from "../../shared/models/dto";
 
 function truncation(over: Partial<ResponseTruncation> = {}): ResponseTruncation {
   return {
@@ -49,22 +49,12 @@ function result(over: Partial<CompareResultResponse> = {}): CompareResultRespons
   } as CompareResultResponse;
 }
 
-const config = {
-  blob_read_enabled: false,
-  blob_write_enabled: false,
-  blob_output_container_url: "",
-  excel_max_rows: 1048576,
-  max_upload_bytes: 1024,
-  max_response_rows: 1000,
-} as ConfigInfo;
-
 describe("ResultsComponent truncation notice", () => {
   let fixture: ComponentFixture<ResultsComponent>;
 
   function render(res: CompareResultResponse) {
     fixture = TestBed.createComponent(ResultsComponent);
     fixture.componentInstance.result = res;
-    fixture.componentInstance.config = config;
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }

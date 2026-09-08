@@ -18,20 +18,24 @@
 
   <app-how-to-use [maxUploadBytes]="config?.max_upload_bytes ?? null"></app-how-to-use>
 
-  <app-catalog-picker></app-catalog-picker>
-
+  <!-- The two uploads come first: they are the whole job. The optional
+       catalogue sits below them, collapsed, so it stops competing with
+       the primary flow for a user who just wants to compare two files. -->
   <div class="row">
     <app-file-input label="Source" [maxUploadBytes]="config?.max_upload_bytes ?? null" (loaded)="onSourceLoaded($event)"></app-file-input>
     <app-file-input label="Target" [maxUploadBytes]="config?.max_upload_bytes ?? null" (loaded)="onTargetLoaded($event)"></app-file-input>
   </div>
 
-  <app-settings-panel></app-settings-panel>
+  <app-catalog-picker></app-catalog-picker>
+
+  <app-settings-panel [maxPreviewRows]="config?.max_response_rows ?? null"></app-settings-panel>
 
   <div class="panel">
     <button type="button" (click)="run(state)" [disabled]="!canRun(state)">
       {{ running ? 'Running…' : 'Run comparison' }}
     </button>
     <button type="button" *ngIf="running" class="link-button" (click)="cancel()">Cancel</button>
+    <button type="button" *ngIf="!running && result" class="link-button" (click)="startOver()">Start over</button>
     <span *ngIf="!state.sourceFile || !state.targetFile" class="muted">Load both a source and target file to run a comparison.</span>
 
     <div *ngIf="running" class="run-progress" role="status" aria-live="polite">
@@ -42,13 +46,14 @@
       <p class="muted">
         {{ progress?.label || 'Starting…' }}<ng-container *ngIf="progress && progress.total > 0">:
           {{ progress.done | number }} / {{ progress.total | number }} rows</ng-container>
+        <span *ngIf="elapsedLabel"> · {{ elapsedLabel }} elapsed</span>
       </p>
     </div>
 
     <div *ngIf="runError" class="alert alert-error">{{ runError }}</div>
   </div>
 
-  <app-results *ngIf="result && config" [result]="result" [config]="config" [previewRows]="state.previewRows"></app-results>
+  <app-results *ngIf="result" [result]="result" [previewRows]="state.previewRows"></app-results>
 </main>
 
 <footer class="app-footer">

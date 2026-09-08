@@ -29,6 +29,10 @@ export class AppComponent implements OnInit, OnDestroy {
   progress: JobProgress | null = null;
   private jobId: string | null = null;
   private pollSub: Subscription | null = null;
+  private startedAt = 0;
+  /** "1m 20s" while a comparison runs -- on a run measured in minutes, a
+   * bar alone leaves the user unsure whether anything is still happening. */
+  elapsedLabel = "";
 
   constructor(
     private readonly auth: AuthService,
@@ -85,7 +89,24 @@ export class AppComponent implements OnInit, OnDestroy {
     this.running = false;
     this.jobId = null;
     this.progress = null;
+    this.elapsedLabel = "";
     this.runError = message;
+  }
+
+  private updateElapsed(): void {
+    const seconds = Math.floor((Date.now() - this.startedAt) / 1000);
+    this.elapsedLabel = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  }
+
+  /** Clears the whole form back to a blank slate -- the files, the
+   * mapping, the settings and the result. */
+  startOver(): void {
+    this.stopPolling();
+    this.compareState.reset();
+    this.result = null;
+    this.runError = "";
+    this.progress = null;
+    this.elapsedLabel = "";
   }
 
   /** Polls a job until it reaches a terminal state, updating progress on
@@ -97,11 +118,13 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (job) => {
           this.progress = job.progress;
+          this.updateElapsed();
           if (job.status === "done" && job.result) {
             this.stopPolling();
             this.running = false;
             this.jobId = null;
             this.progress = null;
+            this.elapsedLabel = "";
             this.result = job.result;
             this.compareState.setResult(job.result);
             return;
@@ -128,6 +151,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.running = true;
     this.runError = "";
     this.progress = null;
+    this.startedAt = Date.now();
+    this.elapsedLabel = "0s";
 
     const req: CompareRequest = {
       source_file_id: state.sourceFile.file_id,

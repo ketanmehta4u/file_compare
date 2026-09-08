@@ -144,14 +144,4 @@
   </p>
   <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
 
-  <div *ngIf="config.blob_write_enabled">
-    <h4>Write outputs to blob</h4>
-    <p class="muted">{{ config.blob_output_container_url }}</p>
-    <button type="button" (click)="writeToBlob()" [disabled]="blobWriting">Write all outputs to blob</button>
-    <div *ngIf="blobWriteError" class="alert alert-error">{{ blobWriteError }}</div>
-    <div *ngIf="blobWriteResult">
-      <p>{{ blobWriteResult.written.length }} written, {{ blobWriteResult.failed.length }} failed.</p>
-      <ul class="table-scroll"><li *ngFor="let w of blobWriteResult.written">{{ w }}</li></ul>
-    </div>
-  </div>
 </div>

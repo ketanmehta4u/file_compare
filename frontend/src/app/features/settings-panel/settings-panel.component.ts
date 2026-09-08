@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit } from "@angular/core";
 import { Subject, combineLatest } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { CompareStateService, type CompareFormState } from "../../core/compare-state.service";
@@ -14,6 +14,12 @@ import { CompareStateService, type CompareFormState } from "../../core/compare-s
 })
 export class SettingsPanelComponent implements OnInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
+
+  /** The server's own cap on rows per section, so the input cannot promise
+   * more than the response will carry. */
+  @Input() maxPreviewRows: number | null = null;
+
+  advancedOpen = false;
 
   state: CompareFormState = this.compareState.value;
   commonColumns: string[] = [];
@@ -36,6 +42,24 @@ export class SettingsPanelComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroyed.next();
     this.destroyed.complete();
+  }
+
+  toggleAdvanced(): void {
+    this.advancedOpen = !this.advancedOpen;
+  }
+
+  /** One-line summary of the collapsed options, so what is hidden is still
+   * visible at a glance. */
+  get optionsSummary(): string {
+    const parts: string[] = [];
+    parts.push(this.state.caseSensitive ? "case sensitive" : "case insensitive");
+    if (!this.state.trimWhitespace) parts.push("whitespace kept");
+    if (this.state.treatBlankAsZero) parts.push("blank = 0");
+    if (this.state.fuzzyColumnNames) parts.push("fuzzy names");
+    const tolerance = (this.state.numericTolerance ?? "").trim();
+    if (tolerance !== "" && tolerance !== "0") parts.push(`tolerance ${tolerance}`);
+    if (this.state.decimalPrecision !== null) parts.push(`${this.state.decimalPrecision} dp`);
+    return parts.join(", ");
   }
 
   get bothFilesLoaded(): boolean {
@@ -88,6 +112,13 @@ export class SettingsPanelComponent implements OnInit, OnDestroy {
   }
   setPreviewRows(v: string): void {
     const n = Number(v);
-    this.compareState.patch({ previewRows: Number.isFinite(n) && n >= 10 ? n : 100 });
+    if (!Number.isFinite(n) || n < 10) {
+      this.compareState.patch({ previewRows: 100 });
+      return;
+    }
+    // Never above what the server will actually send, or the input would
+    // imply rows the response does not contain.
+    const capped = this.maxPreviewRows ? Math.min(n, this.maxPreviewRows) : n;
+    this.compareState.patch({ previewRows: capped });
   }
 }

@@ -16,12 +16,21 @@ export class CatalogPickerComponent {
   datasetId = "";
   mapping: MappingView | null = null;
 
+  /** Collapsed by default: the catalogue is optional, and leading with it
+   * made the common case (compare these two files) look more involved
+   * than it is. */
+  open = false;
+
   uploading = false;
   uploadError = "";
   mappingLoading = false;
   mappingError = "";
 
   constructor(private readonly api: ApiService, readonly state: CompareStateService) {}
+
+  toggle(): void {
+    this.open = !this.open;
+  }
 
   templateUrl(): string {
     return this.api.catalogTemplateUrl();

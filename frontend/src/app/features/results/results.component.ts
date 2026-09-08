@@ -1,6 +1,6 @@
 import { Component, Input } from "@angular/core";
 import { ApiService } from "../../core/api.service";
-import type { CompareResultResponse, ConfigInfo } from "../../shared/models/dto";
+import type { CompareResultResponse } from "../../shared/models/dto";
 
 type ColTab = "source_only" | "target_only" | "common" | "sequence" | "dtype";
 type RowTab = "source_only" | "target_only" | "value_diffs";
@@ -16,15 +16,10 @@ type RowTab = "source_only" | "target_only" | "value_diffs";
 })
 export class ResultsComponent {
   @Input() result!: CompareResultResponse;
-  @Input() config!: ConfigInfo;
   @Input() previewRows = 100;
 
   colTab: ColTab = "source_only";
   rowTab: RowTab = "source_only";
-
-  blobWriting = false;
-  blobWriteResult: { written: string[]; failed: Array<[string, string]> } | null = null;
-  blobWriteError = "";
 
   constructor(private readonly api: ApiService) {}
 
@@ -75,18 +70,4 @@ export class ResultsComponent {
     return this.api.annotatedUrl(this.result.run_id, side);
   }
 
-  writeToBlob(): void {
-    this.blobWriting = true;
-    this.blobWriteError = "";
-    this.api.writeToBlob(this.result.run_id).subscribe({
-      next: (res) => {
-        this.blobWriting = false;
-        this.blobWriteResult = res;
-      },
-      error: (err) => {
-        this.blobWriting = false;
-        this.blobWriteError = err?.error?.detail ?? "Write to blob failed.";
-      },
-    });
-  }
 }

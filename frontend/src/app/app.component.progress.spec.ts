@@ -145,6 +145,35 @@ describe("AppComponent comparison progress", () => {
     discardPeriodicTasks();
   }));
 
+  it("shows elapsed time while a comparison runs", fakeAsync(() => {
+    startRun();
+    tick(0);
+    http.expectOne("/api/compare/jobs/job1").flush(jobView({ status: "running" }));
+    expect(component.elapsedLabel).toBeTruthy();
+
+    component.ngOnDestroy();
+    discardPeriodicTasks();
+  }));
+
+  // Start over has to clear the shared form state too, not just the local
+  // result -- otherwise the previous files and mapping linger invisibly.
+  it("clears everything when starting over", fakeAsync(() => {
+    startRun();
+    tick(0);
+    const done = jobView({ status: "done", result: { run_id: "run1", summary: {} } as never });
+    http.expectOne("/api/compare/jobs/job1").flush(done);
+    expect(component.result).not.toBeNull();
+
+    component.startOver();
+
+    expect(component.result).toBeNull();
+    expect(component.runError).toBe("");
+    expect(component.elapsedLabel).toBe("");
+    expect(state.value.sourceFile).toBeNull();
+    expect(state.value.targetFile).toBeNull();
+    discardPeriodicTasks();
+  }));
+
   it("stops polling when the component is destroyed", fakeAsync(() => {
     startRun();
     tick(0);

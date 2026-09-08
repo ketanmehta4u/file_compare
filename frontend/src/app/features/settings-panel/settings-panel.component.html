@@ -40,34 +40,43 @@
     </label>
   </div>
 
-  <h4>Options</h4>
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="state.caseSensitive" (change)="setCaseSensitive($any($event.target).checked)" />
-    Case sensitive
-  </label>
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="state.trimWhitespace" (change)="setTrimWhitespace($any($event.target).checked)" />
-    Trim whitespace
-  </label>
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="state.treatBlankAsZero" (change)="setTreatBlankAsZero($any($event.target).checked)" />
-    Blank == 0.00
-  </label>
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="state.fuzzyColumnNames" (change)="setFuzzyColumnNames($any($event.target).checked)" />
-    Fuzzy column names
-  </label>
+  <!-- The defaults are right for most comparisons, so these are folded
+       away rather than presented as a wall of choices. -->
+  <button type="button" class="link-button" (click)="toggleAdvanced()" [attr.aria-expanded]="advancedOpen">
+    {{ advancedOpen ? 'Hide ▴' : 'Show ▾' }} Matching options
+    <span class="muted" *ngIf="!advancedOpen">({{ optionsSummary }})</span>
+  </button>
 
-  <label>
-    Numeric tolerance
-    <input type="text" [ngModel]="state.numericTolerance" (ngModelChange)="setNumericTolerance($event)" />
-  </label>
-  <label>
-    Decimal precision <span class="muted">(blank = exact)</span>
-    <input type="number" min="0" [ngModel]="state.decimalPrecision" (ngModelChange)="setDecimalPrecision($event.toString())" />
-  </label>
-  <label>
-    Preview rows per section <span class="muted">(on-screen only — downloads always contain every row)</span>
-    <input type="number" min="10" [ngModel]="state.previewRows" (ngModelChange)="setPreviewRows($event.toString())" />
-  </label>
+  <div *ngIf="advancedOpen">
+    <label class="checkbox-row">
+      <input type="checkbox" [checked]="state.caseSensitive" (change)="setCaseSensitive($any($event.target).checked)" />
+      Case sensitive <span class="muted">— “ACME” differs from “Acme”</span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" [checked]="state.trimWhitespace" (change)="setTrimWhitespace($any($event.target).checked)" />
+      Trim whitespace <span class="muted">— ignore leading and trailing spaces</span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" [checked]="state.treatBlankAsZero" (change)="setTreatBlankAsZero($any($event.target).checked)" />
+      Treat blank as 0.00 <span class="muted">— an empty cell equals zero</span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" [checked]="state.fuzzyColumnNames" (change)="setFuzzyColumnNames($any($event.target).checked)" />
+      Fuzzy column names <span class="muted">— match names differing only by case or spacing</span>
+    </label>
+
+    <label>
+      Numeric tolerance <span class="muted">(0 = exact; e.g. 0.01 allows a penny)</span>
+      <input type="text" inputmode="decimal" [ngModel]="state.numericTolerance" (ngModelChange)="setNumericTolerance($event)" />
+    </label>
+    <label>
+      Decimal precision <span class="muted">(blank = compare in full)</span>
+      <input type="number" min="0" [ngModel]="state.decimalPrecision" (ngModelChange)="setDecimalPrecision($event === null ? '' : $event.toString())" />
+    </label>
+    <label>
+      Rows to show per section
+      <span class="muted">(display only — downloads always contain every row<ng-container *ngIf="maxPreviewRows">, and the server sends at most {{ maxPreviewRows | number }}</ng-container>)</span>
+      <input type="number" min="10" [max]="maxPreviewRows || null" [ngModel]="state.previewRows" (ngModelChange)="setPreviewRows($event === null ? '' : $event.toString())" />
+    </label>
+  </div>
 </div>

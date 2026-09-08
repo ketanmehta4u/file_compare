@@ -179,7 +179,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 
 ```bash
 cd backend && npm test     # 153 tests
-cd ../frontend && npm test # 25 tests (opens Chrome)
+cd ../frontend && npm test # 33 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -306,7 +306,7 @@ cd frontend && npm run watch                       # rebuild on change
 
 ```bash
 cd backend  && npm test                            # vitest, 153 tests
-cd frontend && npm test                            # karma/jasmine, 25 tests
+cd frontend && npm test                            # karma/jasmine, 33 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -374,26 +374,28 @@ git status --short
 
 ## Using it
 
-1. *(Optional)* Upload a **dataset catalogue** and pick a dataset. This
-   pre-fills the column mapping, key columns and comparison settings.
-   Skip it entirely if you just want to compare two files.
-2. Upload the **Source** file (`.csv` or `.xlsx`). For a workbook, pick
+1. Upload the **Source** file (`.csv` or `.xlsx`). For a workbook, pick
    the sheet; for CSV, confirm the header row and delimiter.
-3. Upload the **Target** file the same way.
-4. Check the **column mapping**. Identically-named columns are matched
+2. Upload the **Target** file the same way.
+3. Check the **column mapping**. Identically-named columns are matched
    automatically; map the rest by hand, or set them to *(ignore)*.
-5. Pick **key columns** — the columns that identify a row (an invoice or
+4. Pick **key columns** — the columns that identify a row (an invoice or
    transaction id, say). Leave empty to match on the whole row.
-6. Adjust settings if needed: numeric tolerance, decimal precision, case
-   sensitivity, whitespace trimming, blank-as-zero, control-total
-   columns.
+5. *(Optional)* Open **Matching options** for numeric tolerance, decimal
+   precision, case sensitivity, whitespace trimming and blank-as-zero.
+   The defaults suit most comparisons, and the collapsed heading
+   summarises whatever is in force.
+6. *(Optional)* Open **Dataset catalogue** to load a catalogue workbook,
+   which pre-fills the mapping, key columns and settings for a known
+   dataset. Not needed to compare two files.
 7. **Run comparison.** A progress bar shows the phase and the row counts
    as it works — indexing each side, comparing matched rows, footing the
    control totals — and **Cancel** stops it for real, freeing the slot on
    the server rather than just hiding the result.
 8. Read the verdict, summary, differences and control totals. Download the
    audit workbook, or an annotated copy of either input file with
-   differing cells highlighted.
+   differing cells highlighted. **Start over** clears everything for the
+   next pair of files.
 
 **The tables on screen are a preview.** Each detail section is capped
 (1,000 rows by default) so a large reconciliation does not have to ship
@@ -413,7 +415,7 @@ falls back to whole-row matching).
 
 ```bash
 cd backend && npm test    # vitest — engine + API, 153 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 25 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 33 tests
 ```
 
 The backend suite includes an **anchor end-to-end test**: the sample

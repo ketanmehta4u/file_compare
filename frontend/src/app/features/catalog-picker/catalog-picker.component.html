@@ -1,11 +1,24 @@
 <div class="panel">
-  <h3>Dataset catalogue <span class="muted">(optional)</span></h3>
+  <button type="button" class="link-button" (click)="toggle()" [attr.aria-expanded]="open">
+    {{ open ? 'Hide ▴' : 'Show ▾' }} Dataset catalogue <span class="muted">(optional)</span>
+  </button>
+  <p class="muted" *ngIf="!open && !catalog">
+    Skip this unless you have a catalogue workbook for a known dataset — two files
+    can be compared without one.
+  </p>
+  <p class="muted" *ngIf="!open && catalog">
+    Using <strong>{{ datasetId || '(no dataset selected)' }}</strong> from the uploaded catalogue.
+  </p>
+
+  <div *ngIf="open">
   <p class="muted">
     Upload a catalogue workbook to pre-fill key columns, column mapping, and comparison settings for a known dataset.
     <a [href]="templateUrl()" target="_blank" rel="noopener">Download template</a>.
   </p>
 
-  <input type="file" accept=".xlsx,.xls,.csv" (change)="onFileChosen($event)" [disabled]="uploading" />
+  <!-- .xls omitted deliberately: the catalogue loader rejects legacy OLE2
+       workbooks, so offering them here would only fail after the upload. -->
+  <input type="file" accept=".xlsx,.csv" aria-label="Catalogue workbook" (change)="onFileChosen($event)" [disabled]="uploading" />
   <span *ngIf="uploading">Uploading…</span>
   <div *ngIf="uploadError" class="alert alert-error">{{ uploadError }}</div>
 
@@ -38,4 +51,5 @@
       </tbody>
     </table>
   </div>
+</div>
 </div>

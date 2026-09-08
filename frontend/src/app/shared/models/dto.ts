@@ -82,12 +82,6 @@ export interface FileMetaView {
   blob_url: string;
 }
 
-export interface BlobReadRequest {
-  url: string;
-  sheet_name?: string | null;
-  has_header?: boolean;
-  delimiter?: string | null;
-}
 
 export interface ExcelSheetsResponse {
   sheets: string[];
@@ -204,10 +198,6 @@ export interface CompareResultResponse {
   truncation: ResponseTruncation;
 }
 
-export interface WriteToBlobResponse {
-  written: string[];
-  failed: Array<[string, string]>;
-}
 
 /** Live progress for a background comparison. `percent` is null while a
  * phase has no countable total (the tail phases). */

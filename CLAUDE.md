@@ -66,7 +66,7 @@ Every phase of the build is done, committed, and — critically — actually
 | Angular frontend (`frontend/src/app/`) | ✅ | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified |
 | Docker (`docker-compose.yml`) | ✅ | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express |
 
-**153 backend tests (vitest), 25 frontend tests (karma/jasmine), all
+**153 backend tests (vitest), 33 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
 `cd frontend && npm test`.
 

@@ -6,7 +6,6 @@ import type {
   CompareJobCancelled,
   CompareJobStarted,
   CompareJobView,
-  BlobReadRequest,
   CatalogUploadResponse,
   CompareRequest,
   CompareResultResponse,
@@ -14,15 +13,15 @@ import type {
   ExcelSheetsResponse,
   FileMetaView,
   MappingView,
-  WriteToBlobResponse,
 } from "../shared/models/dto";
 
 export interface UploadProgress {
   percent: number;
 }
 
-/** Thin HttpClient wrapper -- one method per backend route, mirroring the
- * original React app's api.ts. Download endpoints (report.xlsx, annotated
+/** Thin HttpClient wrapper -- one method per backend route this app
+ * actually uses. The blob-storage routes are not among them: the server
+ * ships them hard-disabled, so a client for them would be dead weight. Download endpoints (report.xlsx, annotated
  * files, the catalog template) are exposed as URL builders rather than
  * fetch calls, same as the original: they're meant to be used as <a href>
  * targets so the browser handles Content-Disposition itself. */
@@ -78,14 +77,6 @@ export class ApiService {
     return this.http.post<ExcelSheetsResponse>("/api/files/list-sheets", form);
   }
 
-  readBlob(req: BlobReadRequest): Observable<FileMetaView> {
-    return this.http.post<FileMetaView>("/api/files/from-blob", req);
-  }
-
-  blobSheets(url: string): Observable<ExcelSheetsResponse> {
-    return this.http.post<ExcelSheetsResponse>("/api/files/blob-sheets", { url });
-  }
-
   runCompare(req: CompareRequest): Observable<CompareResultResponse> {
     return this.http.post<CompareResultResponse>("/api/compare/run", req);
   }
@@ -111,10 +102,6 @@ export class ApiService {
 
   annotatedUrl(runId: string, side: "source" | "target"): string {
     return `/api/compare/${encodeURIComponent(runId)}/annotated/${side}`;
-  }
-
-  writeToBlob(runId: string): Observable<WriteToBlobResponse> {
-    return this.http.post<WriteToBlobResponse>(`/api/compare/${encodeURIComponent(runId)}/write-to-blob`, {});
   }
 }
 
