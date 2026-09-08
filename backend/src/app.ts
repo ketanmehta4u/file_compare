@@ -1,6 +1,6 @@
 import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
-import { corsOrigins } from "./config/env";
+import { corsOrigins, trustProxy } from "./config/env";
 import { bodySizeGuard } from "./api/middleware/bodySizeGuard";
 import { securityHeaders } from "./api/middleware/securityHeaders";
 import { requestLog, log } from "./api/middleware/requestLog";
@@ -13,6 +13,12 @@ import { compareRouter } from "./api/routes/compare";
 
 export function createApp(): Express {
   const app = express();
+
+  // Behind the nginx container, `req.ip` is the proxy's address unless
+  // Express is told how many proxy hops to trust -- which would put every
+  // unauthenticated client in a single shared rate-limit bucket. See
+  // trustProxy() for why the default is one hop, and how to turn it off.
+  app.set("trust proxy", trustProxy());
 
   app.use(
     cors({

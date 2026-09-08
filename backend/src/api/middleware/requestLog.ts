@@ -22,13 +22,18 @@ export function requestLog(req: Request, res: Response, next: NextFunction): voi
   const requestId = randomUUID().replace(/-/g, "").slice(0, 12);
   req.requestId = requestId;
   const start = performance.now();
+  // Captured now, not in the finish handler: Express rewrites req.url to be
+  // relative while dispatching into a mounted router, and "finish" can fire
+  // while still inside that dispatch -- which logged the API's own routes
+  // with their /api mount point stripped ("/compare/run", "/livez").
+  const path = req.originalUrl.split("?")[0];
 
   res.on("finish", () => {
     const durationMs = Math.round((performance.now() - start) * 100) / 100;
     const fields = {
       ctx_request_id: requestId,
       ctx_method: req.method,
-      ctx_path: req.path,
+      ctx_path: path,
       ctx_status: res.statusCode,
       ctx_duration_ms: durationMs,
       ctx_user: currentUser(req),

@@ -3,10 +3,20 @@ import { HttpEventType } from "@angular/common/http";
 import { ApiService, uploadPercent } from "../../core/api.service";
 import type { FileMetaView } from "../../shared/models/dto";
 
-function isExcelName(name: string): boolean {
-  const ext = name.toLowerCase().split(".").pop();
-  return ext === "xlsx" || ext === "xls";
+function extensionOf(name: string): string {
+  const parts = name.toLowerCase().split(".");
+  return parts.length > 1 ? parts[parts.length - 1] : "";
 }
+
+function isExcelName(name: string): boolean {
+  return extensionOf(name) === "xlsx";
+}
+
+/** Extensions this build can actually parse. Legacy `.xls` (OLE2) is
+ * deliberately out of scope -- the backend detects it by magic bytes and
+ * rejects it, so it is caught here too rather than after a full upload
+ * round-trip. */
+const ACCEPTED_EXTENSIONS = ["csv", "xlsx"];
 
 /**
  * Port of the original's FileInput.tsx, reused for both Source and
@@ -50,6 +60,16 @@ export class FileInputComponent {
     this.chosenSheet = "";
     this.meta = null;
     this.loaded.emit(null);
+
+    const ext = extensionOf(file.name);
+    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+      this.sizeError =
+        ext === "xls"
+          ? `${file.name} is a legacy .xls workbook, which this application cannot read — re-save it as .xlsx or .csv and try again.`
+          : `${file.name} is not a supported file type — upload a .csv or .xlsx file.`;
+      this.pickedFile = null;
+      return;
+    }
 
     if (this.maxUploadBytes && file.size > this.maxUploadBytes) {
       this.sizeError = `${file.name} is ${(file.size / (1024 * 1024)).toFixed(1)} MB, over the ${(this.maxUploadBytes / (1024 * 1024)).toFixed(0)} MB limit.`;

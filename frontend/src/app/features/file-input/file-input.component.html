@@ -1,7 +1,7 @@
 <div class="panel">
   <h3>{{ label }}</h3>
 
-  <input type="file" accept=".csv,.xlsx,.xls" (change)="onFileChosen($event)" />
+  <input type="file" accept=".csv,.xlsx" (change)="onFileChosen($event)" />
   <div *ngIf="sizeError" class="alert alert-error">{{ sizeError }}</div>
   <div *ngIf="loadError" class="alert alert-error">{{ loadError }}</div>
 

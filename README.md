@@ -58,9 +58,23 @@ Open `http://localhost:4200/`.
 ### Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 112 tests
-cd frontend && npm test   # karma/jasmine (needs Chrome) — 3 tests
+cd backend && npm test    # vitest — engine + API, 120 tests
+cd frontend && npm test   # karma/jasmine (needs Chrome) — 15 tests
 ```
+
+## Configuration
+
+Backend environment variables (all optional):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PORT` | `3000` | Listen port. |
+| `CORS_ORIGINS` | `http://localhost:4200` | Comma-separated allowed origins. |
+| `MAX_UPLOAD_BYTES` | `209715200` (200 MB) | Per-file upload cap. Keep nginx's `client_max_body_size` at or above this. |
+| `MAX_CONCURRENT_COMPARISONS` | `3` | Comparison concurrency cap (restart to change). |
+| `COMPARE_QUEUE_TIMEOUT_S` | `120` | How long a queued comparison waits for a slot before a 503. |
+| `TRUST_PROXY` | `1` | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed. |
+| `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging. `LOG_FORMAT=text` gives pretty-printed dev output. |
 
 ## Known Docker gotchas (found and fixed during the build)
 
@@ -74,6 +88,14 @@ cd frontend && npm test   # karma/jasmine (needs Chrome) — 3 tests
   service was stopped`. Fix: `rm -rf node_modules && npm install` on
   whichever platform you're building on next — don't share
   `node_modules` across host/container boundaries.
+- **`add_header` does not merge across nginx `location` levels.** A child
+  block that defines any `add_header` of its own drops every header
+  inherited from the server level. The SPA's `location = /index.html`
+  (reached by the `try_files` fallback for *every* page load, not just a
+  literal `/index.html` request) sets `Cache-Control`, which silently
+  dropped all five security headers from the main document while static
+  assets still carried them. They are now repeated in that block; verify
+  with `curl -I http://localhost:8080/` after touching `nginx.conf`.
 - **This nginx image only binds IPv4.** Its healthcheck must target
   `127.0.0.1`, not `localhost` — resolving `localhost` to `::1` inside
   the container gets a genuine connection refused even though the

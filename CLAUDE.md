@@ -66,9 +66,38 @@ Every phase of the build is done, committed, and — critically — actually
 | Angular frontend (`frontend/src/app/`) | ✅ | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified |
 | Docker (`docker-compose.yml`) | ✅ | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express |
 
-**112 backend tests (vitest), 3 frontend tests (karma/jasmine), all
+**120 backend tests (vitest), 15 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
 `cd frontend && npm test`.
+
+### Post-build review pass
+
+A later session reviewed the finished build against the plain-user goal
+("upload two files, compare them") and fixed five real defects, each
+verified rather than assumed:
+
+- **Every user shared one rate-limit bucket behind nginx.** Express had no
+  `trust proxy` setting, so `req.ip` was the nginx container's address for
+  all traffic. Proved in containers: nginx sits at `172.19.0.3` while the
+  backend now logs the true client. Configurable via `TRUST_PROXY`.
+- **The SPA shell served no security headers.** nginx `add_header` is not
+  inherited into a `location` block that defines any of its own, and the
+  `try_files` fallback routes every page load through
+  `location = /index.html`. Proved by running the pre-fix config
+  side-by-side: `/` returned no CSP or `X-Frame-Options` at all, while
+  static assets did.
+- **Key/control-total selections went stale on a mapping edit.** They are
+  listed by post-mapping name, so re-pointing a mapping row stranded a
+  checked column: gone from the panel, still in the request, and the
+  engine then warned and silently fell back to whole-row matching.
+- **`.xls` was offered by the file picker** but rejected by the backend
+  only after a full upload round-trip.
+- **`ctx_path` logged API routes with the `/api` prefix stripped**, because
+  it read `req.path` in the `finish` handler after Express had rewritten
+  the URL for the mounted router.
+
+One test (the `EXCEL_MAX_ROWS` spill case, which builds a >1M-row report)
+was also failing on vitest's 5s default timeout; the suite now allows 30s.
 
 **Full narrative of how it was built — including every bug found and
 how — is in the git log.** Each commit message is a detailed account of

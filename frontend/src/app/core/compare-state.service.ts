@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, combineLatest } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import type { CompareResultResponse, DatasetView, FileMetaView, MappingView } from "../shared/models/dto";
 
@@ -111,6 +111,35 @@ export class CompareStateService {
 
   setColumnMap(map: Record<string, string>, edited: boolean): void {
     this.patch({ columnMap: map, colMapEdited: edited });
+    this.pruneStaleColumnSelections();
+  }
+
+  /**
+   * Drop key / control-total selections that no longer name a column
+   * present on both sides.
+   *
+   * Both pickers list post-mapping column names, so re-pointing or
+   * ignoring a mapping row can strand a previously-checked column: it
+   * vanishes from the checkbox list (nothing left to untick) while still
+   * sitting in the request. A stranded key column is the damaging case --
+   * the engine finds no such column, warns, and silently falls back to
+   * whole-row matching, so the run the user gets back is not the run the
+   * visible settings describe.
+   *
+   * Only prunes once both files are loaded; before that there is nothing
+   * meaningful to validate against, and a catalogue picked ahead of the
+   * files supplies its own default key columns.
+   */
+  private pruneStaleColumnSelections(): void {
+    const s = this.state.value;
+    if (!s.sourceFile || !s.targetFile) return;
+    const common = new Set(commonColumnsOf(s));
+    const keyColumns = s.keyColumns.filter((c) => common.has(c));
+    const controlTotalColumns = s.controlTotalColumns.filter((c) => common.has(c));
+    if (keyColumns.length === s.keyColumns.length && controlTotalColumns.length === s.controlTotalColumns.length) {
+      return;
+    }
+    this.state.next({ ...this.state.value, keyColumns, controlTotalColumns });
   }
 
   /** Port of the original's defaultColMap(): prefer the catalogue's
@@ -139,6 +168,7 @@ export class CompareStateService {
       }
     }
     this.state.next({ ...s, columnMap: map });
+    this.pruneStaleColumnSelections();
   }
 
   /** Explicit reset to the computed default, e.g. an "Auto-match by name"
@@ -154,34 +184,37 @@ export class CompareStateService {
     map((s) => new Set(Object.values(s.columnMap).filter(Boolean)))
   );
 
-  /** Columns common to both sides post-mapping: the mapped target name if
-   * a source column maps, else the catalogue's canonical names, else raw
-   * shared column names -- same fallback chain as the original. */
-  readonly commonColumns$: Observable<string[]> = this.state$.pipe(
-    map((s) => {
-      if (!s.sourceFile || !s.targetFile) return [];
-      const mapped = Object.values(s.columnMap).filter(Boolean);
-      if (mapped.length > 0) return [...new Set(mapped)];
-      if (s.mapping && s.mapping.canonical_names.length > 0) {
-        return s.mapping.canonical_names.filter((c) => s.targetFile!.columns.includes(c));
-      }
-      const targetSet = new Set(s.targetFile.columns);
-      return s.sourceFile.columns.filter((c) => targetSet.has(c));
-    })
-  );
+  /** Columns common to both sides post-mapping. */
+  readonly commonColumns$: Observable<string[]> = this.state$.pipe(map(commonColumnsOf));
 
   /** Columns numeric on BOTH sides (post-mapping), for the control-total
    * column picker -- footing a text column is meaningless. */
-  readonly numericColumns$: Observable<string[]> = combineLatest([this.state$, this.commonColumns$]).pipe(
-    map(([s, common]) => {
-      if (!s.sourceFile || !s.targetFile) return [];
-      const srcDtype = new Map(s.sourceFile.dtypes);
-      const tgtDtype = new Map(s.targetFile.dtypes);
-      const reverseMap = new Map(Object.entries(s.columnMap).map(([src, tgt]) => [tgt, src]));
-      return common.filter((c) => {
-        const srcCol = reverseMap.get(c) ?? c;
-        return srcDtype.get(srcCol) === "numeric" && tgtDtype.get(c) === "numeric";
-      });
-    })
-  );
+  readonly numericColumns$: Observable<string[]> = this.state$.pipe(map(numericColumnsOf));
+}
+
+/** Columns common to both sides post-mapping: the mapped target name if a
+ * source column maps, else the catalogue's canonical names, else raw shared
+ * column names -- same fallback chain as the original. Pure so the service
+ * can also evaluate it synchronously when pruning stale selections. */
+export function commonColumnsOf(s: CompareFormState): string[] {
+  if (!s.sourceFile || !s.targetFile) return [];
+  const mapped = Object.values(s.columnMap).filter(Boolean);
+  if (mapped.length > 0) return [...new Set(mapped)];
+  if (s.mapping && s.mapping.canonical_names.length > 0) {
+    return s.mapping.canonical_names.filter((c) => s.targetFile!.columns.includes(c));
+  }
+  const targetSet = new Set(s.targetFile.columns);
+  return s.sourceFile.columns.filter((c) => targetSet.has(c));
+}
+
+/** Common columns that are numeric on both sides. */
+export function numericColumnsOf(s: CompareFormState): string[] {
+  if (!s.sourceFile || !s.targetFile) return [];
+  const srcDtype = new Map(s.sourceFile.dtypes);
+  const tgtDtype = new Map(s.targetFile.dtypes);
+  const reverseMap = new Map(Object.entries(s.columnMap).map(([src, tgt]) => [tgt, src]));
+  return commonColumnsOf(s).filter((c) => {
+    const srcCol = reverseMap.get(c) ?? c;
+    return srcDtype.get(srcCol) === "numeric" && tgtDtype.get(c) === "numeric";
+  });
 }
