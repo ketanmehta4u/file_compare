@@ -84,9 +84,9 @@
   <!-- Counts come from the summary, which always holds the true totals:
        the arrays themselves may be a capped preview. -->
   <div class="tabs">
-    <button type="button" [class.active]="rowTab === 'source_only'" (click)="rowTab = 'source_only'">Source-only ({{ result.summary.source_only_rows | number }})</button>
-    <button type="button" [class.active]="rowTab === 'target_only'" (click)="rowTab = 'target_only'">Target-only ({{ result.summary.target_only_rows | number }})</button>
-    <button type="button" [class.active]="rowTab === 'value_diffs'" (click)="rowTab = 'value_diffs'">Value differences ({{ result.summary.cell_diffs | number }})</button>
+    <button type="button" [class.active]="rowTab === 'source_only'" (click)="setRowTab('source_only')">Source-only ({{ result.summary.source_only_rows | number }})</button>
+    <button type="button" [class.active]="rowTab === 'target_only'" (click)="setRowTab('target_only')">Target-only ({{ result.summary.target_only_rows | number }})</button>
+    <button type="button" [class.active]="rowTab === 'value_diffs'" (click)="setRowTab('value_diffs')">Value differences ({{ result.summary.cell_diffs | number }})</button>
   </div>
 
   <div *ngIf="isTruncated" class="alert alert-warn">
@@ -106,13 +106,13 @@
   <div class="table-scroll" *ngIf="rowTab === 'source_only'">
     <table class="simple-table">
       <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
-      <tbody><tr *ngFor="let r of previewedSourceOnly"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+      <tbody><tr *ngFor="let r of previewedSourceOnly; trackBy: trackByIndex"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
     </table>
   </div>
   <div class="table-scroll" *ngIf="rowTab === 'target_only'">
     <table class="simple-table">
       <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
-      <tbody><tr *ngFor="let r of previewedTargetOnly"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+      <tbody><tr *ngFor="let r of previewedTargetOnly; trackBy: trackByIndex"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
     </table>
   </div>
   <div class="table-scroll" *ngIf="rowTab === 'value_diffs'">
@@ -124,7 +124,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let vd of previewedValueDiffs">
+        <tr *ngFor="let vd of previewedValueDiffs; trackBy: trackByIndex">
           <td *ngFor="let k of keyColumnsOf(vd)">{{ vd.key[k] }}</td>
           <td>{{ vd.source_row }}</td>
           <td>{{ vd.target_row }}</td>

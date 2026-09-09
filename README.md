@@ -181,7 +181,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 
 ```bash
 cd backend && npm test     # 164 tests
-cd ../frontend && npm test # 39 tests (opens Chrome)
+cd ../frontend && npm test # 45 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -308,7 +308,7 @@ cd frontend && npm run watch                       # rebuild on change
 
 ```bash
 cd backend  && npm test                            # vitest, 164 tests
-cd frontend && npm test                            # karma/jasmine, 39 tests
+cd frontend && npm test                            # karma/jasmine, 45 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -419,7 +419,7 @@ falls back to whole-row matching).
 
 ```bash
 cd backend && npm test    # vitest — engine + API, 164 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 39 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 45 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run
@@ -740,6 +740,13 @@ design otherwise avoids entirely.
   happen — V8 will not build a single string over 512 MB, so a large
   enough run would have thrown while serialising instead of returning
   anything.
+- The results table renders at most `previewRows` rows, and the component
+  that draws it uses OnPush change detection with its derived values
+  memoised. That is not incidental: with a large result on screen, every
+  unrelated event -- an upload emits progress events continuously -- used
+  to re-slice the row arrays and re-derive the column list once per
+  rendered row, costing ~15ms per event and making the page crawl while
+  the next pair of files loaded. It now costs ~0.01ms.
 - Building the workbook for a very large result is itself slow: 300,000
   rows across the two sheets took about 135 seconds and produced a 10 MB
   file.

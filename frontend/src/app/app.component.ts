@@ -148,6 +148,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   run(state: CompareFormState): void {
     if (!state.sourceFile || !state.targetFile) return;
+    // Defensive: the button is disabled while a run is in flight, but a
+    // second poller left running would poll forever and hammer the server.
+    this.stopPolling();
     this.running = true;
     this.runError = "";
     this.progress = null;
