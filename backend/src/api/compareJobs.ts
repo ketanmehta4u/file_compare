@@ -174,12 +174,13 @@ async function run(
       targetMeta: outcome.targetMeta,
       mapping: input.mapping,
       dropUnmapped: input.dropUnmapped,
+      annotatedOutputs: input.annotatedOutputs,
       cachedAt: Date.now(),
     });
 
     touch(job, {
       status: "done",
-      result: compareToResponse(outcome.report, runId, ctx.complianceWarnings),
+      result: compareToResponse(outcome.report, runId, ctx.complianceWarnings, input.annotatedOutputs),
       progress: { phase: "done", label: "Complete", done: 1, total: 1, percent: 100 },
     });
     log.info(

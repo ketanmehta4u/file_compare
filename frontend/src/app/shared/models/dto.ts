@@ -103,6 +103,8 @@ export interface CompareRequest {
   fuzzy_column_names?: boolean;
   control_total_columns?: string[];
   enforced_dtypes?: Record<string, string>;
+  /** Whether to keep what the annotated source/target downloads need. */
+  annotated_outputs?: boolean;
 }
 
 export interface ColumnDifferencesView {
@@ -201,6 +203,10 @@ export interface CompareResultResponse {
   audit: AuditView;
   catalog_compliance_warnings: string[];
   truncation: ResponseTruncation;
+  /** Whether the annotated downloads exist for this run. Decided by the
+   * run, not by the current form state, so the links shown always match
+   * what the server will actually serve. */
+  annotated_outputs: boolean;
 }
 
 

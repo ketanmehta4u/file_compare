@@ -162,7 +162,8 @@ function capSection<T>(rows: readonly T[], limit: number): { rows: T[]; info: Se
 export function compareToResponse(
   report: CompareReport,
   runId: string,
-  catalogComplianceWarnings: string[]
+  catalogComplianceWarnings: string[],
+  annotatedOutputs = true
 ): CompareResultResponse {
   const cd = report.columnDiff;
   const srcOnly = report.sourceOnlyRows.length;
@@ -235,5 +236,6 @@ export function compareToResponse(
     audit,
     catalog_compliance_warnings: catalogComplianceWarnings,
     truncation,
+    annotated_outputs: annotatedOutputs,
   };
 }

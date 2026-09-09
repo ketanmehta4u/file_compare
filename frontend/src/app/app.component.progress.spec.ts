@@ -71,6 +71,7 @@ describe("AppComponent comparison progress", () => {
     component.run(currentState());
     const req = http.expectOne({ method: "POST", url: "/api/compare/jobs" });
     expect(req.request.body.source_file_id).toBe("src");
+    expect(req.request.body.annotated_outputs).toBe(true);
     req.flush({ job_id: "job1", status: "queued" });
     expect(component.running).toBe(true);
     component.ngOnDestroy();

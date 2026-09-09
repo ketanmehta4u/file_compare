@@ -155,9 +155,14 @@
     These contain the <strong>complete</strong> result — every row, however
     many the tables above showed.
   </p>
-  <p>
+  <p *ngIf="result.annotated_outputs">
     <a [href]="annotatedUrl('source')">Annotated source file</a> ·
     <a [href]="annotatedUrl('target')">Annotated target file</a>
+  </p>
+  <p *ngIf="!result.annotated_outputs" class="muted">
+    Annotated files were not produced for this run — tick
+    <strong>Annotated source/target files</strong> under Outputs and run it
+    again to get them.
   </p>
   <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
 

@@ -34,6 +34,11 @@ export interface CompareJobInput {
   mapping: ColumnMapping | null;
   dropUnmapped: boolean;
   user: string;
+  /** When false the per-row status maps are dropped before the report is
+   * sent back: they are only ever read by the annotated export, and on a
+   * large run they are hundreds of thousands of entries to clone and then
+   * hold for the life of the cached run. */
+  annotatedOutputs: boolean;
 }
 
 export type WorkerMessage =
@@ -91,6 +96,11 @@ async function main(): Promise<void> {
       port.postMessage(message);
     }
   );
+
+  if (!input.annotatedOutputs) {
+    report.sourceRowStatus = new Map();
+    report.targetRowStatus = new Map();
+  }
 
   const message: WorkerMessage = {
     type: "done",

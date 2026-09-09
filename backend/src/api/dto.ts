@@ -106,6 +106,11 @@ export interface CompareRequest {
   fuzzy_column_names?: boolean;
   control_total_columns?: string[];
   enforced_dtypes?: Record<string, string>;
+  /** Whether this run should keep what the annotated source/target
+   * downloads need. Defaults to true. Turning it off frees the per-row
+   * status maps, which exist for no other purpose and are proportional to
+   * the number of distinct keys. */
+  annotated_outputs?: boolean;
 }
 
 export interface ColumnDifferencesView {
@@ -209,6 +214,10 @@ export interface CompareResultResponse {
   audit: AuditView;
   catalog_compliance_warnings: string[];
   truncation: ResponseTruncation;
+  /** Whether the annotated source/target downloads are available for this
+   * run. The run decides, not the client, so a reloaded or shared result
+   * cannot offer a download the server will refuse. */
+  annotated_outputs: boolean;
 }
 
 export interface WriteToBlobResponse {

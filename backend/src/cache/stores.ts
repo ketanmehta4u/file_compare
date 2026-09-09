@@ -38,6 +38,11 @@ export interface CachedRun {
   targetMeta: FileMeta;
   mapping: ColumnMapping | null;
   dropUnmapped: boolean;
+  /** Whether this run was asked to keep what the annotated downloads
+   * need. When false the report carries no per-row statuses, so those
+   * endpoints refuse rather than returning a file with every row marked
+   * as an unmatched break. */
+  annotatedOutputs: boolean;
   cachedAt: number;
 }
 

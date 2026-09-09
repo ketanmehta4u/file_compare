@@ -91,6 +91,9 @@ export class SettingsPanelComponent implements OnInit, OnDestroy {
     this.compareState.patch({ controlTotalColumns: [...set] });
   }
 
+  setAnnotatedOutputs(v: boolean): void {
+    this.compareState.patch({ annotatedOutputs: v });
+  }
   setCaseSensitive(v: boolean): void {
     this.compareState.patch({ caseSensitive: v });
   }

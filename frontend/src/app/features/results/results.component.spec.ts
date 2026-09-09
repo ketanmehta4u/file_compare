@@ -47,6 +47,7 @@ function result(over: Partial<CompareResultResponse> = {}): CompareResultRespons
     audit: { rows: [], user: "", generated_at_utc: "", outcome: null },
     catalog_compliance_warnings: [],
     truncation: truncation(),
+    annotated_outputs: true,
     ...over,
   } as CompareResultResponse;
 }
@@ -143,6 +144,22 @@ describe("ResultsComponent truncation notice", () => {
       t.textContent?.includes("Source duplicate rows")
     );
     expect(tile?.textContent).toContain("across 3 keys");
+  });
+
+  it("offers the annotated downloads when the run produced them", () => {
+    const el = render(result());
+    expect(el.textContent).toContain("Annotated source file");
+    expect(el.textContent).toContain("Annotated target file");
+  });
+
+  // The run decides, not the current form state -- so a result that was
+  // produced without them must not offer links the server will refuse.
+  it("explains their absence instead of offering a broken link", () => {
+    const el = render(result({ annotated_outputs: false }));
+    expect(el.textContent).not.toContain("Annotated source file");
+    expect(el.textContent).toContain("were not produced for this run");
+    // The audit workbook is unconditional.
+    expect(el.textContent).toContain("Audit workbook");
   });
 
   it("lists only the sections that were actually cut", () => {

@@ -129,6 +129,9 @@ function prepareCompare(
         mapping,
         dropUnmapped: body.drop_unmapped ?? false,
         user,
+        // Defaults on, so an existing caller that says nothing keeps the
+        // behaviour it had.
+        annotatedOutputs: body.annotated_outputs ?? true,
       },
       complianceWarnings,
     };
@@ -154,9 +157,10 @@ export function storeRun(
     targetMeta: outcome.targetMeta,
     mapping: input.mapping,
     dropUnmapped: input.dropUnmapped,
+    annotatedOutputs: input.annotatedOutputs,
     cachedAt: Date.now(),
   });
-  return compareToResponse(outcome.report, runId, complianceWarnings);
+  return compareToResponse(outcome.report, runId, complianceWarnings, input.annotatedOutputs);
 }
 
 /**
@@ -264,6 +268,12 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
       return res.status(400).json({ detail: "side must be 'source' or 'target'." });
     }
     const cached = getRunOr404(String(req.params.runId));
+    if (!cached.annotatedOutputs) {
+      throw new HttpError(
+        400,
+        "Annotated files were not produced for this run — tick “Annotated source/target files” before running the comparison to enable them."
+      );
+    }
     const meta = side === "source" ? cached.sourceMeta : cached.targetMeta;
 
     // Re-parsed on demand from the cached upload rather than kept resident

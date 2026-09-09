@@ -43,6 +43,7 @@ parallel rebuild in its own repository, not a migration.
 - [Tests](#tests)
 - [Configuration](#configuration)
 - [HTTP API](#http-api)
+- [What you get back](#what-you-get-back)
 - [How it works](#how-it-works)
 - [Sizing and memory](#sizing-and-memory)
 - [Limitations](#limitations)
@@ -179,8 +180,8 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 158 tests
-cd ../frontend && npm test # 35 tests (opens Chrome)
+cd backend && npm test     # 164 tests
+cd ../frontend && npm test # 39 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -306,8 +307,8 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 158 tests
-cd frontend && npm test                            # karma/jasmine, 35 tests
+cd backend  && npm test                            # vitest, 164 tests
+cd frontend && npm test                            # karma/jasmine, 39 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -394,9 +395,11 @@ git status --short
    control totals — and **Cancel** stops it for real, freeing the slot on
    the server rather than just hiding the result.
 8. Read the verdict, summary, differences and control totals. Download the
-   audit workbook, or an annotated copy of either input file with
+   audit workbook, or -- if you left **Annotated source/target files**
+   ticked under Outputs -- an annotated copy of either input file with
    differing cells highlighted. **Start over** clears everything for the
-   next pair of files.
+   next pair of files. See [What you get back](#what-you-get-back) for
+   what those files contain.
 
 **The tables on screen are a preview.** Each detail section is capped
 (1,000 rows by default) so a large reconciliation does not have to ship
@@ -415,8 +418,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 158 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 35 tests
+cd backend && npm test    # vitest — engine + API, 164 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 39 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run
@@ -535,8 +538,69 @@ everything else is optional — `catalog_id` + `dataset_id`, `column_map`
 (source column → target column), `drop_unmapped`, `key_columns`,
 `case_sensitive`, `trim_whitespace`, `numeric_tolerance` (decimal
 string), `decimal_precision`, `treat_blank_as_zero`,
-`fuzzy_column_names`, `control_total_columns`, `enforced_dtypes`. An
-explicit `column_map` takes precedence over the catalogue's mapping.
+`fuzzy_column_names`, `control_total_columns`, `enforced_dtypes`, and
+`annotated_outputs` (default `true`; `false` skips the annotated files
+and the per-row bookkeeping they need). An explicit `column_map` takes
+precedence over the catalogue's mapping.
+
+---
+
+## What you get back
+
+Every run produces an **audit workbook**; the **annotated files** are
+optional and controlled by a checkbox (Outputs -> *Annotated
+source/target files*, on by default).
+
+### The audit workbook (`report.xlsx`)
+
+Always produced. Sheets for the audit header, the summary counts, any
+warnings, the column differences, the source-only / target-only / value
+difference detail, and the control totals. This is the complete result --
+it is never trimmed the way the on-screen tables are.
+
+### The annotated files
+
+Your own source or target file handed back with three columns prepended
+and differing cells highlighted:
+
+| Column | What it is |
+|---|---|
+| `_record_id` | The row's identity, derived from your key columns -- the same value on both sides for the same record, so you can VLOOKUP/XLOOKUP between the two files |
+| `_record_status` | `matched_equal`, `matched_with_differences`, `matched_with_tolerance`, `source_only` or `target_only`, colour-coded |
+| `_record_hash` | A fingerprint of the row's **entire** content, so two rows sharing a key are still distinguishable |
+
+Turning them off skips the per-row status bookkeeping the export needs --
+which is the only thing that data is used for, and on a large run it is
+one entry per distinct key, per side, held for the life of the cached
+result. The audit workbook does not depend on it. If a run was made
+without them, its annotated links are not offered and the endpoint
+refuses, rather than returning a file whose every row is marked unmatched.
+
+### How `_record_id` is calculated
+
+From the **key columns you selected**, in three cases:
+
+| Key columns | `_record_id` | Example |
+|---|---|---|
+| One | the value itself | `TXN-004` |
+| Several | pipe-joined, in the order selected | `TXN-004\|EU` |
+| None | a 12-character hash of the whole normalised row | `34737099cc37` |
+
+Three things follow from that, and they surprise people:
+
+- **It is the *normalised* value, not the raw cell.** The key goes through
+  the same normalisation the comparison uses, so a numeric-looking code
+  loses its leading zeros: `00123` becomes `123`, and `"  0456  "` becomes
+  `456`. Declaring that column as dtype **`id`** keeps the text exactly as
+  written -- `00123`, `0456` -- which matters for matching as much as for
+  the id.
+- **It is not unique per row.** Two rows sharing a key get the *same*
+  `_record_id`; that is the point of it, and it is why `_record_hash`
+  exists alongside. If your key has duplicates, only the first row per key
+  was compared at all (see [Limitations](#limitations)).
+- **With no key columns, `_record_id` and `_record_hash` are the same
+  fingerprint** at different lengths -- with no key, an exact repeat *is*
+  the same record as far as the comparison is concerned.
 
 ---
 

@@ -23,6 +23,10 @@ export interface CompareFormState {
   decimalPrecision: number | null;
   controlTotalColumns: string[];
   previewRows: number;
+  /** Produce the annotated source/target files for this run. On by
+   * default; turning it off frees the per-row status maps the run would
+   * otherwise hold for the life of the cached result. */
+  annotatedOutputs: boolean;
 }
 
 function initialState(): CompareFormState {
@@ -44,6 +48,7 @@ function initialState(): CompareFormState {
     decimalPrecision: null,
     controlTotalColumns: [],
     previewRows: 100,
+    annotatedOutputs: true,
   };
 }
 

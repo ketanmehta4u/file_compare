@@ -32,6 +32,22 @@ describe("SettingsPanelComponent", () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain("Numeric tolerance");
   });
 
+  // Annotated files are an output choice, not a matching one, so the
+  // checkbox sits in plain view rather than behind the options toggle.
+  it("offers annotated outputs on by default, in plain view", () => {
+    expect(state.value.annotatedOutputs).toBe(true);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain("Annotated source/target files");
+    expect(component.advancedOpen).toBe(false);
+  });
+
+  it("turns annotated outputs off through the shared state", () => {
+    component.setAnnotatedOutputs(false);
+    expect(state.value.annotatedOutputs).toBe(false);
+    component.setAnnotatedOutputs(true);
+    expect(state.value.annotatedOutputs).toBe(true);
+  });
+
   it("summarises the hidden options so nothing is silently in force", () => {
     expect(component.optionsSummary).toContain("case sensitive");
 

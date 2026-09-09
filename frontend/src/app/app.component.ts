@@ -168,6 +168,7 @@ export class AppComponent implements OnInit, OnDestroy {
       treat_blank_as_zero: state.treatBlankAsZero,
       fuzzy_column_names: state.fuzzyColumnNames,
       control_total_columns: state.controlTotalColumns,
+      annotated_outputs: state.annotatedOutputs,
     };
     // Only send an explicit column_map once the user has edited it away
     // from the computed default -- untouched, the server falls back to
