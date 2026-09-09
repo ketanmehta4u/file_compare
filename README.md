@@ -84,7 +84,7 @@ CLI and every dependency live inside the images.
 ### 1. Clone
 
 ```bash
-git clone https://github.com/ketanmehta4u/file_compare.git
+git clone <this repository's URL>
 cd file_compare
 ```
 
