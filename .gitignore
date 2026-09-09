@@ -6,5 +6,7 @@ backend/dist/
 .env
 coverage/
 
-# Session context for AI-assisted work -- kept locally, not published.
+# Session context and superseded drafts for AI-assisted work -- kept
+# locally, not published.
 CLAUDE.md
+prompt.md

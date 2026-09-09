@@ -10,10 +10,6 @@ was deliberate (and where the obvious alternative was rejected), the reason
 is stated, because those are the points a rebuild is most likely to get
 wrong.
 
-> Not to be confused with `prompt.md`, which is an earlier, **rejected**
-> specification proposing a client-side/Web Worker architecture that was
-> never built. If the two disagree, this file is right.
-
 ---
 
 ## 1. What to build
