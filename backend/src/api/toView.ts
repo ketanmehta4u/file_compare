@@ -184,7 +184,9 @@ export function compareToResponse(
     control_totals_tied_out: ties,
     control_totals_not_tied_out: notTies,
     source_duplicate_rows: report.duplicates.sourceDuplicateRows,
+    source_duplicate_keys: report.duplicates.sourceDuplicateKeys,
     target_duplicate_rows: report.duplicates.targetDuplicateRows,
+    target_duplicate_keys: report.duplicates.targetDuplicateKeys,
   };
 
   const audit: AuditView = {

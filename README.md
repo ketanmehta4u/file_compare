@@ -179,8 +179,8 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 153 tests
-cd ../frontend && npm test # 34 tests (opens Chrome)
+cd backend && npm test     # 158 tests
+cd ../frontend && npm test # 35 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -306,8 +306,8 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 153 tests
-cd frontend && npm test                            # karma/jasmine, 34 tests
+cd backend  && npm test                            # vitest, 158 tests
+cd frontend && npm test                            # karma/jasmine, 35 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -415,8 +415,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 153 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 34 tests
+cd backend && npm test    # vitest — engine + API, 158 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 35 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run
@@ -740,8 +740,10 @@ design otherwise avoids entirely.
 - **Duplicate keys are counted, warned about, and not fully compared.**
   When two rows share a key value, only the first participates in the
   cell-level comparison; the rest are neither matched nor reported as
-  source/target-only. The run says so in a warning, the summary shows
-  duplicate row counts per side, and the audit workbook records them. To
+  source/target-only. The run says so in a warning, the summary reports
+  both the duplicate row count and the number of duplicated key values per
+  side (2 rows across 1 key is a different problem from 2 rows across 2
+  keys), and the audit workbook records both. To
   compare every row, make the key unique (a composite key), or use the
   `_record_hash` column in the annotated download.
 

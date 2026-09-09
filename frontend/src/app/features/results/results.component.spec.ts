@@ -34,7 +34,9 @@ function result(over: Partial<CompareResultResponse> = {}): CompareResultRespons
       control_totals_tied_out: 0,
       control_totals_not_tied_out: 0,
       source_duplicate_rows: 0,
+      source_duplicate_keys: 0,
       target_duplicate_rows: 0,
+      target_duplicate_keys: 0,
     },
     column_diff: { source_only: [], target_only: [], common: [], sequence_mismatches: [], dtype_mismatches: [] },
     source_only_rows: [{ id: "a" }, { id: "b" }],
@@ -98,7 +100,13 @@ describe("ResultsComponent truncation notice", () => {
   it("shows duplicate row counts in the summary", () => {
     const el = render(
       result({
-        summary: { ...result().summary, source_duplicate_rows: 2, target_duplicate_rows: 0 },
+        summary: {
+          ...result().summary,
+          source_duplicate_rows: 2,
+          source_duplicate_keys: 1,
+          target_duplicate_rows: 0,
+          target_duplicate_keys: 0,
+        },
       })
     );
     const text = el.textContent ?? "";
@@ -112,6 +120,29 @@ describe("ResultsComponent truncation notice", () => {
     expect(sourceTile?.querySelector(".metric-value")?.classList.contains("bad")).toBe(true);
     const targetTile = tiles.find((t) => t.textContent?.includes("Target duplicate rows"));
     expect(targetTile?.querySelector(".metric-value")?.classList.contains("bad")).toBe(false);
+
+    // "2 rows across 1 key" and "2 rows across 2 keys" mean different
+    // things, so the key count is spelled out beside the row count.
+    expect(sourceTile?.textContent).toContain("across 1 key");
+    expect(sourceTile?.textContent).not.toContain("across 1 keys");
+    // Nothing to explain when there are no duplicates.
+    expect(targetTile?.textContent).not.toContain("across");
+  });
+
+  it("pluralises the key count", () => {
+    const el = render(
+      result({
+        summary: {
+          ...result().summary,
+          source_duplicate_rows: 7,
+          source_duplicate_keys: 3,
+        },
+      })
+    );
+    const tile = Array.from(el.querySelectorAll(".metric")).find((t) =>
+      t.textContent?.includes("Source duplicate rows")
+    );
+    expect(tile?.textContent).toContain("across 3 keys");
   });
 
   it("lists only the sections that were actually cut", () => {

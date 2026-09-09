@@ -34,10 +34,16 @@
     <div class="metric">
       <span class="metric-label">Source duplicate rows</span>
       <span class="metric-value" [class.bad]="result.summary.source_duplicate_rows > 0">{{ result.summary.source_duplicate_rows | number }}</span>
+      <span class="metric-note muted" *ngIf="result.summary.source_duplicate_rows > 0">
+        across {{ result.summary.source_duplicate_keys | number }} key{{ result.summary.source_duplicate_keys === 1 ? '' : 's' }}
+      </span>
     </div>
     <div class="metric">
       <span class="metric-label">Target duplicate rows</span>
       <span class="metric-value" [class.bad]="result.summary.target_duplicate_rows > 0">{{ result.summary.target_duplicate_rows | number }}</span>
+      <span class="metric-note muted" *ngIf="result.summary.target_duplicate_rows > 0">
+        across {{ result.summary.target_duplicate_keys | number }} key{{ result.summary.target_duplicate_keys === 1 ? '' : 's' }}
+      </span>
     </div>
   </div>
 

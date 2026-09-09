@@ -238,6 +238,13 @@ button:disabled {
   color: var(--wb-navy);
 }
 
+/* Second line inside a metric tile, e.g. "across 1 key" under a duplicate
+   row count -- context for a number that would otherwise be ambiguous. */
+.metric-note {
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
 .tabs {
   display: flex;
   gap: 4px;

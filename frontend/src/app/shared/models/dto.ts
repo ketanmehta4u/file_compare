@@ -163,8 +163,13 @@ export interface CompareSummary {
   cell_diffs: number;
   control_totals_tied_out: number;
   control_totals_not_tied_out: number;
+  /** Rows sharing a key with an earlier row, and how many distinct key
+   * values were duplicated. Only the first row of each duplicated key is
+   * compared, so both numbers describe what the run did not check. */
   source_duplicate_rows: number;
+  source_duplicate_keys: number;
   target_duplicate_rows: number;
+  target_duplicate_keys: number;
 }
 
 export interface SectionTruncation {
