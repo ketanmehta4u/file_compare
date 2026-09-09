@@ -4,12 +4,16 @@ export default defineConfig({
   test: {
     include: ["test/**/*.spec.ts"],
 
-    // The EXCEL_MAX_ROWS spill test builds a >1,048,576-row report and
-    // serialises it to CSV -- genuinely seconds of work, and it landed
-    // right on vitest's 5s default (observed: a 4.9s file run that timed
-    // out on a slower pass). Raised so a legitimately slow test isn't
-    // reported as a failure.
-    testTimeout: 30_000,
+    // Generous on purpose. Two kinds of test here are slow by nature: the
+    // EXCEL_MAX_ROWS spill case builds a >1,048,576-row report, and every
+    // comparison test spawns an OS worker thread that compiles the engine
+    // on startup. Both are fine alone, and both stretch badly when the
+    // machine is busy -- running this suite at the same time as the
+    // frontend's (a webpack build plus Chrome) pushed one-second tests
+    // past thirty. A timeout is a guard against a genuine hang, not an
+    // assertion about speed, so it is set well clear of the work rather
+    // than close to it; a real deadlock still fails, just later.
+    testTimeout: 120_000,
 
     // Five spec files run real comparisons, and each test in them spawns
     // an OS worker thread that saturates a core -- and under a TypeScript
