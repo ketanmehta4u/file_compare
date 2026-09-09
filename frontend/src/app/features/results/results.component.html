@@ -28,6 +28,17 @@
     <div class="metric"><span class="metric-label">Cell diffs</span><span class="metric-value">{{ result.summary.cell_diffs }}</span></div>
     <div class="metric"><span class="metric-label">Control totals tied out</span><span class="metric-value">{{ result.summary.control_totals_tied_out }}</span></div>
     <div class="metric"><span class="metric-label">Control totals NOT tied out</span><span class="metric-value">{{ result.summary.control_totals_not_tied_out }}</span></div>
+    <!-- Duplicate rows matter more than their size suggests: beyond the
+         first row per key, they are NOT compared at all. Flagged when
+         non-zero so the number is not read as routine. -->
+    <div class="metric">
+      <span class="metric-label">Source duplicate rows</span>
+      <span class="metric-value" [class.bad]="result.summary.source_duplicate_rows > 0">{{ result.summary.source_duplicate_rows | number }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Target duplicate rows</span>
+      <span class="metric-value" [class.bad]="result.summary.target_duplicate_rows > 0">{{ result.summary.target_duplicate_rows | number }}</span>
+    </div>
   </div>
 
   <details>

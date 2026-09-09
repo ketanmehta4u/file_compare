@@ -92,6 +92,28 @@ describe("ResultsComponent truncation notice", () => {
     expect(text).toContain("audit workbook");
   });
 
+  // Duplicate rows are computed by the engine and written into the audit
+  // workbook; the on-screen summary used to omit them entirely, which hid
+  // the fact that rows beyond the first per key are never compared.
+  it("shows duplicate row counts in the summary", () => {
+    const el = render(
+      result({
+        summary: { ...result().summary, source_duplicate_rows: 2, target_duplicate_rows: 0 },
+      })
+    );
+    const text = el.textContent ?? "";
+    expect(text).toContain("Source duplicate rows");
+    expect(text).toContain("Target duplicate rows");
+
+    const tiles = Array.from(el.querySelectorAll(".metric"));
+    const sourceTile = tiles.find((t) => t.textContent?.includes("Source duplicate rows"));
+    expect(sourceTile?.querySelector(".metric-value")?.textContent?.trim()).toBe("2");
+    // Non-zero duplicates are flagged; a clean zero is not.
+    expect(sourceTile?.querySelector(".metric-value")?.classList.contains("bad")).toBe(true);
+    const targetTile = tiles.find((t) => t.textContent?.includes("Target duplicate rows"));
+    expect(targetTile?.querySelector(".metric-value")?.classList.contains("bad")).toBe(false);
+  });
+
   it("lists only the sections that were actually cut", () => {
     const component = render(
       result({
