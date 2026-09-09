@@ -4,8 +4,8 @@ A walk through the system: what happens from the moment the page loads to
 the moment a reconciliation is downloaded, exactly which HTTP calls the
 Angular app makes and when, and what the backend does with each of them.
 
-For *running* the app see [README.md](README.md); for a specification of
-what it is supposed to do see [BUILD_PROMPT.md](BUILD_PROMPT.md).
+For *running* the app -- setup, configuration, limits and troubleshooting
+-- see [README.md](README.md).
 
 ---
 

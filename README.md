@@ -884,7 +884,6 @@ frontend/         Angular 14 SPA
 fixtures/         sample CSV/XLSX used by tests and manual checks
 docker-compose.yml
 ARCHITECTURE.md   how it works: workflow, API calls, internals
-BUILD_PROMPT.md   full specification of this app, written from the code
 ```
 
 The **git log is the build narrative**: each commit describes what was

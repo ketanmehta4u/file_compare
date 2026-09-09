@@ -6,7 +6,9 @@ backend/dist/
 .env
 coverage/
 
-# Session context and superseded drafts for AI-assisted work -- kept
-# locally, not published.
+# Prompts and session context for AI-assisted work: kept locally, never
+# published. The glob covers future ones too, so a new prompt file cannot
+# be committed by accident.
 CLAUDE.md
-prompt.md
+*prompt*.md
+*PROMPT*.md
