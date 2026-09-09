@@ -5,7 +5,8 @@ the moment a reconciliation is downloaded, exactly which HTTP calls the
 Angular app makes and when, and what the backend does with each of them.
 
 For *running* the app -- setup, configuration, limits and troubleshooting
--- see [README.md](README.md).
+-- see [README.md](README.md); for a specification of what it is supposed
+to do, see [BUILD_PROMPT.md](BUILD_PROMPT.md).
 
 ---
 
