@@ -84,9 +84,7 @@ export function runComparisonInWorker(
       }
       // Rebuild the kind of error the worker actually threw, so the route
       // can still tell a bad upload from an internal fault.
-      finish(() =>
-        reject(message.inputError ? new InputError(message.message) : new Error(message.message))
-      );
+      finish(() => reject(message.inputError ? new InputError(message.message) : new Error(message.message)));
     });
 
     worker.on("error", (err) => finish(() => reject(err)));
@@ -96,7 +94,9 @@ export function runComparisonInWorker(
       // anything; only treat an exit as a failure if nothing settled it.
       if (settled) return;
       settled = true;
-      reject(code === 0 ? new ComparisonCancelledError() : new Error(`Comparison worker exited with code ${code}.`));
+      reject(
+        code === 0 ? new ComparisonCancelledError() : new Error(`Comparison worker exited with code ${code}.`)
+      );
     });
 
     options.onStart?.(worker);

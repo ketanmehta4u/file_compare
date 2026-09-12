@@ -8,19 +8,38 @@ import { runComparison } from "../../src/engine/runComparison";
 import { defaultSettings } from "../../src/engine/types";
 import type { CompareReport, CompareSettings, Table } from "../../src/engine/types";
 import { buildExcelReport, EXCEL_MAX_ROWS } from "../../src/engine/report/buildExcelReport";
-import { annotateForExcel, diffCellsForAnnotated, buildAnnotatedExcel } from "../../src/engine/report/annotate";
+import {
+  annotateForExcel,
+  diffCellsForAnnotated,
+  buildAnnotatedExcel,
+} from "../../src/engine/report/annotate";
 
 const FIXTURES = join(__dirname, "../../../fixtures");
 
-async function buildSampleReport(): Promise<{ report: CompareReport; settings: CompareSettings; srcTable: Table; tgtTable: Table }> {
-  const catalog = await loadCatalog(readFileSync(join(FIXTURES, "sample_catalog.xlsx")), "sample_catalog.xlsx");
+async function buildSampleReport(): Promise<{
+  report: CompareReport;
+  settings: CompareSettings;
+  srcTable: Table;
+  tgtTable: Table;
+}> {
+  const catalog = await loadCatalog(
+    readFileSync(join(FIXTURES, "sample_catalog.xlsx")),
+    "sample_catalog.xlsx"
+  );
   const mapping = getMappingFor(catalog, "GL_MONTHLY");
   const src = loadCsv(readFileSync(join(FIXTURES, "sample_source.csv")), "sample_source.csv");
   const tgt = loadCsv(readFileSync(join(FIXTURES, "sample_target.csv")), "sample_target.csv");
   const srcMapped = applyMapping(src.table, src.meta, "source", mapping, true);
   const tgtMapped = applyMapping(tgt.table, tgt.meta, "target", mapping, true);
   const settings = defaultSettings({ keyColumns: keyCanonicalNames(mapping) });
-  const report = runComparison(srcMapped.table, srcMapped.meta, tgtMapped.table, tgtMapped.meta, settings, mapping);
+  const report = runComparison(
+    srcMapped.table,
+    srcMapped.meta,
+    tgtMapped.table,
+    tgtMapped.meta,
+    settings,
+    mapping
+  );
   return { report, settings, srcTable: srcMapped.table, tgtTable: tgtMapped.table };
 }
 

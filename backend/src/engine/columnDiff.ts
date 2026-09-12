@@ -35,8 +35,14 @@ export function compareColumns(
   const tgtKeys = new Set(tgtMap.keys());
 
   const commonCanon = [...srcKeys].filter((k) => tgtKeys.has(k)).sort();
-  const sourceOnly = [...srcKeys].filter((k) => !tgtKeys.has(k)).map((k) => srcMap.get(k)!).sort();
-  const targetOnly = [...tgtKeys].filter((k) => !srcKeys.has(k)).map((k) => tgtMap.get(k)!).sort();
+  const sourceOnly = [...srcKeys]
+    .filter((k) => !tgtKeys.has(k))
+    .map((k) => srcMap.get(k)!)
+    .sort();
+  const targetOnly = [...tgtKeys]
+    .filter((k) => !srcKeys.has(k))
+    .map((k) => tgtMap.get(k)!)
+    .sort();
 
   const srcIndex = new Map(sourceMeta.columns.map((c, i) => [c, i]));
   const tgtIndex = new Map(targetMeta.columns.map((c, i) => [c, i]));

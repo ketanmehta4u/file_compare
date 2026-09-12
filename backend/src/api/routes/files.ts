@@ -21,7 +21,8 @@ filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (
     const load: LoadOptions = {
       sheetName: typeof req.body.sheet_name === "string" ? req.body.sheet_name : undefined,
       hasHeader: req.body.has_header !== "false",
-      delimiter: typeof req.body.delimiter === "string" && req.body.delimiter ? req.body.delimiter : undefined,
+      delimiter:
+        typeof req.body.delimiter === "string" && req.body.delimiter ? req.body.delimiter : undefined,
     };
 
     // Parsed once here for the metadata the UI needs (columns, dtypes, row
@@ -55,7 +56,9 @@ filesRouter.post("/files/list-sheets", uploadRateLimit, uploadSingle("file"), as
 // Blob storage is out of scope for this port (matching the original's own
 // already-disabled state) -- these are literal 400-returning stubs, no
 // Azure SDK dependency at all.
-const BLOB_DISABLED_MSG = { detail: "Azure Storage is disabled on this server — blob input/output are not available." };
+const BLOB_DISABLED_MSG = {
+  detail: "Azure Storage is disabled on this server — blob input/output are not available.",
+};
 
 filesRouter.post("/files/from-blob", uploadRateLimit, (_req, res) => {
   res.status(400).json(BLOB_DISABLED_MSG);

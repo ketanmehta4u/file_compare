@@ -5,7 +5,13 @@ import { ConfigService } from "./core/config.service";
 import { ApiService } from "./core/api.service";
 import { CompareStateService, type CompareFormState } from "./core/compare-state.service";
 import { theme } from "./theme";
-import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView, JobProgress } from "./shared/models/dto";
+import type {
+  CompareRequest,
+  CompareResultResponse,
+  ConfigInfo,
+  FileMetaView,
+  JobProgress,
+} from "./shared/models/dto";
 
 /** Root shell -- port of the original's App.tsx. Loads the server's
  * limits, renders the branded header/footer (from theme.ts), and composes

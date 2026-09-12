@@ -5,7 +5,10 @@ import { log } from "./middleware/requestLog";
 /** An error that already knows its HTTP status -- raised by the routes
  * themselves for things like an unknown file id or a bad option. */
 export class HttpError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message);
     this.name = "HttpError";
   }
@@ -39,7 +42,7 @@ export function respondWithError(req: Request, res: Response, err: unknown): voi
     {
       ctx_request_id: req.requestId,
       ctx_path: req.originalUrl.split("?")[0],
-      err: err instanceof Error ? err.stack ?? err.message : String(err),
+      err: err instanceof Error ? (err.stack ?? err.message) : String(err),
     },
     "http.unhandled"
   );

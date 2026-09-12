@@ -26,7 +26,10 @@ export class CatalogPickerComponent {
   mappingLoading = false;
   mappingError = "";
 
-  constructor(private readonly api: ApiService, readonly state: CompareStateService) {}
+  constructor(
+    private readonly api: ApiService,
+    readonly state: CompareStateService
+  ) {}
 
   toggle(): void {
     this.open = !this.open;

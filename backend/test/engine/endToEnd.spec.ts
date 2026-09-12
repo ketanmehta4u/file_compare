@@ -38,7 +38,14 @@ describe("end-to-end: sample GL_MONTHLY reconciliation", () => {
     const tgtMapped = applyMapping(tgt.table, tgt.meta, "target", mapping, true);
 
     const settings = defaultSettings({ keyColumns: keyCanonicalNames(mapping) });
-    report = runComparison(srcMapped.table, srcMapped.meta, tgtMapped.table, tgtMapped.meta, settings, mapping);
+    report = runComparison(
+      srcMapped.table,
+      srcMapped.meta,
+      tgtMapped.table,
+      tgtMapped.meta,
+      settings,
+      mapping
+    );
   });
 
   it("matches the known-correct ground truth counts", () => {

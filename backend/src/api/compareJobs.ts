@@ -122,11 +122,7 @@ export function startCompareJob(input: CompareJobInput, ctx: JobContext): Compar
   return job;
 }
 
-async function run(
-  job: CompareJob,
-  input: CompareJobInput,
-  ctx: JobContext
-): Promise<void> {
+async function run(job: CompareJob, input: CompareJobInput, ctx: JobContext): Promise<void> {
   const queuedFrom = performance.now();
   const acquired = await acquireCompareSlot();
   if (!acquired) {
@@ -197,10 +193,7 @@ async function run(
       touch(job, { status: "cancelled", error: null });
     } else {
       touch(job, { status: "error", error: err instanceof Error ? err.message : String(err) });
-      log.warn(
-        { ctx_request_id: ctx.requestId, ctx_job: job.id, err: String(err) },
-        "compare.job_failed"
-      );
+      log.warn({ ctx_request_id: ctx.requestId, ctx_job: job.id, err: String(err) }, "compare.job_failed");
     }
   } finally {
     job.worker = null;

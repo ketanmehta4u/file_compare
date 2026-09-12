@@ -74,7 +74,14 @@ const TEMPLATE_DATASETS_HEADER = [
   "description",
 ];
 
-const TEMPLATE_COLUMNS_HEADER = ["dataset_id", "canonical_name", "source_column", "key_role", "dtype", "description"];
+const TEMPLATE_COLUMNS_HEADER = [
+  "dataset_id",
+  "canonical_name",
+  "source_column",
+  "key_role",
+  "dtype",
+  "description",
+];
 
 /** Port of comparison.py's _TEMPLATE_COLUMN_ROWS: one example row per
  * supported dtype, plus a key, so a user sees every concept before
@@ -105,7 +112,14 @@ const TEMPLATE_COLUMN_ROWS: ReadonlyArray<readonly string[]> = [
     "Currency symbols, thousands separators and (parentheses) negatives are all handled: $1,234.56 and 1234.56 are equal.",
   ],
   ["MY_DATASET", "quantity", "", "", "numeric", "Plain number — compared with exact decimal math."],
-  ["MY_DATASET", "counterparty", "", "", "text", "Free text. Case and whitespace sensitivity are comparison settings."],
+  [
+    "MY_DATASET",
+    "counterparty",
+    "",
+    "",
+    "text",
+    "Free text. Case and whitespace sensitivity are comparison settings.",
+  ],
   [
     "MY_DATASET",
     "account_code",
@@ -141,7 +155,10 @@ const TEMPLATE_HOWTO_ROWS: ReadonlyArray<readonly [string, string]> = [
     "Step 2",
     "On the 'Columns' sheet, list every column to compare (one row per column). Required: dataset_id and canonical_name. Use source_column when the source file names it differently — the target file is expected to already use the canonical name.",
   ],
-  ["Step 3", "Delete the MY_DATASET example rows, save the file, and upload it in the app under 'Dataset catalogue'."],
+  [
+    "Step 3",
+    "Delete the MY_DATASET example rows, save the file, and upload it in the app under 'Dataset catalogue'.",
+  ],
   ["", ""],
   [
     "key_role",

@@ -99,7 +99,10 @@ function prepareCompare(
     for (const [col, kind] of Object.entries(body.enforced_dtypes ?? {})) {
       const k = kind.trim().toLowerCase();
       if (k !== "id" && k !== "timestamp") {
-        throw new HttpError(400, `enforced_dtypes[${JSON.stringify(col)}] must be 'id' or 'timestamp', got ${JSON.stringify(kind)}.`);
+        throw new HttpError(
+          400,
+          `enforced_dtypes[${JSON.stringify(col)}] must be 'id' or 'timestamp', got ${JSON.stringify(kind)}.`
+        );
       }
       enforced.set(col, k);
     }
@@ -177,11 +180,14 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
 
     slotHeld = await acquireCompareSlot();
     if (!slotHeld) {
-      return res.status(503).set("Retry-After", "60").json({
-        detail:
-          `Server busy — ${compareSlotCount()} comparison(s) already running and ` +
-          "the queue did not clear in time. Please retry shortly.",
-      });
+      return res
+        .status(503)
+        .set("Retry-After", "60")
+        .json({
+          detail:
+            `Server busy — ${compareSlotCount()} comparison(s) already running and ` +
+            "the queue did not clear in time. Please retry shortly.",
+        });
     }
 
     const outcome = await runComparisonInWorker(input);
@@ -245,7 +251,10 @@ compareRouter.get("/compare/:runId/report.xlsx", downloadRateLimit, async (req, 
     const cached = getRunOr404(String(req.params.runId));
     const { buffer } = await buildExcelReport(cached.report);
     const fname = `reconciliation_${cached.report.audit.source.sha256.slice(0, 8)}_${cached.report.audit.target.sha256.slice(0, 8)}.xlsx`;
-    res.set("Content-Type", XLSX_MIME).set("Content-Disposition", `attachment; filename="${fname}"`).send(buffer);
+    res
+      .set("Content-Type", XLSX_MIME)
+      .set("Content-Disposition", `attachment; filename="${fname}"`)
+      .send(buffer);
   } catch (err) {
     respondWithError(req, res, err);
   }
@@ -284,12 +293,16 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
       : loaded.table;
 
     const annotated = annotateForExcel(table, side, cached.report, cached.report.audit.settings);
-    const base = (meta.name.includes(".") ? meta.name.slice(0, meta.name.lastIndexOf(".")) : meta.name) + "_annotated";
+    const base =
+      (meta.name.includes(".") ? meta.name.slice(0, meta.name.lastIndexOf(".")) : meta.name) + "_annotated";
 
     if (annotated.rows.length + 1 <= EXCEL_MAX_ROWS) {
       const cells = diffCellsForAnnotated(annotated, cached.report, cached.report.audit.settings);
       const buffer = await buildAnnotatedExcel(annotated, side, cells);
-      res.set("Content-Type", XLSX_MIME).set("Content-Disposition", `attachment; filename="${base}.xlsx"`).send(buffer);
+      res
+        .set("Content-Type", XLSX_MIME)
+        .set("Content-Disposition", `attachment; filename="${base}.xlsx"`)
+        .send(buffer);
       return;
     }
 
@@ -304,7 +317,8 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
     const CHUNK = 10_000;
     for (let i = 0; i < annotated.rows.length; i += CHUNK) {
       const chunk = annotated.rows.slice(i, i + CHUNK);
-      const text = chunk.map((row) => annotated.columns.map((c) => escape(row[c])).join(",")).join("\n") + "\n";
+      const text =
+        chunk.map((row) => annotated.columns.map((c) => escape(row[c])).join(",")).join("\n") + "\n";
       res.write(text);
     }
     res.end();

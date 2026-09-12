@@ -84,7 +84,10 @@ export function maxResponseRows(): number {
 
 export function corsOrigins(): string[] {
   const raw = process.env.CORS_ORIGINS ?? "http://localhost:4200";
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export function logLevel(): string {

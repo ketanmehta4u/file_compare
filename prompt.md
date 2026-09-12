@@ -38,6 +38,7 @@ Here's the prompt:
 **Build a web application to compare and reconcile two financial-reporting data files (XLSX or CSV), using Angular 14.3.x, containerized with a `node:25.8-alpine` base image.**
 
 **Version constraints (build exactly to these; note the compatibility caveat below)**
+
 - **Angular: 14.3.x** (framework + CLI).
 - **Container base image: `node:25.8-alpine`.**
 - **Compatibility warning to handle explicitly:** Angular 14 officially supports Node 14/16/18, not Node 25. The build must account for this — either pin the toolchain, use `npm install --force`/`--legacy-peer-deps` as needed, set the CLI to tolerate the Node version, or document a supported Node for local dev while keeping the runtime image on Alpine. Do not silently ignore the engine mismatch; call it out in the README and handle it in the Dockerfile.
@@ -47,6 +48,7 @@ Here's the prompt:
 A user downloads financial reporting data from a dashboard and reconciles it against a dataset they already maintain. They compare exactly two files at a time — a **Source** and a **Target** — each `.xlsx` or `.csv`. The files may differ in column names, column count, column order, and record set. The app surfaces structural differences (row count, column count, column sequence, schema), record-level differences, and reconciliation signals (signed deltas, control totals) in an audit-ready way. Correctness and traceability matter more than convenience.
 
 **Architecture**
+
 - **Angular 14.3 SPA** as the frontend UI.
 - Keep all comparison/reconciliation logic in **pure, framework-independent TypeScript services** (no Angular-component dependency in the core logic), so it's testable and reusable.
 - **Small files:** parse and compare client-side in the browser (Web Worker to keep the UI responsive).
@@ -60,36 +62,41 @@ A user downloads financial reporting data from a dashboard and reconciles it aga
 4. **Output / UX** — summary panel at top (counts, column diffs, sequence mismatches, control-total tie-out); detailed diffs in tabs/expanders with a **paginated/virtualized preview only** (never render millions of rows); export an audit-ready report (XLSX via a library such as `exceljs`/`SheetJS`, with CSV fallback for oversized results) containing: Audit Header, Summary, Column Differences, Source-Only, Target-Only, Value Differences, Control Totals.
 
 **Financial-reporting requirements**
+
 - **Never use JavaScript `number` (float) for monetary comparison** — use a decimal library (e.g., `decimal.js` / `big.js`) or integer minor-units. JS floats lose precision on financial values.
 - Numeric tolerance is **explicit and configurable**, defaulting to **exact match (zero tolerance)**; as an absolute amount (e.g., ±0.01); any tolerance-matched row is flagged, never silently equal.
 - Normalize before comparing: thousands separators, currency symbols (`$`, `€`, `₹`), stray spaces, **accounting parenthesized negatives** `(1,234.00)` → `-1234.00`; treat `-0.00` and `0.00` as equal.
 - Preserve sign and scale — `+100` vs `-100` is a material sign error, never collapsed to magnitude.
 - Report **signed delta** (Target − Source) per numeric field and a **net difference total** per numeric column.
-- **Control-total / footing check:** independently sum each numeric column in both files and report tie-out, *separately* from row-level diffs.
+- **Control-total / footing check:** independently sum each numeric column in both files and report tie-out, _separately_ from row-level diffs.
 - Classify each record: matched-and-equal, matched-with-differences, source-only, target-only.
 - Handle dates as dates (Excel serial, multiple string formats, fiscal vs. calendar), not strings.
 - **No silent rounding/coercion**; any normalization is transparent and reported. Treat blank/null vs `0.00` as **distinct** (configurable).
 - **Audit-ready + deterministic:** report header with file names, **SHA-256 hashes**, row/column counts, sheet names, timestamp, and every setting used; identical inputs+settings always yield an identical report.
 
 **Large-file handling**
+
 - Use **Web Workers** (client) so parsing/comparison never freezes the UI; stream with a library like **PapaParse** (CSV) and **SheetJS** (XLSX) in read/stream mode.
 - For very large files, route to the **Node backend**, which streams the file and does key-based/hash-join matching rather than nested loops.
 - Show progress and elapsed time; virtualize result tables (Angular CDK virtual scroll); fall back to CSV export beyond Excel's ~1,048,576-row limit.
 - Warn on large uploads; document backend upload-size limits.
 
 **Edge cases — handle all gracefully (never crash; clear message). Configurable where a default is debatable.**
-- *File/format:* empty or header-only file; no-header file; wrong extension vs. content; corrupted/password-protected XLSX; non-UTF-8 encodings (`latin-1`, `cp1252`, UTF-8 BOM) with fallback + reporting; delimiter ambiguity (comma/semicolon/tab/pipe) with auto-sniff + override; quoted fields with embedded delimiters/newlines; mixed line endings; multiple/hidden/empty sheets; identical files → "no differences".
-- *Schema:* different column counts; fully non-overlapping names; same columns different order; duplicate column names; names differing only by case/whitespace (configurable); blank/unnamed/trailing-empty columns; same name different type.
-- *Data:* zero overlap; strict subset; duplicate rows; non-unique key values (warn — breaks 1:1 match; define behavior); key missing in one file; nulls/blanks in keys/values; semantically-equal numeric formatting; date-format mismatches; blank vs `0.00`; long text/Unicode.
-- *Scale:* too large for browser memory → route to backend / cap preview; diff beyond Excel limit → CSV; long-running comparison → progress, responsive UI.
-- *User-flow:* only one file uploaded → block; settings changed → recompute, no stale results.
+
+- _File/format:_ empty or header-only file; no-header file; wrong extension vs. content; corrupted/password-protected XLSX; non-UTF-8 encodings (`latin-1`, `cp1252`, UTF-8 BOM) with fallback + reporting; delimiter ambiguity (comma/semicolon/tab/pipe) with auto-sniff + override; quoted fields with embedded delimiters/newlines; mixed line endings; multiple/hidden/empty sheets; identical files → "no differences".
+- _Schema:_ different column counts; fully non-overlapping names; same columns different order; duplicate column names; names differing only by case/whitespace (configurable); blank/unnamed/trailing-empty columns; same name different type.
+- _Data:_ zero overlap; strict subset; duplicate rows; non-unique key values (warn — breaks 1:1 match; define behavior); key missing in one file; nulls/blanks in keys/values; semantically-equal numeric formatting; date-format mismatches; blank vs `0.00`; long text/Unicode.
+- _Scale:_ too large for browser memory → route to backend / cap preview; diff beyond Excel limit → CSV; long-running comparison → progress, responsive UI.
+- _User-flow:_ only one file uploaded → block; settings changed → recompute, no stale results.
 
 **Containerization**
+
 - **Multi-stage Dockerfile:** build stage on `node:25.8-alpine` (Angular build), runtime stage serving the compiled SPA (e.g., static server or `nginx:alpine`); optional backend stage also on `node:25.8-alpine`.
 - Handle the Angular-14-vs-Node-25 engine mismatch explicitly in the build stage (documented flags/pins).
 - `.dockerignore`, non-root user, small final image.
 
 **Deliverables**
+
 - Angular 14.3 project: comparison/reconciliation **services** (pure TS + unit tests), UI components, Web Worker, file-parsing service, export service.
 - Optional Node backend service (Express/Fastify) with the comparison API.
 - `Dockerfile` (multi-stage), `docker-compose.yml` (frontend + optional backend), `.dockerignore`.

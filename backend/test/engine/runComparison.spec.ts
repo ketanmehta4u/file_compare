@@ -23,7 +23,13 @@ describe("runComparison (orchestration + verdict)", () => {
     const source: Table = { columns: ["id", "amount"], rows: [{ id: "1", amount: "100" }] };
     const target: Table = { columns: ["id", "amount"], rows: [{ id: "1", amount: "100" }] };
     const settings = defaultSettings({ keyColumns: ["id"] });
-    const report = runComparison(source, meta("s", source.columns), target, meta("t", target.columns), settings);
+    const report = runComparison(
+      source,
+      meta("s", source.columns),
+      target,
+      meta("t", target.columns),
+      settings
+    );
 
     expect(report.audit.outcome.reconciled).toBe(true);
     expect(report.audit.outcome.verdict).toBe("RECONCILED — no differences found");
@@ -34,7 +40,13 @@ describe("runComparison (orchestration + verdict)", () => {
     const source: Table = { columns: ["id", "amount"], rows: [{ id: "1", amount: "100.00" }] };
     const target: Table = { columns: ["id", "amount"], rows: [{ id: "1", amount: "100.005" }] };
     const settings = defaultSettings({ keyColumns: ["id"], numericTolerance: new Decimal("0.01") });
-    const report = runComparison(source, meta("s", source.columns), target, meta("t", target.columns), settings);
+    const report = runComparison(
+      source,
+      meta("s", source.columns),
+      target,
+      meta("t", target.columns),
+      settings
+    );
 
     expect(report.audit.outcome.reconciled).toBe(true);
     expect(report.audit.outcome.verdict).toContain("RECONCILED WITHIN TOLERANCE");
@@ -57,7 +69,13 @@ describe("runComparison (orchestration + verdict)", () => {
       ],
     };
     const settings = defaultSettings({ keyColumns: ["id"] });
-    const report = runComparison(source, meta("s", source.columns), target, meta("t", target.columns), settings);
+    const report = runComparison(
+      source,
+      meta("s", source.columns),
+      target,
+      meta("t", target.columns),
+      settings
+    );
 
     expect(report.audit.outcome.reconciled).toBe(false);
     // hard_breaks = 1 source-only + 1 target-only + 1 matched-with-differences

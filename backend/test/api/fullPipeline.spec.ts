@@ -28,7 +28,9 @@ describe("full pipeline: catalog -> files -> compare -> report", () => {
       .attach("file", join(FIXTURES, "sample_catalog.xlsx"));
     expect(catalogUpload.status).toBe(200);
     const catalogId = catalogUpload.body.catalog_id;
-    expect(catalogUpload.body.datasets.map((d: { dataset_id: string }) => d.dataset_id)).toContain("GL_MONTHLY");
+    expect(catalogUpload.body.datasets.map((d: { dataset_id: string }) => d.dataset_id)).toContain(
+      "GL_MONTHLY"
+    );
 
     const mapping = await request(app).get(`/api/catalog/${catalogId}/datasets/GL_MONTHLY/mapping`);
     expect(mapping.status).toBe(200);
@@ -45,16 +47,14 @@ describe("full pipeline: catalog -> files -> compare -> report", () => {
       .attach("file", join(FIXTURES, "sample_target.csv"));
     expect(tgtUpload.status).toBe(200);
 
-    const run = await request(app)
-      .post("/api/compare/run")
-      .send({
-        source_file_id: srcUpload.body.file_id,
-        target_file_id: tgtUpload.body.file_id,
-        catalog_id: catalogId,
-        dataset_id: "GL_MONTHLY",
-        drop_unmapped: true,
-        key_columns: mapping.body.default_key_columns,
-      });
+    const run = await request(app).post("/api/compare/run").send({
+      source_file_id: srcUpload.body.file_id,
+      target_file_id: tgtUpload.body.file_id,
+      catalog_id: catalogId,
+      dataset_id: "GL_MONTHLY",
+      drop_unmapped: true,
+      key_columns: mapping.body.default_key_columns,
+    });
     expect(run.status).toBe(200);
     expect(run.body.summary.matched_equal).toBe(9);
     expect(run.body.summary.matched_with_differences).toBe(2);
@@ -80,7 +80,9 @@ describe("full pipeline: catalog -> files -> compare -> report", () => {
   });
 
   it("returns 404 for a compare/run against an uncached file id", async () => {
-    const res = await request(app).post("/api/compare/run").send({ source_file_id: "nope", target_file_id: "nope2" });
+    const res = await request(app)
+      .post("/api/compare/run")
+      .send({ source_file_id: "nope", target_file_id: "nope2" });
     expect(res.status).toBe(404);
   });
 });

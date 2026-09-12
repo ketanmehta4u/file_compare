@@ -86,9 +86,7 @@ describe("running a comparison in a worker", () => {
   });
 
   it("applies a column mapping on the worker side", async () => {
-    const renamedTarget = Buffer.from(
-      ["ref,amount", "1,10.00", "2,22.50", "4,40.00", ""].join("\n")
-    );
+    const renamedTarget = Buffer.from(["ref,amount", "1,10.00", "2,22.50", "4,40.00", ""].join("\n"));
     // Built the way the route builds it: source column -> target column,
     // where the target's name is the canonical one.
     const mapping = mappingFromPairs(

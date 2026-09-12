@@ -24,10 +24,12 @@ describe("toDecimal", () => {
     expect(toDecimal("€1.234,56")).toBeNull();
   });
 
-  it.each([["", null], ["abc", null], ["nan", null], [null, null]])(
-    "non-numeric %s -> null",
-    (raw) => {
-      expect(toDecimal(raw)).toBeNull();
-    }
-  );
+  it.each([
+    ["", null],
+    ["abc", null],
+    ["nan", null],
+    [null, null],
+  ])("non-numeric %s -> null", (raw) => {
+    expect(toDecimal(raw)).toBeNull();
+  });
 });

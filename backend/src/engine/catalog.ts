@@ -94,7 +94,10 @@ function normaliseHeader(raw: string): string {
 async function readSheetAsRows(
   data: Buffer,
   fileName: string
-): Promise<{ datasetsRows: Array<Record<string, string>> | null; columnsRows: Array<Record<string, string>> }> {
+): Promise<{
+  datasetsRows: Array<Record<string, string>> | null;
+  columnsRows: Array<Record<string, string>>;
+}> {
   const ext = fileName.toLowerCase().split(".").pop();
 
   if (ext === "xlsx") {
@@ -134,7 +137,9 @@ async function readSheetAsRows(
   }
 
   if (ext === "xls") {
-    throw new InputError(`${fileName}: legacy .xls format is not supported in this port -- please re-save as .xlsx or .csv.`);
+    throw new InputError(
+      `${fileName}: legacy .xls format is not supported in this port -- please re-save as .xlsx or .csv.`
+    );
   }
 
   // CSV path: the file IS the Columns sheet.
@@ -294,10 +299,14 @@ export function validateColumnsAgainstMapping(
 
   const warnings: string[] = [];
   if (missing.length > 0) {
-    warnings.push(`${label} file is missing ${missing.length} column(s) the catalogue expected: ${missing.join(", ")}`);
+    warnings.push(
+      `${label} file is missing ${missing.length} column(s) the catalogue expected: ${missing.join(", ")}`
+    );
   }
   if (extra.length > 0) {
-    warnings.push(`${label} file has ${extra.length} column(s) not declared in the catalogue: ${extra.join(", ")}`);
+    warnings.push(
+      `${label} file has ${extra.length} column(s) not declared in the catalogue: ${extra.join(", ")}`
+    );
   }
   return warnings;
 }

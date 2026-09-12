@@ -45,25 +45,25 @@ correct path.
 
 ## 2. Stack (fixed)
 
-| Part | Choice |
-|---|---|
-| Frontend | Angular **14.3.0** framework packages, scaffolded with Angular CLI **14.2.13** |
-| Backend | **Express 5** + **TypeScript**, Node **25.8-alpine** in Docker |
-| Excel I/O | `exceljs` |
-| CSV | `papaparse` + `iconv-lite` |
-| Decimal math | `decimal.js` |
-| Dates | `date-fns` |
-| Uploads | `multer`, memory storage |
-| Caching | `lru-cache` |
-| Logging | `pino` |
-| Backend tests | `vitest` + `supertest` |
-| Frontend tests | Karma + Jasmine |
-| Serving | nginx `1.29-alpine` static + reverse proxy |
+| Part           | Choice                                                                         |
+| -------------- | ------------------------------------------------------------------------------ |
+| Frontend       | Angular **14.3.0** framework packages, scaffolded with Angular CLI **14.2.13** |
+| Backend        | **Express 5** + **TypeScript**, Node **25.8-alpine** in Docker                 |
+| Excel I/O      | `exceljs`                                                                      |
+| CSV            | `papaparse` + `iconv-lite`                                                     |
+| Decimal math   | `decimal.js`                                                                   |
+| Dates          | `date-fns`                                                                     |
+| Uploads        | `multer`, memory storage                                                       |
+| Caching        | `lru-cache`                                                                    |
+| Logging        | `pino`                                                                         |
+| Backend tests  | `vitest` + `supertest`                                                         |
+| Frontend tests | Karma + Jasmine                                                                |
+| Serving        | nginx `1.29-alpine` static + reverse proxy                                     |
 
 Two version traps worth knowing before you start:
 
 - **There is no `@angular/cli@14.3.0`** — the CLI line stops at 14.2.13.
-  Scaffold with the CLI at 14.2.13 and pin the *framework* packages
+  Scaffold with the CLI at 14.2.13 and pin the _framework_ packages
   (`@angular/core` and siblings) to `^14.3.0`. The CLI is a dev-time tool
   and is not shipped.
 - **Pin `@types/node` to `^16.18.0` in the frontend.** Left unpinned, npm
@@ -134,7 +134,7 @@ toggle; without a header, synthesise column names.
 
 **XLSX.** Read every cell as a string too, via a best-effort conversion
 that handles numbers, dates, booleans, rich text, hyperlinks, and formula
-cells with a cached result. Two things must be *detected and reported*,
+cells with a cached result. Two things must be _detected and reported_,
 not silently swallowed:
 
 - **Hidden rows and columns.** They are included in the comparison, and
@@ -182,7 +182,7 @@ arbitrary-precision Decimal. Never use JavaScript `number` for a monetary
 value anywhere in the pipeline.
 
 Date parsing tries an ordered format list, and **the order encodes the
-ambiguity policy**: ISO-like formats first, then day-month-year *before*
+ambiguity policy**: ISO-like formats first, then day-month-year _before_
 month-day-year, then month-name formats. `03/04/2024` is 3 April, not
 4 March. Also accept Excel serial numbers, using the `1899-12-30` epoch —
 this deliberately reproduces Excel's phantom 1900 leap day rather than
@@ -195,7 +195,7 @@ Two normalised values are equal when their kinds agree and their values
 agree, with these rules:
 
 - **Numeric**: compare as Decimals. If a `numeric_tolerance` is set, a
-  difference within it counts as *matched within tolerance* — a distinct
+  difference within it counts as _matched within tolerance_ — a distinct
   outcome from "equal", reported separately, never folded into it. If
   `decimal_precision` is set, quantise to that many places first;
   unset means exact.
@@ -250,9 +250,9 @@ target-only rows, matched-with-differences rows, and control totals that
 do not tie out:
 
 - No hard breaks and nothing within tolerance → `RECONCILED — no
-  differences found`.
+differences found`.
 - No hard breaks but some rows within tolerance → `RECONCILED WITHIN
-  TOLERANCE — N row(s) differ but stay within the numeric tolerance`.
+TOLERANCE — N row(s) differ but stay within the numeric tolerance`.
 - Otherwise → `DIFFERENCES FOUND — N break(s) require review`.
 
 Carry an **audit header** through with it: generation timestamp, both
@@ -298,23 +298,23 @@ All routes under `/api`, all JSON `snake_case`, all errors
 `{"detail": "..."}` with a meaningful status. Decimals cross the wire as
 **strings**, dates as ISO strings — never raw Decimal or Date objects.
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/health`, `/api/livez` | Liveness |
-| GET | `/api/readyz` | Readiness + cache sizes |
-| GET | `/api/auth/me` | Current user (from proxy SSO headers) |
-| GET | `/api/config` | Upload cap, Excel row cap, feature flags |
-| GET | `/api/catalog/template` | Blank catalogue template `.xlsx` |
-| POST | `/api/catalog/upload` | Upload catalogue → `catalog_id` + datasets |
-| GET | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset |
-| POST | `/api/files/upload` | Upload one file → `file_id` + metadata |
-| POST | `/api/files/list-sheets` | Sheet names in a workbook |
-| POST | `/api/compare/run` | Run a comparison synchronously → full result + `run_id` |
-| POST | `/api/compare/jobs` | Start a comparison in the background → `job_id` |
-| GET | `/api/compare/jobs/:jobId` | Live progress; the result once done |
-| DELETE | `/api/compare/jobs/:jobId` | Cancel a queued or running comparison |
-| GET | `/api/compare/:runId/report.xlsx` | Audit workbook |
-| GET | `/api/compare/:runId/annotated/:side` | Annotated source/target |
+| Method | Path                                                  | Purpose                                                 |
+| ------ | ----------------------------------------------------- | ------------------------------------------------------- |
+| GET    | `/api/health`, `/api/livez`                           | Liveness                                                |
+| GET    | `/api/readyz`                                         | Readiness + cache sizes                                 |
+| GET    | `/api/auth/me`                                        | Current user (from proxy SSO headers)                   |
+| GET    | `/api/config`                                         | Upload cap, Excel row cap, feature flags                |
+| GET    | `/api/catalog/template`                               | Blank catalogue template `.xlsx`                        |
+| POST   | `/api/catalog/upload`                                 | Upload catalogue → `catalog_id` + datasets              |
+| GET    | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset                                   |
+| POST   | `/api/files/upload`                                   | Upload one file → `file_id` + metadata                  |
+| POST   | `/api/files/list-sheets`                              | Sheet names in a workbook                               |
+| POST   | `/api/compare/run`                                    | Run a comparison synchronously → full result + `run_id` |
+| POST   | `/api/compare/jobs`                                   | Start a comparison in the background → `job_id`         |
+| GET    | `/api/compare/jobs/:jobId`                            | Live progress; the result once done                     |
+| DELETE | `/api/compare/jobs/:jobId`                            | Cancel a queued or running comparison                   |
+| GET    | `/api/compare/:runId/report.xlsx`                     | Audit workbook                                          |
+| GET    | `/api/compare/:runId/annotated/:side`                 | Annotated source/target                                 |
 
 `POST /api/compare/run` takes `source_file_id`, `target_file_id`, and
 optionally `catalog_id` + `dataset_id`, `column_map` (source column →
@@ -336,7 +336,7 @@ notices.
 
 Node has one event loop, and this engine is CPU-bound: run it inline and a
 large comparison freezes the whole server. Measured on a 150k-row pair,
-the process answered *nothing* for the entire run -- health checks
+the process answered _nothing_ for the entire run -- health checks
 included, which is enough for an orchestrator to decide the container is
 dead and restart it mid-comparison.
 
@@ -354,7 +354,7 @@ Two details that bite:
   values, and silent. Box them into a tagged marker on the way out and
   rebuild them on the way in, generically rather than field-by-field:
   Decimals occur in the settings, the value differences, the control
-  totals *and* inside normalised row keys.
+  totals _and_ inside normalised row keys.
 - **Loading a TypeScript worker.** Compiled, the worker is a sibling .js
   file. Under a TS runner (dev, tests) Node cannot load .ts in a worker by
   itself -- resolve the entry by the extension of `__filename` and pass
@@ -421,7 +421,7 @@ JSON body parsing → routes → error handler.
   permissions policy, CSP, HSTS — set only if not already present.
 - **Request logging**: a short correlation id per request and one
   structured line per response with method, path, status, duration, user,
-  and client IP. Capture the path when the request *arrives* — read it in
+  and client IP. Capture the path when the request _arrives_ — read it in
   the `finish` handler and Express will already have rewritten the URL for
   the mounted router, logging `/compare/run` instead of `/api/compare/run`.
 - **Rate limiting**: per authenticated user, else per client IP, with
@@ -437,7 +437,7 @@ JSON body parsing → routes → error handler.
   fronting proxy (`x-ms-client-principal-name`, `x-auth-request-email`,
   `x-forwarded-user`, `x-auth-username`, `remote-user`), first non-empty
   wins.
-- **`trust proxy`**: set it. Without it `req.ip` is the *proxy's* address
+- **`trust proxy`**: set it. Without it `req.ip` is the _proxy's_ address
   for every request, which collapses all per-IP rate limiting into one
   shared bucket and makes the logged client IP useless. Default to
   trusting one hop; make it configurable so a directly-exposed deployment
@@ -466,7 +466,7 @@ the process, for data usually never downloaded.
 means "50 files" whether they are 20 KB or 50 MB. Derive the budget from
 `v8.getHeapStatistics().heap_size_limit`, which follows a container's
 memory limit on its own -- and do **not** use `os.totalmem()`, which
-reports the *host's* memory inside a container (measured: 3.8 GB reported
+reports the _host's_ memory inside a container (measured: 3.8 GB reported
 in a 512 MB container, which would size the cache seven times too large).
 Let the default upload cap follow the same budget rather than promising a
 fixed size the machine cannot process, and report heap, budget and cache
@@ -495,7 +495,7 @@ A single page, no router. Components:
 - **Settings panel**: the column-mapping table (each source column → a
   target column or "ignore", each target claimable once), key-column
   checkboxes, control-total checkboxes (offering only columns numeric on
-  *both* sides), and the comparison toggles.
+  _both_ sides), and the comparison toggles.
 - **Results**: the verdict banner, summary metrics, column differences,
   paged tables of source-only/target-only rows and cell differences,
   control totals, warnings, the audit header, and download links.
@@ -530,7 +530,7 @@ correctness safeguards in the engine report themselves that way.
 Also provide an **optional single-process mode** so the app can run with
 no Docker and no nginx: a flag/env var that makes the backend serve the
 built SPA itself (static files plus a fallback to `index.html` for
-client-side routes), mounted *after* the API so it can never shadow
+client-side routes), mounted _after_ the API so it can never shadow
 `/api` — an unknown `/api/...` path must stay a 404 rather than being
 handed the HTML shell. Note that the API-wide CSP (`default-src 'none'`)
 is correct for JSON but would block the SPA's own bundles, so non-API
@@ -569,7 +569,7 @@ standard this project was built to:
 - Keep an **anchor end-to-end test**: a known pair of sample files with a
   hand-verified expected result (in this repo: 9 matched-equal, 2
   matched-with-differences, 1 source-only, 2 target-only), asserted
-  through the engine *and* over real HTTP.
+  through the engine _and_ over real HTTP.
 - Test the API surface with real requests, including the failure paths:
   oversize bodies, empty uploads, unknown file ids, bad tolerances,
   legacy `.xls`.

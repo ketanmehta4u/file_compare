@@ -81,12 +81,14 @@ describe("optional annotated outputs", () => {
   it("works the same through the job route", async () => {
     const src = await request(app).post("/api/files/upload").attach("file", SOURCE, "source.csv");
     const tgt = await request(app).post("/api/files/upload").attach("file", TARGET, "target.csv");
-    const started = await request(app).post("/api/compare/jobs").send({
-      source_file_id: src.body.file_id,
-      target_file_id: tgt.body.file_id,
-      key_columns: ["id"],
-      annotated_outputs: false,
-    });
+    const started = await request(app)
+      .post("/api/compare/jobs")
+      .send({
+        source_file_id: src.body.file_id,
+        target_file_id: tgt.body.file_id,
+        key_columns: ["id"],
+        annotated_outputs: false,
+      });
     expect(started.status).toBe(202);
 
     let view: { status: string; result: { annotated_outputs: boolean; run_id: string } | null } | undefined;

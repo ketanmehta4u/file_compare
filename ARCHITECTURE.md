@@ -4,7 +4,7 @@ A walk through the system: what happens from the moment the page loads to
 the moment a reconciliation is downloaded, exactly which HTTP calls the
 Angular app makes and when, and what the backend does with each of them.
 
-For *running* the app -- setup, configuration, limits and troubleshooting
+For _running_ the app -- setup, configuration, limits and troubleshooting
 -- see [README.md](README.md); for a specification of what it is supposed
 to do, see [BUILD_PROMPT.md](BUILD_PROMPT.md).
 
@@ -68,8 +68,8 @@ Without Docker, nginx is absent and Express serves the built SPA itself
 
 `AppComponent.ngOnInit()` fires one request, fire-and-forget:
 
-| Call | Why |
-|---|---|
+| Call              | Why                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /api/config` | The limits the UI must respect: `max_upload_bytes` (checked before uploading) and `max_response_rows` (bounds the preview-rows input). |
 
 The server also exposes `GET /api/auth/me`, but the page does not call
@@ -138,21 +138,30 @@ The component polls `GET /api/compare/jobs/{jobId}` every 400 ms
 job's status and its progress:
 
 ```json
-{ "job_id": "a36ab59d005743a8", "status": "running",
-  "progress": { "phase": "comparing", "label": "Comparing matched rows",
-                "done": 132000, "total": 150000, "percent": 55 },
-  "result": null, "detail": null }
+{
+  "job_id": "a36ab59d005743a8",
+  "status": "running",
+  "progress": {
+    "phase": "comparing",
+    "label": "Comparing matched rows",
+    "done": 132000,
+    "total": 150000,
+    "percent": 55
+  },
+  "result": null,
+  "detail": null
+}
 ```
 
 That drives the progress bar, the phase label, the row counter and the
 elapsed clock. Polling stops the moment the status becomes terminal:
 
-| Status | What the UI does |
-|---|---|
-| `queued` / `running` | Keep polling, keep updating the bar |
-| `done` | Take `result`, render it, stop polling |
-| `error` | Show `detail`, stop polling |
-| `cancelled` | Say so, stop polling |
+| Status               | What the UI does                       |
+| -------------------- | -------------------------------------- |
+| `queued` / `running` | Keep polling, keep updating the bar    |
+| `done`               | Take `result`, render it, stop polling |
+| `error`              | Show `detail`, stop polling            |
+| `cancelled`          | Say so, stop polling                   |
 
 **Cancel** issues `DELETE /api/compare/jobs/{jobId}`, which terminates the
 worker and releases its concurrency slot — it stops the work, rather than
@@ -190,18 +199,18 @@ export needs. It remains available to a direct API caller.
 Every request the SPA can make, in the order it typically makes them.
 `ApiService` is the only place in the frontend that knows any URL.
 
-| # | When | Method | Path | Sends | Gets back |
-|---|---|---|---|---|---|
-| 1 | Bootstrap | GET | `/api/config` | — | limits + capability flags |
-| 2 | Workbook picked | POST | `/api/files/list-sheets` | multipart file | `{ sheets: [...] }` |
-| 3 | "Load" clicked | POST | `/api/files/upload` | file + sheet/header/delimiter | `FileMetaView` incl. `file_id` |
-| 4 | Catalogue uploaded | POST | `/api/catalog/upload` | multipart file | `catalog_id` + datasets |
-| 5 | Dataset picked | GET | `/api/catalog/{id}/datasets/{ds}/mapping` | — | mapping + default key columns |
-| 6 | Guide link | GET | `/api/catalog/template` | — | blank catalogue `.xlsx` |
-| 7 | "Run comparison" | POST | `/api/compare/jobs` | `CompareRequest` | `202 { job_id, status }` |
-| 8 | Every 400 ms | GET | `/api/compare/jobs/{jobId}` | — | status, progress, result when done |
-| 9 | "Cancel" | DELETE | `/api/compare/jobs/{jobId}` | — | `{ cancelled }` |
-| 10 | Download link | GET | `/api/compare/{runId}/report.xlsx` | — | workbook |
+| #   | When               | Method | Path                                      | Sends                         | Gets back                          |
+| --- | ------------------ | ------ | ----------------------------------------- | ----------------------------- | ---------------------------------- |
+| 1   | Bootstrap          | GET    | `/api/config`                             | —                             | limits + capability flags          |
+| 2   | Workbook picked    | POST   | `/api/files/list-sheets`                  | multipart file                | `{ sheets: [...] }`                |
+| 3   | "Load" clicked     | POST   | `/api/files/upload`                       | file + sheet/header/delimiter | `FileMetaView` incl. `file_id`     |
+| 4   | Catalogue uploaded | POST   | `/api/catalog/upload`                     | multipart file                | `catalog_id` + datasets            |
+| 5   | Dataset picked     | GET    | `/api/catalog/{id}/datasets/{ds}/mapping` | —                             | mapping + default key columns      |
+| 6   | Guide link         | GET    | `/api/catalog/template`                   | —                             | blank catalogue `.xlsx`            |
+| 7   | "Run comparison"   | POST   | `/api/compare/jobs`                       | `CompareRequest`              | `202 { job_id, status }`           |
+| 8   | Every 400 ms       | GET    | `/api/compare/jobs/{jobId}`               | —                             | status, progress, result when done |
+| 9   | "Cancel"           | DELETE | `/api/compare/jobs/{jobId}`               | —                             | `{ cancelled }`                    |
+| 10  | Download link      | GET    | `/api/compare/{runId}/report.xlsx`        | —                             | workbook                           |
 
 Conventions across all of them:
 
@@ -225,20 +234,23 @@ mirrors the settings panel:
 ```jsonc
 {
   "source_file_id": "639cb758f4e2830e",
-  "target_file_id":  "4969c181dd5c8bcb",
+  "target_file_id": "4969c181dd5c8bcb",
 
-  "column_map":   { "txn_id": "transaction_id" },  // source col -> target col
+  "column_map": { "txn_id": "transaction_id" }, // source col -> target col
   "drop_unmapped": true,
-  "key_columns":  ["transaction_id"],              // empty = whole-row match
+  "key_columns": ["transaction_id"], // empty = whole-row match
 
-  "catalog_id": "30fc...", "dataset_id": "GL_MONTHLY",   // instead of column_map
+  "catalog_id": "30fc...",
+  "dataset_id": "GL_MONTHLY", // instead of column_map
 
-  "case_sensitive": true, "trim_whitespace": true,
-  "treat_blank_as_zero": false, "fuzzy_column_names": false,
-  "numeric_tolerance": "0.01",       // decimal string, never a float
-  "decimal_precision": 2,            // null = compare in full
+  "case_sensitive": true,
+  "trim_whitespace": true,
+  "treat_blank_as_zero": false,
+  "fuzzy_column_names": false,
+  "numeric_tolerance": "0.01", // decimal string, never a float
+  "decimal_precision": 2, // null = compare in full
   "control_total_columns": ["amount_local"],
-  "enforced_dtypes": { "gl_account": "id" }
+  "enforced_dtypes": { "gl_account": "id" },
 }
 ```
 
@@ -373,12 +385,12 @@ Two behaviours in that service are load-bearing:
 
 Nothing is written to disk, and nothing survives a restart.
 
-| Store | Holds | Keyed by | Evicted |
-|---|---|---|---|
-| `fileCache` | uploaded **bytes** + metadata + load options | content SHA-256 (first 16 hex) | by **bytes**, against a budget derived from the V8 heap limit |
-| `catalogCache` | parsed catalogue | content hash | by count (~60) |
-| `runCache` | the full report + file ids + mapping | random run id | by count (~10) |
-| job registry | status, progress, finished response | random job id | ~40 entries, 30-minute TTL |
+| Store          | Holds                                        | Keyed by                       | Evicted                                                       |
+| -------------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------------------- |
+| `fileCache`    | uploaded **bytes** + metadata + load options | content SHA-256 (first 16 hex) | by **bytes**, against a budget derived from the V8 heap limit |
+| `catalogCache` | parsed catalogue                             | content hash                   | by count (~60)                                                |
+| `runCache`     | the full report + file ids + mapping         | random run id                  | by count (~10)                                                |
+| job registry   | status, progress, finished response          | random job id                  | ~40 entries, 30-minute TTL                                    |
 
 The reason uploads are cached as bytes rather than parsed tables: a parsed
 table costs roughly 12× the file it came from, so caching parses made
@@ -405,7 +417,7 @@ Every failure reaches the user as `{ "detail": "..." }` with a status, and
 the UI renders `detail` verbatim — so the message the engine writes is the
 message the user reads.
 
-What decides the status is the *kind* of error, in one place
+What decides the status is the _kind_ of error, in one place
 (`api/errors.ts`): an `HttpError` carries its own status; an `InputError`
 — raised by the loaders and the catalogue parser for anything wrong with
 the caller's data — is a 400 with its message; anything else is a 500
@@ -414,16 +426,16 @@ with a generic message and the real one logged against the request id. An
 class does not survive the thread boundary, so a flag travels with the
 message and the error is rebuilt on the other side.
 
-| Where it fails | Status | What the user sees |
-|---|---|---|
-| File too large (header) | 413 | "Request body exceeds the server's upload limit…" |
-| File too large (actual) | 400 | multer's limit error |
-| Legacy `.xls` | 400 | "…please re-save as .xlsx or .csv" — usually caught client-side first |
-| Unknown/evicted `file_id` | 404 | "Source file not in cache — re-upload." |
-| Bad request (tolerance, dtype, duplicate mapping target) | 400 | the specific complaint |
-| No concurrency slot | 503 + `Retry-After` | "Server busy — N comparison(s) already running…" |
-| Failure inside the worker | job `status: "error"` | `detail` on the next poll |
-| Anything unhandled | 500 | "Internal server error." (the real message only in the log, against the request id) |
+| Where it fails                                           | Status                | What the user sees                                                                  |
+| -------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------- |
+| File too large (header)                                  | 413                   | "Request body exceeds the server's upload limit…"                                   |
+| File too large (actual)                                  | 400                   | multer's limit error                                                                |
+| Legacy `.xls`                                            | 400                   | "…please re-save as .xlsx or .csv" — usually caught client-side first               |
+| Unknown/evicted `file_id`                                | 404                   | "Source file not in cache — re-upload."                                             |
+| Bad request (tolerance, dtype, duplicate mapping target) | 400                   | the specific complaint                                                              |
+| No concurrency slot                                      | 503 + `Retry-After`   | "Server busy — N comparison(s) already running…"                                    |
+| Failure inside the worker                                | job `status: "error"` | `detail` on the next poll                                                           |
+| Anything unhandled                                       | 500                   | "Internal server error." (the real message only in the log, against the request id) |
 
 Not everything that goes wrong is an error, and this matters for a
 reconciliation tool: hidden Excel rows, uncalculated formulas read as

@@ -3,9 +3,10 @@ import { parseDate } from "../../src/engine/dates";
 
 function iso(d: Date | null): string | null {
   if (!d) return null;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 // Ported from tests/test_comparison.py::TestNormalise::test_parse_date.

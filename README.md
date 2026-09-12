@@ -71,12 +71,12 @@ Then open <http://localhost:8080>. Sample files to try it with are in
 
 ### What you need
 
-| | Version | Needed for |
-|---|---|---|
-| **Docker Desktop** (or Docker Engine + Compose v2) | any current release | The Docker path — this is all you need |
-| **Node.js + npm** | Node 20+ (verified on 24.14.1 and, in the container, 25.8) | Running or developing without Docker |
-| **Git** | any | Cloning |
-| **Google Chrome** | any | Frontend tests only |
+|                                                    | Version                                                    | Needed for                             |
+| -------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------- |
+| **Docker Desktop** (or Docker Engine + Compose v2) | any current release                                        | The Docker path — this is all you need |
+| **Node.js + npm**                                  | Node 20+ (verified on 24.14.1 and, in the container, 25.8) | Running or developing without Docker   |
+| **Git**                                            | any                                                        | Cloning                                |
+| **Google Chrome**                                  | any                                                        | Frontend tests only                    |
 
 The Docker path needs nothing installed but Docker — Node, the Angular
 CLI and every dependency live inside the images.
@@ -123,7 +123,7 @@ services:
 
 `docker compose up` picks that file up automatically, and the app is then
 on <http://localhost:8081>. The `!override` tag matters — without it
-Compose *appends* to the port list rather than replacing it, and the
+Compose _appends_ to the port list rather than replacing it, and the
 original `8080` binding still conflicts.
 
 ### 2b. Without Docker — one process, one command
@@ -140,8 +140,8 @@ npm start         # builds both, then serves on http://localhost:3000
 
 > **Windows PowerShell:** run these from the root as shown. The
 > `cd x && npm ...` form used elsewhere in this README is POSIX shell
-> syntax — PowerShell 5.1 rejects `&&` outright with *"The token '&&' is
-> not a valid statement separator in this version"*, and nothing runs. The
+> syntax — PowerShell 5.1 rejects `&&` outright with _"The token '&&' is
+> not a valid statement separator in this version"_, and nothing runs. The
 > root scripts above avoid the problem because npm executes its own
 > scripts through `cmd`, whatever shell you called it from. See
 > [Command reference](#command-reference) for the per-shell forms.
@@ -194,7 +194,7 @@ cd ../frontend && npm test # 43 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
-The two fixtures deliberately carry *different* column names on each
+The two fixtures deliberately carry _different_ column names on each
 side, so this maps them and keys on the transaction id — the same thing
 the UI walks you through:
 
@@ -247,15 +247,15 @@ deployment. Before putting it in front of users:
 
 ## Running the app
 
-| | Command | URL |
-|---|---|---|
-| Docker (prod shape) | `docker compose up --build` | <http://localhost:8080> |
-| **One process, one command** (from the root) | `npm start` | <http://localhost:3000> |
-| Same, without rebuilding | `npm run serve` | <http://localhost:3000> |
-| Backend only (dev) | `cd backend && npm run dev` | <http://localhost:3000> |
-| Frontend only (dev) | `cd frontend && npm start` | <http://localhost:4200> |
-| Backend production build | `cd backend && npm run build && npm start` | <http://localhost:3000> |
-| Frontend production build | `cd frontend && npm run build` | output in `frontend/dist/frontend` |
+|                                              | Command                                    | URL                                |
+| -------------------------------------------- | ------------------------------------------ | ---------------------------------- |
+| Docker (prod shape)                          | `docker compose up --build`                | <http://localhost:8080>            |
+| **One process, one command** (from the root) | `npm start`                                | <http://localhost:3000>            |
+| Same, without rebuilding                     | `npm run serve`                            | <http://localhost:3000>            |
+| Backend only (dev)                           | `cd backend && npm run dev`                | <http://localhost:3000>            |
+| Frontend only (dev)                          | `cd frontend && npm start`                 | <http://localhost:4200>            |
+| Backend production build                     | `cd backend && npm run build && npm start` | <http://localhost:3000>            |
+| Frontend production build                    | `cd frontend && npm run build`             | output in `frontend/dist/frontend` |
 
 ---
 
@@ -266,8 +266,8 @@ root, and `cd` back to the root between blocks.
 
 > **The `&&` in these blocks is POSIX shell syntax.** It works in bash,
 > zsh, Git Bash and cmd.exe. **PowerShell 5.1 does not accept it at all** --
-> `cd frontend && npm run build` fails to parse with *"The token '&&' is
-> not a valid statement separator in this version"*, so nothing runs, not
+> `cd frontend && npm run build` fails to parse with _"The token '&&' is
+> not a valid statement separator in this version"_, so nothing runs, not
 > even the first half. Two ways round it:
 >
 > ```powershell
@@ -417,14 +417,14 @@ git status --short
    the sheet; for CSV, confirm the header row and delimiter.
 2. Upload the **Target** file the same way.
 3. Check the **column mapping**. Identically-named columns are matched
-   automatically; map the rest by hand, or set them to *(ignore)*.
+   automatically; map the rest by hand, or set them to _(ignore)_.
 4. Pick **key columns** — the columns that identify a row (an invoice or
    transaction id, say). Leave empty to match on the whole row.
-5. *(Optional)* Open **Matching options** for numeric tolerance, decimal
+5. _(Optional)_ Open **Matching options** for numeric tolerance, decimal
    precision, case sensitivity, whitespace trimming and blank-as-zero.
    The defaults suit most comparisons, and the collapsed heading
    summarises whatever is in force.
-6. *(Optional)* Open **Dataset catalogue** to load a catalogue workbook,
+6. _(Optional)_ Open **Dataset catalogue** to load a catalogue workbook,
    which pre-fills the mapping, key columns and settings for a known
    dataset. Not needed to compare two files.
 7. **Run comparison.** A progress bar shows the phase and the row counts
@@ -480,20 +480,20 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 
 Backend environment variables (all optional):
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `PORT` | `3000` | Listen port. |
-| `CORS_ORIGINS` | `http://localhost:4200` | Comma-separated allowed origins. |
-| `MAX_UPLOAD_BYTES` | half the cache budget, capped at 200 MB | Per-file upload cap. Unset, it follows the machine rather than promising 200 MB a small container could never parse (a 2 GB container lands at 140 MB). Keep nginx's `client_max_body_size` at or above it. |
-| `MAX_CONCURRENT_COMPARISONS` | `3` | Comparison concurrency cap (restart to change). |
-| `COMPARE_QUEUE_TIMEOUT_S` | `120` | How long a queued comparison waits for a slot before a 503. |
-| `TRUST_PROXY` | `1` | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed. |
-| `MAX_RESPONSE_ROWS` | `1000` | Rows per detail section put in a compare response. Downloads are never capped. |
-| `MAX_CACHE_BYTES` | 25% of the V8 heap limit | Bytes of uploaded files the cache may hold. Derived from the machine, so it self-sizes on a laptop and in a container. |
-| `MEM_LIMIT` (compose) | `2g` | The backend container's memory limit. V8 sizes its heap from this, and the cache budget and upload cap follow the heap. |
-| `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging. `LOG_FORMAT=text` gives pretty-printed dev output. |
-| `SERVE_FRONTEND` | off | Serve the built SPA from this process too, for running without Docker/nginx. `1`/`true`/`yes`, or pass `--serve-frontend`. |
-| `FRONTEND_DIST` | `frontend/dist/frontend` | Where the built SPA lives, when `SERVE_FRONTEND` is on. |
+| Variable                     | Default                                 | Meaning                                                                                                                                                                                                     |
+| ---------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                       | `3000`                                  | Listen port.                                                                                                                                                                                                |
+| `CORS_ORIGINS`               | `http://localhost:4200`                 | Comma-separated allowed origins.                                                                                                                                                                            |
+| `MAX_UPLOAD_BYTES`           | half the cache budget, capped at 200 MB | Per-file upload cap. Unset, it follows the machine rather than promising 200 MB a small container could never parse (a 2 GB container lands at 140 MB). Keep nginx's `client_max_body_size` at or above it. |
+| `MAX_CONCURRENT_COMPARISONS` | `3`                                     | Comparison concurrency cap (restart to change).                                                                                                                                                             |
+| `COMPARE_QUEUE_TIMEOUT_S`    | `120`                                   | How long a queued comparison waits for a slot before a 503.                                                                                                                                                 |
+| `TRUST_PROXY`                | `1`                                     | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed.         |
+| `MAX_RESPONSE_ROWS`          | `1000`                                  | Rows per detail section put in a compare response. Downloads are never capped.                                                                                                                              |
+| `MAX_CACHE_BYTES`            | 25% of the V8 heap limit                | Bytes of uploaded files the cache may hold. Derived from the machine, so it self-sizes on a laptop and in a container.                                                                                      |
+| `MEM_LIMIT` (compose)        | `2g`                                    | The backend container's memory limit. V8 sizes its heap from this, and the cache budget and upload cap follow the heap.                                                                                     |
+| `LOG_LEVEL` / `LOG_FORMAT`   | `info` / `json`                         | Logging. `LOG_FORMAT=text` gives pretty-printed dev output.                                                                                                                                                 |
+| `SERVE_FRONTEND`             | off                                     | Serve the built SPA from this process too, for running without Docker/nginx. `1`/`true`/`yes`, or pass `--serve-frontend`.                                                                                  |
+| `FRONTEND_DIST`              | `frontend/dist/frontend`                | Where the built SPA lives, when `SERVE_FRONTEND` is on.                                                                                                                                                     |
 
 Every one of these except `PORT` (fixed by the container topology) is
 passed through in `docker-compose.yml`, so a `.env` file beside it
@@ -512,23 +512,23 @@ LOG_LEVEL=debug
 All routes are under `/api`, JSON is `snake_case`, and errors come back
 as `{"detail": "..."}`. Decimal values cross the wire as strings.
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/health`, `/api/livez` | Liveness |
-| GET | `/api/readyz` | Readiness, cache sizes, and live memory/budget figures. 503 if the comparison worker is missing from the build |
-| GET | `/api/auth/me` | Current user, from proxy SSO headers. *Not called by the UI* -- the identity is recorded in the audit report rather than displayed. |
-| GET | `/api/config` | Upload cap, Excel row cap, feature flags |
-| GET | `/api/catalog/template` | Blank catalogue template `.xlsx` |
-| POST | `/api/catalog/upload` | Upload catalogue → `catalog_id` + datasets |
-| GET | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset |
-| POST | `/api/files/upload` | Upload one file → `file_id` + metadata |
-| POST | `/api/files/list-sheets` | Sheet names in a workbook |
-| POST | `/api/compare/run` | Run a comparison synchronously → result + `run_id` |
-| POST | `/api/compare/jobs` | Start a comparison in the background → `job_id` (202) |
-| GET | `/api/compare/jobs/:jobId` | Live progress, and the result once done |
-| DELETE | `/api/compare/jobs/:jobId` | Cancel a queued or running comparison |
-| GET | `/api/compare/:runId/report.xlsx` | Audit workbook |
-| GET | `/api/compare/:runId/annotated/:side` | Annotated `source` or `target`. *Not linked from the UI*; needs a run started with `annotated_outputs: true`. |
+| Method | Path                                                  | Purpose                                                                                                                             |
+| ------ | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`, `/api/livez`                           | Liveness                                                                                                                            |
+| GET    | `/api/readyz`                                         | Readiness, cache sizes, and live memory/budget figures. 503 if the comparison worker is missing from the build                      |
+| GET    | `/api/auth/me`                                        | Current user, from proxy SSO headers. _Not called by the UI_ -- the identity is recorded in the audit report rather than displayed. |
+| GET    | `/api/config`                                         | Upload cap, Excel row cap, feature flags                                                                                            |
+| GET    | `/api/catalog/template`                               | Blank catalogue template `.xlsx`                                                                                                    |
+| POST   | `/api/catalog/upload`                                 | Upload catalogue → `catalog_id` + datasets                                                                                          |
+| GET    | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset                                                                                                               |
+| POST   | `/api/files/upload`                                   | Upload one file → `file_id` + metadata                                                                                              |
+| POST   | `/api/files/list-sheets`                              | Sheet names in a workbook                                                                                                           |
+| POST   | `/api/compare/run`                                    | Run a comparison synchronously → result + `run_id`                                                                                  |
+| POST   | `/api/compare/jobs`                                   | Start a comparison in the background → `job_id` (202)                                                                               |
+| GET    | `/api/compare/jobs/:jobId`                            | Live progress, and the result once done                                                                                             |
+| DELETE | `/api/compare/jobs/:jobId`                            | Cancel a queued or running comparison                                                                                               |
+| GET    | `/api/compare/:runId/report.xlsx`                     | Audit workbook                                                                                                                      |
+| GET    | `/api/compare/:runId/annotated/:side`                 | Annotated `source` or `target`. _Not linked from the UI_; needs a run started with `annotated_outputs: true`.                       |
 
 ### Running a comparison
 
@@ -540,10 +540,19 @@ live progress — the phase, its row counts and an overall percentage —
 and carries the finished result once `status` is `done`:
 
 ```json
-{ "job_id": "a36ab59d005743a8", "status": "running",
-  "progress": { "phase": "comparing", "label": "Comparing matched rows",
-                "done": 132000, "total": 150000, "percent": 55 },
-  "result": null, "detail": null }
+{
+  "job_id": "a36ab59d005743a8",
+  "status": "running",
+  "progress": {
+    "phase": "comparing",
+    "label": "Comparing matched rows",
+    "done": 132000,
+    "total": 150000,
+    "percent": 55
+  },
+  "result": null,
+  "detail": null
+}
 ```
 
 `DELETE` on the same URL cancels it, terminating the worker and freeing
@@ -600,11 +609,11 @@ it is never trimmed the way the on-screen tables are.
 Your own source or target file handed back with three columns prepended
 and differing cells highlighted:
 
-| Column | What it is |
-|---|---|
-| `_record_id` | The row's identity, derived from your key columns -- the same value on both sides for the same record, so you can VLOOKUP/XLOOKUP between the two files |
-| `_record_status` | `matched_equal`, `matched_with_differences`, `matched_with_tolerance`, `source_only` or `target_only`, colour-coded |
-| `_record_hash` | A fingerprint of the row's **entire** content, so two rows sharing a key are still distinguishable |
+| Column           | What it is                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_record_id`     | The row's identity, derived from your key columns -- the same value on both sides for the same record, so you can VLOOKUP/XLOOKUP between the two files |
+| `_record_status` | `matched_equal`, `matched_with_differences`, `matched_with_tolerance`, `source_only` or `target_only`, colour-coded                                     |
+| `_record_hash`   | A fingerprint of the row's **entire** content, so two rows sharing a key are still distinguishable                                                      |
 
 **The UI does not offer these.** It sends `annotated_outputs: false`, so a
 run started from the page skips the per-row status bookkeeping the export
@@ -622,26 +631,26 @@ returning a file whose every row is marked unmatched.
 
 From the **key columns you selected**, in three cases:
 
-| Key columns | `_record_id` | Example |
-|---|---|---|
-| One | the value itself | `TXN-004` |
-| Several | pipe-joined, in the order selected | `TXN-004\|EU` |
-| None | a 12-character hash of the whole normalised row | `34737099cc37` |
+| Key columns | `_record_id`                                    | Example        |
+| ----------- | ----------------------------------------------- | -------------- |
+| One         | the value itself                                | `TXN-004`      |
+| Several     | pipe-joined, in the order selected              | `TXN-004\|EU`  |
+| None        | a 12-character hash of the whole normalised row | `34737099cc37` |
 
 Three things follow from that, and they surprise people:
 
-- **It is the *normalised* value, not the raw cell.** The key goes through
+- **It is the _normalised_ value, not the raw cell.** The key goes through
   the same normalisation the comparison uses, so a numeric-looking code
   loses its leading zeros: `00123` becomes `123`, and `"  0456  "` becomes
   `456`. Declaring that column as dtype **`id`** keeps the text exactly as
   written -- `00123`, `0456` -- which matters for matching as much as for
   the id.
-- **It is not unique per row.** Two rows sharing a key get the *same*
+- **It is not unique per row.** Two rows sharing a key get the _same_
   `_record_id`; that is the point of it, and it is why `_record_hash`
   exists alongside. If your key has duplicates, only the first row per key
   was compared at all (see [Limitations](#limitations)).
 - **With no key columns, `_record_id` and `_record_hash` are the same
-  fingerprint** at different lengths -- with no key, an exact repeat *is*
+  fingerprint** at different lengths -- with no key, an exact repeat _is_
   the same record as far as the comparison is concerned.
 
 ---
@@ -689,14 +698,14 @@ follows two things: what is cached, and what a comparison is working on.
   per-row object overhead dominates. That working set exists only while
   the run is in flight, and it lives in the worker thread.
 
-A guide for a comparison of two files of size *S* each. Only the first
+A guide for a comparison of two files of size _S_ each. Only the first
 row is measured; the others scale it by parsed size:
 
-| Files (each) | Peak process memory | Give the container |
-|---|---|---|
-| ~5 MB (150k rows) | **372 MB** — measured (was 534 MB before uploads were cached as bytes) | 1 GB |
-| ~20 MB | ~700 MB — estimated | 2 GB (the default) |
-| ~50 MB | >2 GB — estimated | 4 GB, and raise `--max-old-space-size` |
+| Files (each)      | Peak process memory                                                    | Give the container                     |
+| ----------------- | ---------------------------------------------------------------------- | -------------------------------------- |
+| ~5 MB (150k rows) | **372 MB** — measured (was 534 MB before uploads were cached as bytes) | 1 GB                                   |
+| ~20 MB            | ~700 MB — estimated                                                    | 2 GB (the default)                     |
+| ~50 MB            | >2 GB — estimated                                                      | 4 GB, and raise `--max-old-space-size` |
 
 > Resident memory (RSS) overstates what is actually held: V8 does not
 > return freed heap to the OS, so a process that has parsed a large file
@@ -981,14 +990,14 @@ detail.
   applied. It is now disabled in `angular.json`'s production
   configuration, and `frontend/scripts/check-csp-safe.js` runs after every
   build and fails it if `index.html` regains an inline handler or a
-  print-deferred stylesheet. Note this only ever affected the *production*
+  print-deferred stylesheet. Note this only ever affected the _production_
   build served under the app's own CSP -- `ng serve` sets no CSP and uses
   the development configuration, so the two-terminal dev setup always
   looked right.
 - **`add_header` does not merge across nginx `location` levels.** A child
   block defining any `add_header` of its own drops every header inherited
   from the server level. The SPA's `location = /index.html` (reached by
-  the `try_files` fallback on *every* page load, not just a literal
+  the `try_files` fallback on _every_ page load, not just a literal
   `/index.html` request) sets `Cache-Control`, which silently dropped all
   five security headers from the main document while static assets kept
   theirs. They are now repeated in that block — verify with

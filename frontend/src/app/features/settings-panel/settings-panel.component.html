@@ -5,7 +5,12 @@
     <h4>Column mapping</h4>
     <button type="button" (click)="autoMatch()">Auto-match by name</button>
     <table class="simple-table">
-      <thead><tr><th>Source column</th><th>Compare against (target)</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Source column</th>
+          <th>Compare against (target)</th>
+        </tr>
+      </thead>
       <tbody>
         <tr *ngFor="let col of state.sourceFile!.columns">
           <td>{{ col }}</td>
@@ -29,13 +34,21 @@
   <div *ngIf="commonColumns.length">
     <h4>Key columns <span class="muted">(empty = compare full row)</span></h4>
     <label *ngFor="let col of commonColumns" class="checkbox-row">
-      <input type="checkbox" [checked]="state.keyColumns.includes(col)" (change)="toggleKeyColumn(col, $any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.keyColumns.includes(col)"
+        (change)="toggleKeyColumn(col, $any($event.target).checked)"
+      />
       {{ col }}
     </label>
 
     <h4>Control-total columns <span class="muted">(empty = auto, all numeric)</span></h4>
     <label *ngFor="let col of numericColumns" class="checkbox-row">
-      <input type="checkbox" [checked]="state.controlTotalColumns.includes(col)" (change)="toggleControlTotalColumn(col, $any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.controlTotalColumns.includes(col)"
+        (change)="toggleControlTotalColumn(col, $any($event.target).checked)"
+      />
       {{ col }}
     </label>
   </div>
@@ -43,40 +56,76 @@
   <!-- The defaults are right for most comparisons, so these are folded
        away rather than presented as a wall of choices. -->
   <button type="button" class="link-button" (click)="toggleAdvanced()" [attr.aria-expanded]="advancedOpen">
-    {{ advancedOpen ? 'Hide ▴' : 'Show ▾' }} Matching options
+    {{ advancedOpen ? "Hide ▴" : "Show ▾" }} Matching options
     <span class="muted" *ngIf="!advancedOpen">({{ optionsSummary }})</span>
   </button>
 
   <div *ngIf="advancedOpen">
     <label class="checkbox-row">
-      <input type="checkbox" [checked]="state.caseSensitive" (change)="setCaseSensitive($any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.caseSensitive"
+        (change)="setCaseSensitive($any($event.target).checked)"
+      />
       Case sensitive <span class="muted">— “ACME” differs from “Acme”</span>
     </label>
     <label class="checkbox-row">
-      <input type="checkbox" [checked]="state.trimWhitespace" (change)="setTrimWhitespace($any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.trimWhitespace"
+        (change)="setTrimWhitespace($any($event.target).checked)"
+      />
       Trim whitespace <span class="muted">— ignore leading and trailing spaces</span>
     </label>
     <label class="checkbox-row">
-      <input type="checkbox" [checked]="state.treatBlankAsZero" (change)="setTreatBlankAsZero($any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.treatBlankAsZero"
+        (change)="setTreatBlankAsZero($any($event.target).checked)"
+      />
       Treat blank as 0.00 <span class="muted">— an empty cell equals zero</span>
     </label>
     <label class="checkbox-row">
-      <input type="checkbox" [checked]="state.fuzzyColumnNames" (change)="setFuzzyColumnNames($any($event.target).checked)" />
+      <input
+        type="checkbox"
+        [checked]="state.fuzzyColumnNames"
+        (change)="setFuzzyColumnNames($any($event.target).checked)"
+      />
       Fuzzy column names <span class="muted">— match names differing only by case or spacing</span>
     </label>
 
     <label>
       Numeric tolerance <span class="muted">(0 = exact; e.g. 0.01 allows a penny)</span>
-      <input type="text" inputmode="decimal" [ngModel]="state.numericTolerance" (ngModelChange)="setNumericTolerance($event)" />
+      <input
+        type="text"
+        inputmode="decimal"
+        [ngModel]="state.numericTolerance"
+        (ngModelChange)="setNumericTolerance($event)"
+      />
     </label>
     <label>
       Decimal precision <span class="muted">(blank = compare in full)</span>
-      <input type="number" min="0" [ngModel]="state.decimalPrecision" (ngModelChange)="setDecimalPrecision($event === null ? '' : $event.toString())" />
+      <input
+        type="number"
+        min="0"
+        [ngModel]="state.decimalPrecision"
+        (ngModelChange)="setDecimalPrecision($event === null ? '' : $event.toString())"
+      />
     </label>
     <label>
       Rows to show per section
-      <span class="muted">(display only — downloads always contain every row<ng-container *ngIf="maxPreviewRows">, and the server sends at most {{ maxPreviewRows | number }}</ng-container>)</span>
-      <input type="number" min="10" [max]="maxPreviewRows || null" [ngModel]="state.previewRows" (ngModelChange)="setPreviewRows($event === null ? '' : $event.toString())" />
+      <span class="muted"
+        >(display only — downloads always contain every row<ng-container *ngIf="maxPreviewRows"
+          >, and the server sends at most {{ maxPreviewRows | number }}</ng-container
+        >)</span
+      >
+      <input
+        type="number"
+        min="10"
+        [max]="maxPreviewRows || null"
+        [ngModel]="state.previewRows"
+        (ngModelChange)="setPreviewRows($event === null ? '' : $event.toString())"
+      />
     </label>
   </div>
 </div>

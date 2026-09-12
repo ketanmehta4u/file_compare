@@ -67,8 +67,7 @@ function tryStrictFormats(s: string): Date | null {
  * equivalent -- flagged in the implementation plan as needing its own
  * dedicated tests.
  */
-const LENIENT_RE =
-  /^(\d{1,4})[/\-. ](\d{1,2})[/\-. ](\d{1,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
+const LENIENT_RE = /^(\d{1,4})[/\-. ](\d{1,2})[/\-. ](\d{1,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
 
 function tryLenientFallback(s: string): Date | null {
   const m = LENIENT_RE.exec(s);
@@ -102,7 +101,9 @@ function tryLenientFallback(s: string): Date | null {
   return null;
 }
 
-function normaliseInput(raw: unknown): { kind: "excel-serial"; value: number } | { kind: "string"; value: string } | null {
+function normaliseInput(
+  raw: unknown
+): { kind: "excel-serial"; value: number } | { kind: "string"; value: string } | null {
   if (raw === null || raw === undefined) return null;
   if (raw instanceof Date) return { kind: "string", value: "" }; // handled by caller before this
   if (typeof raw === "number") {

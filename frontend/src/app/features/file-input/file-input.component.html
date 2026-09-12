@@ -46,10 +46,12 @@
     Loaded {{ meta.filename }} — {{ meta.row_count }} rows × {{ meta.column_count }} columns
     <span *ngIf="meta.sheet_name">(sheet: {{ meta.sheet_name }})</span>
     <div *ngIf="meta.hidden_columns.length || meta.hidden_row_count" class="alert alert-warn">
-      Contains hidden data ({{ meta.hidden_columns.length }} column(s), {{ meta.hidden_row_count }} row(s)) — included in the comparison, not skipped.
+      Contains hidden data ({{ meta.hidden_columns.length }} column(s), {{ meta.hidden_row_count }} row(s)) —
+      included in the comparison, not skipped.
     </div>
     <div *ngIf="meta.formula_blank_count" class="alert alert-warn">
-      {{ meta.formula_blank_count }} uncalculated formula cell(s) read as blank in: {{ meta.formula_blank_columns.join(', ') }}.
+      {{ meta.formula_blank_count }} uncalculated formula cell(s) read as blank in:
+      {{ meta.formula_blank_columns.join(", ") }}.
     </div>
   </div>
 </div>

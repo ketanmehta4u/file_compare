@@ -46,10 +46,7 @@ export interface Table {
   rows: ReadonlyArray<Record<string, unknown>>;
 }
 
-export function enforcedFor(
-  settings: CompareSettings,
-  column: string
-): "id" | "timestamp" | undefined {
+export function enforcedFor(settings: CompareSettings, column: string): "id" | "timestamp" | undefined {
   return settings.enforcedDtypes.get(column);
 }
 
@@ -80,11 +77,7 @@ export interface DuplicateStats {
 }
 
 export type RowStatus =
-  | "source_only"
-  | "target_only"
-  | "matched_equal"
-  | "matched_with_differences"
-  | "matched_with_tolerance";
+  "source_only" | "target_only" | "matched_equal" | "matched_with_differences" | "matched_with_tolerance";
 
 /** Port of comparison.py's FileMeta dataclass. */
 export interface FileMeta {

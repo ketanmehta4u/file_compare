@@ -10,7 +10,9 @@ export function bodySizeGuard(req: Request, res: Response, next: NextFunction): 
   if (contentLength && /^\d+$/.test(contentLength)) {
     const cap = maxUploadBytes() + multipartSlackBytes();
     if (Number(contentLength) > cap) {
-      res.status(413).json({ detail: `Request body exceeds the server's upload limit of ${cap.toLocaleString()} bytes.` });
+      res
+        .status(413)
+        .json({ detail: `Request body exceeds the server's upload limit of ${cap.toLocaleString()} bytes.` });
       return;
     }
   }

@@ -29,7 +29,12 @@ export class SettingsPanelComponent implements OnInit, OnDestroy {
   constructor(readonly compareState: CompareStateService) {}
 
   ngOnInit(): void {
-    combineLatest([this.compareState.state$, this.compareState.commonColumns$, this.compareState.numericColumns$, this.compareState.usedTargets$])
+    combineLatest([
+      this.compareState.state$,
+      this.compareState.commonColumns$,
+      this.compareState.numericColumns$,
+      this.compareState.usedTargets$,
+    ])
       .pipe(takeUntil(this.destroyed))
       .subscribe(([state, common, numeric, used]) => {
         this.state = state;

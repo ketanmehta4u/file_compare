@@ -8,12 +8,7 @@
  */
 
 export type ProgressPhase =
-  | "indexing_source"
-  | "indexing_target"
-  | "matching"
-  | "comparing"
-  | "control_totals"
-  | "reporting";
+  "indexing_source" | "indexing_target" | "matching" | "comparing" | "control_totals" | "reporting";
 
 /** Human wording per phase, so the API and UI agree on the label. */
 export const PHASE_LABELS: Record<ProgressPhase, string> = {

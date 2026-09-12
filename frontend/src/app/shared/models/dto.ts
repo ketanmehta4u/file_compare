@@ -10,7 +10,6 @@
  * changes; field names stay snake_case to match the wire format exactly.
  */
 
-
 export interface ConfigInfo {
   blob_read_enabled: boolean;
   blob_write_enabled: boolean;
@@ -78,7 +77,6 @@ export interface FileMetaView {
   formula_blank_count: number;
   blob_url: string;
 }
-
 
 export interface ExcelSheetsResponse {
   sheets: string[];
@@ -205,7 +203,6 @@ export interface CompareResultResponse {
    * what the server will actually serve. */
   annotated_outputs: boolean;
 }
-
 
 /** Live progress for a background comparison. `percent` is null while a
  * phase has no countable total (the tail phases). */

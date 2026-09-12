@@ -48,10 +48,14 @@ describe("compareSlot concurrency gate", () => {
   it("returns 503 with Retry-After when the queue doesn't clear in time", async () => {
     // Occupy both slots with requests that outlast the 0.3s queue timeout.
     const appLong = express();
-    appLong.get("/slow", (await import("../../src/api/middleware/compareSlot")).compareSlot, async (_req, res) => {
-      await new Promise((r) => setTimeout(r, 500));
-      res.json({ ok: true });
-    });
+    appLong.get(
+      "/slow",
+      (await import("../../src/api/middleware/compareSlot")).compareSlot,
+      async (_req, res) => {
+        await new Promise((r) => setTimeout(r, 500));
+        res.json({ ok: true });
+      }
+    );
 
     // supertest's Test objects (superagent Requests) don't actually send
     // the HTTP request until awaited/.then()'d -- merely constructing them

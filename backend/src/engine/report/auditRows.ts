@@ -4,7 +4,12 @@ export type Row = readonly [string, string];
 
 function printableDelimiter(d: string | null | undefined): string {
   if (d === null || d === undefined) return "";
-  const map: Record<string, string> = { "\t": "\\t (tab)", ",": ", (comma)", ";": "; (semicolon)", "|": "| (pipe)" };
+  const map: Record<string, string> = {
+    "\t": "\\t (tab)",
+    ",": ", (comma)",
+    ";": "; (semicolon)",
+    "|": "| (pipe)",
+  };
   return map[d] ?? d;
 }
 
@@ -77,7 +82,10 @@ export function auditHeaderToRows(audit: AuditHeader): Row[] {
     ["Case sensitive", String(s.caseSensitive)],
     ["Trim whitespace", String(s.trimWhitespace)],
     ["Numeric tolerance", s.numericTolerance.toString()],
-    ["Decimal precision", s.decimalPrecision === null ? "exact (full precision)" : `${s.decimalPrecision} place(s)`],
+    [
+      "Decimal precision",
+      s.decimalPrecision === null ? "exact (full precision)" : `${s.decimalPrecision} place(s)`,
+    ],
     ["Treat blank as zero", String(s.treatBlankAsZero)],
     ["Fuzzy column names", String(s.fuzzyColumnNames)],
     ["Control-total columns", s.controlTotalColumns.join(", ") || "(auto: all numeric)"]

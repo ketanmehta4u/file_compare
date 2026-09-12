@@ -1,55 +1,76 @@
 <div class="panel">
   <button type="button" class="link-button" (click)="toggle()" [attr.aria-expanded]="open">
-    {{ open ? 'Hide ▴' : 'Show ▾' }} Dataset catalogue <span class="muted">(optional)</span>
+    {{ open ? "Hide ▴" : "Show ▾" }} Dataset catalogue <span class="muted">(optional)</span>
   </button>
   <p class="muted" *ngIf="!open && !catalog">
-    Skip this unless you have a catalogue workbook for a known dataset — two files
-    can be compared without one.
+    Skip this unless you have a catalogue workbook for a known dataset — two files can be compared without
+    one.
   </p>
   <p class="muted" *ngIf="!open && catalog">
-    Using <strong>{{ datasetId || '(no dataset selected)' }}</strong> from the uploaded catalogue.
+    Using <strong>{{ datasetId || "(no dataset selected)" }}</strong> from the uploaded catalogue.
   </p>
 
   <div *ngIf="open">
-  <p class="muted">
-    Upload a catalogue workbook to pre-fill key columns, column mapping, and comparison settings for a known dataset.
-    <a [href]="templateUrl()" target="_blank" rel="noopener">Download template</a>.
-  </p>
+    <p class="muted">
+      Upload a catalogue workbook to pre-fill key columns, column mapping, and comparison settings for a known
+      dataset.
+      <a [href]="templateUrl()" target="_blank" rel="noopener">Download template</a>.
+    </p>
 
-  <!-- .xls omitted deliberately: the catalogue loader rejects legacy OLE2
+    <!-- .xls omitted deliberately: the catalogue loader rejects legacy OLE2
        workbooks, so offering them here would only fail after the upload. -->
-  <input type="file" accept=".xlsx,.csv" aria-label="Catalogue workbook" (change)="onFileChosen($event)" [disabled]="uploading" />
-  <span *ngIf="uploading">Uploading…</span>
-  <div *ngIf="uploadError" class="alert alert-error">{{ uploadError }}</div>
+    <input
+      type="file"
+      accept=".xlsx,.csv"
+      aria-label="Catalogue workbook"
+      (change)="onFileChosen($event)"
+      [disabled]="uploading"
+    />
+    <span *ngIf="uploading">Uploading…</span>
+    <div *ngIf="uploadError" class="alert alert-error">{{ uploadError }}</div>
 
-  <div *ngIf="catalog">
-    <label>
-      Dataset
-      <select [ngModel]="datasetId" (ngModelChange)="onDatasetChange($event)">
-        <option value="">(none)</option>
-        <option *ngFor="let d of catalog.datasets" [value]="d.dataset_id">{{ d.dataset_id }} — {{ d.dataset_name }}</option>
-      </select>
-    </label>
-    <span *ngIf="mappingLoading">Loading mapping…</span>
-    <div *ngIf="mappingError" class="alert alert-error">{{ mappingError }}</div>
+    <div *ngIf="catalog">
+      <label>
+        Dataset
+        <select [ngModel]="datasetId" (ngModelChange)="onDatasetChange($event)">
+          <option value="">(none)</option>
+          <option *ngFor="let d of catalog.datasets" [value]="d.dataset_id">
+            {{ d.dataset_id }} — {{ d.dataset_name }}
+          </option>
+        </select>
+      </label>
+      <span *ngIf="mappingLoading">Loading mapping…</span>
+      <div *ngIf="mappingError" class="alert alert-error">{{ mappingError }}</div>
 
-    <label class="checkbox-row">
-      <input type="checkbox" [checked]="state.value.dropUnmapped" (change)="onDropUnmappedChange($any($event.target).checked)" />
-      Drop columns not declared in the catalogue
-    </label>
+      <label class="checkbox-row">
+        <input
+          type="checkbox"
+          [checked]="state.value.dropUnmapped"
+          (change)="onDropUnmappedChange($any($event.target).checked)"
+        />
+        Drop columns not declared in the catalogue
+      </label>
 
-    <table *ngIf="mapping" class="simple-table">
-      <thead><tr><th>Canonical</th><th>Source column</th><th>Key role</th><th>Dtype</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let e of mapping.entries">
-          <td>{{ e.canonical_name }}</td>
-          <td>{{ e.source_column || '(same name)' }}</td>
-          <td>{{ e.key_role || (e.is_key ? 'key' : '') }}</td>
-          <td>{{ e.dtype }}</td>
-          <td class="muted">{{ e.description }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table *ngIf="mapping" class="simple-table">
+        <thead>
+          <tr>
+            <th>Canonical</th>
+            <th>Source column</th>
+            <th>Key role</th>
+            <th>Dtype</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of mapping.entries">
+            <td>{{ e.canonical_name }}</td>
+            <td>{{ e.source_column || "(same name)" }}</td>
+            <td>{{ e.key_role || (e.is_key ? "key" : "") }}</td>
+            <td>{{ e.dtype }}</td>
+            <td class="muted">{{ e.description }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 </div>

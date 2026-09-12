@@ -1,6 +1,6 @@
 <div class="panel">
   <button type="button" class="link-button" (click)="toggle()">
-    {{ open ? 'Hide guide ▴' : 'Show guide ▾' }} How to use this application
+    {{ open ? "Hide guide ▴" : "Show guide ▾" }} How to use this application
   </button>
 
   <div *ngIf="open" class="howto-body">
@@ -9,22 +9,52 @@
          under the two uploads, sending readers looking for a panel that
          was no longer at the top. -->
     <ol>
-      <li>Choose your <strong>Source</strong> file (<code>.csv</code> or <code>.xlsx</code>) and click <em>Load Source</em>. Legacy <code>.xls</code> workbooks are not supported — re-save them as <code>.xlsx</code>.</li>
+      <li>
+        Choose your <strong>Source</strong> file (<code>.csv</code> or <code>.xlsx</code>) and click
+        <em>Load Source</em>. Legacy <code>.xls</code> workbooks are not supported — re-save them as
+        <code>.xlsx</code>.
+      </li>
       <li>Do the same for the <strong>Target</strong> file.</li>
-      <li>Under <strong>Comparison settings</strong>, check the column mapping, then tick the <strong>key columns</strong> that identify a row (an invoice or transaction id, say). Leave them unticked to compare whole rows.</li>
-      <li>Optionally open <strong>Matching options</strong> for numeric tolerance, case sensitivity and the rest — the defaults suit most comparisons, and the collapsed heading summarises whatever is in force.</li>
-      <li>Optionally open <strong>Dataset catalogue</strong> if you have a catalogue workbook for a known dataset; it pre-fills the mapping, key columns and settings. It is not needed to compare two files.</li>
-      <li>Click <strong>Run comparison</strong>. A progress bar reports the phase and row counts, and <em>Cancel</em> stops it.</li>
-      <li>Read the verdict and summary. The tables are a preview; download the <strong>audit workbook</strong> for the complete result.</li>
+      <li>
+        Under <strong>Comparison settings</strong>, check the column mapping, then tick the
+        <strong>key columns</strong> that identify a row (an invoice or transaction id, say). Leave them
+        unticked to compare whole rows.
+      </li>
+      <li>
+        Optionally open <strong>Matching options</strong> for numeric tolerance, case sensitivity and the rest
+        — the defaults suit most comparisons, and the collapsed heading summarises whatever is in force.
+      </li>
+      <li>
+        Optionally open <strong>Dataset catalogue</strong> if you have a catalogue workbook for a known
+        dataset; it pre-fills the mapping, key columns and settings. It is not needed to compare two files.
+      </li>
+      <li>
+        Click <strong>Run comparison</strong>. A progress bar reports the phase and row counts, and
+        <em>Cancel</em> stops it.
+      </li>
+      <li>
+        Read the verdict and summary. The tables are a preview; download the
+        <strong>audit workbook</strong> for the complete result.
+      </li>
     </ol>
-    <p *ngIf="maxUploadBytes">Per-file upload limit: {{ (maxUploadBytes / (1024 * 1024)) | number:'1.0-0' }} MB.</p>
+    <p *ngIf="maxUploadBytes">
+      Per-file upload limit: {{ maxUploadBytes / (1024 * 1024) | number: "1.0-0" }} MB.
+    </p>
 
     <h4>Supported data types (dtype)</h4>
     <table class="simple-table">
-      <thead><tr><th>Type</th><th>Meaning</th><th>Examples</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Meaning</th>
+          <th>Examples</th>
+        </tr>
+      </thead>
       <tbody>
         <tr *ngFor="let d of dtypes">
-          <td><code>{{ d.name }}</code></td>
+          <td>
+            <code>{{ d.name }}</code>
+          </td>
           <td>{{ d.meaning }}</td>
           <td class="muted">{{ d.examples }}</td>
         </tr>
@@ -33,7 +63,9 @@
 
     <h4>Good to know</h4>
     <ul>
-      <li *ngFor="let g of gotchas"><strong>{{ g.name }}:</strong> {{ g.meaning }}</li>
+      <li *ngFor="let g of gotchas">
+        <strong>{{ g.name }}:</strong> {{ g.meaning }}
+      </li>
     </ul>
   </div>
 </div>

@@ -21,12 +21,22 @@ describe("controlTotals", () => {
   });
 
   it("restricts to the selected columns when control_total_columns is set", () => {
-    const totals = controlTotals(source, target, common, defaultSettings({ controlTotalColumns: ["amount"] }));
+    const totals = controlTotals(
+      source,
+      target,
+      common,
+      defaultSettings({ controlTotalColumns: ["amount"] })
+    );
     expect(totals.map((t) => t.column)).toEqual(["amount"]);
   });
 
   it("ties out when the delta is zero", () => {
-    const totals = controlTotals(source, target, common, defaultSettings({ controlTotalColumns: ["amount"] }));
+    const totals = controlTotals(
+      source,
+      target,
+      common,
+      defaultSettings({ controlTotalColumns: ["amount"] })
+    );
     expect(totals[0].tiesOut).toBe(true);
     expect(totals[0].delta.isZero()).toBe(true);
   });

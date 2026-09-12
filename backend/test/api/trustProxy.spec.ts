@@ -36,9 +36,7 @@ describe("trust proxy", () => {
   });
 
   it("reads the client address nginx appended, not the proxy's own", async () => {
-    const r = await request(appBehindProxy())
-      .get("/api/__ip")
-      .set("X-Forwarded-For", "203.0.113.9");
+    const r = await request(appBehindProxy()).get("/api/__ip").set("X-Forwarded-For", "203.0.113.9");
     expect(r.body.ip).toBe("203.0.113.9");
   });
 
@@ -46,9 +44,7 @@ describe("trust proxy", () => {
     // A client that sends its own X-Forwarded-For gets nginx's entry
     // appended to the right of it; trusting one hop must resolve to that
     // appended (real) address, not the spoofed leftmost one.
-    const r = await request(appBehindProxy())
-      .get("/api/__ip")
-      .set("X-Forwarded-For", "1.2.3.4, 203.0.113.9");
+    const r = await request(appBehindProxy()).get("/api/__ip").set("X-Forwarded-For", "1.2.3.4, 203.0.113.9");
     expect(r.body.ip).toBe("203.0.113.9");
   });
 

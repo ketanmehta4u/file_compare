@@ -82,7 +82,15 @@ describe("AppComponent comparison progress", () => {
 
     tick(0);
     http.expectOne("/api/compare/jobs/job1").flush(
-      jobView({ progress: { phase: "comparing", label: "Comparing matched rows", done: 5000, total: 20000, percent: 72 } })
+      jobView({
+        progress: {
+          phase: "comparing",
+          label: "Comparing matched rows",
+          done: 5000,
+          total: 20000,
+          percent: 72,
+        },
+      })
     );
 
     expect(component.progress?.label).toBe("Comparing matched rows");
@@ -121,7 +129,9 @@ describe("AppComponent comparison progress", () => {
   it("surfaces a failed job's message", fakeAsync(() => {
     startRun();
     tick(0);
-    http.expectOne("/api/compare/jobs/job1").flush(jobView({ status: "error", detail: "Key column missing." }));
+    http
+      .expectOne("/api/compare/jobs/job1")
+      .flush(jobView({ status: "error", detail: "Key column missing." }));
 
     expect(component.running).toBe(false);
     expect(component.runError).toBe("Key column missing.");

@@ -55,7 +55,10 @@ export function createApp(): Express {
   if (serveFrontendEnabled()) serveFrontend(app);
 
   app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-    log.error({ ctx_request_id: req.requestId, err: err instanceof Error ? err.message : String(err) }, "http.exception");
+    log.error(
+      { ctx_request_id: req.requestId, err: err instanceof Error ? err.message : String(err) },
+      "http.exception"
+    );
     if (res.headersSent) return;
     res.status(500).json({ detail: "Internal server error." });
   });

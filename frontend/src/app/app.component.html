@@ -18,8 +18,16 @@
        catalogue sits below them, collapsed, so it stops competing with
        the primary flow for a user who just wants to compare two files. -->
   <div class="row">
-    <app-file-input label="Source" [maxUploadBytes]="config?.max_upload_bytes ?? null" (loaded)="onSourceLoaded($event)"></app-file-input>
-    <app-file-input label="Target" [maxUploadBytes]="config?.max_upload_bytes ?? null" (loaded)="onTargetLoaded($event)"></app-file-input>
+    <app-file-input
+      label="Source"
+      [maxUploadBytes]="config?.max_upload_bytes ?? null"
+      (loaded)="onSourceLoaded($event)"
+    ></app-file-input>
+    <app-file-input
+      label="Target"
+      [maxUploadBytes]="config?.max_upload_bytes ?? null"
+      (loaded)="onTargetLoaded($event)"
+    ></app-file-input>
   </div>
 
   <app-catalog-picker></app-catalog-picker>
@@ -28,11 +36,15 @@
 
   <div class="panel">
     <button type="button" (click)="run(state)" [disabled]="!canRun(state)">
-      {{ running ? 'Running…' : 'Run comparison' }}
+      {{ running ? "Running…" : "Run comparison" }}
     </button>
     <button type="button" *ngIf="running" class="link-button" (click)="cancel()">Cancel</button>
-    <button type="button" *ngIf="!running && result" class="link-button" (click)="startOver()">Start over</button>
-    <span *ngIf="!state.sourceFile || !state.targetFile" class="muted">Load both a source and target file to run a comparison.</span>
+    <button type="button" *ngIf="!running && result" class="link-button" (click)="startOver()">
+      Start over
+    </button>
+    <span *ngIf="!state.sourceFile || !state.targetFile" class="muted"
+      >Load both a source and target file to run a comparison.</span
+    >
 
     <div *ngIf="running" class="run-progress" role="status" aria-live="polite">
       <div class="progress-bar">
@@ -40,8 +52,10 @@
         <span>{{ progress?.percent ?? 0 }}%</span>
       </div>
       <p class="muted">
-        {{ progress?.label || 'Starting…' }}<ng-container *ngIf="progress && progress.total > 0">:
-          {{ progress.done | number }} / {{ progress.total | number }} rows</ng-container>
+        {{ progress?.label || "Starting…"
+        }}<ng-container *ngIf="progress && progress.total > 0"
+          >: {{ progress.done | number }} / {{ progress.total | number }} rows</ng-container
+        >
         <span *ngIf="elapsedLabel"> · {{ elapsedLabel }} elapsed</span>
       </p>
     </div>
@@ -57,6 +71,8 @@
   <p>&copy; {{ theme.orgLegalName }}</p>
   <nav>
     <span>{{ theme.footerLinksTitle }}:</span>
-    <a *ngFor="let link of theme.footerLinks" [href]="link.href" target="_blank" rel="noopener">{{ link.label }}</a>
+    <a *ngFor="let link of theme.footerLinks" [href]="link.href" target="_blank" rel="noopener">{{
+      link.label
+    }}</a>
   </nav>
 </footer>

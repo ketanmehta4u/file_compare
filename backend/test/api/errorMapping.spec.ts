@@ -72,9 +72,7 @@ describe("error mapping", () => {
       new Error("ENOENT: something internal leaked out")
     );
 
-    const r = await request(app)
-      .post("/api/files/upload")
-      .attach("file", Buffer.from("id\n1\n"), "a.csv");
+    const r = await request(app).post("/api/files/upload").attach("file", Buffer.from("id\n1\n"), "a.csv");
 
     expect(r.status).toBe(500);
     expect(r.body.detail).toBe("Internal server error.");

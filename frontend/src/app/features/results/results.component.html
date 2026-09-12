@@ -6,43 +6,88 @@
     <div *ngFor="let w of result.warnings">{{ w }}</div>
   </div>
 
-  <div *ngIf="result.audit.outcome as outcome" class="verdict-banner" [class.verdict-ok]="outcome.reconciled" [class.verdict-bad]="!outcome.reconciled">
-    <span class="verdict-badge">{{ outcome.reconciled ? '✓' : '!' }}</span>
+  <div
+    *ngIf="result.audit.outcome as outcome"
+    class="verdict-banner"
+    [class.verdict-ok]="outcome.reconciled"
+    [class.verdict-bad]="!outcome.reconciled"
+  >
+    <span class="verdict-badge">{{ outcome.reconciled ? "✓" : "!" }}</span>
     <strong>{{ outcome.verdict }}</strong>
     <div class="muted">
-      source-only: {{ outcome.source_only_rows }} · target-only: {{ outcome.target_only_rows }} ·
-      matched with differences: {{ outcome.matched_with_differences }} · cell diffs: {{ outcome.cell_differences }}
-      <span *ngIf="outcome.control_totals_not_tied_out"> · control totals NOT tied out: {{ outcome.control_totals_not_tied_out }}</span>
+      source-only: {{ outcome.source_only_rows }} · target-only: {{ outcome.target_only_rows }} · matched with
+      differences: {{ outcome.matched_with_differences }} · cell diffs: {{ outcome.cell_differences }}
+      <span *ngIf="outcome.control_totals_not_tied_out">
+        · control totals NOT tied out: {{ outcome.control_totals_not_tied_out }}</span
+      >
     </div>
   </div>
 
   <h3>Summary</h3>
   <div class="metric-grid">
-    <div class="metric"><span class="metric-label">Source rows</span><span class="metric-value">{{ result.summary.source_rows }}</span></div>
-    <div class="metric"><span class="metric-label">Target rows</span><span class="metric-value">{{ result.summary.target_rows }}</span></div>
-    <div class="metric"><span class="metric-label">Matched & equal</span><span class="metric-value">{{ result.summary.matched_equal }}</span></div>
-    <div class="metric"><span class="metric-label">Matched w/ differences</span><span class="metric-value">{{ result.summary.matched_with_differences }}</span></div>
-    <div class="metric"><span class="metric-label">Matched w/ tolerance</span><span class="metric-value">{{ result.summary.matched_with_tolerance }}</span></div>
-    <div class="metric"><span class="metric-label">Source-only rows</span><span class="metric-value">{{ result.summary.source_only_rows }}</span></div>
-    <div class="metric"><span class="metric-label">Target-only rows</span><span class="metric-value">{{ result.summary.target_only_rows }}</span></div>
-    <div class="metric"><span class="metric-label">Cell diffs</span><span class="metric-value">{{ result.summary.cell_diffs }}</span></div>
-    <div class="metric"><span class="metric-label">Control totals tied out</span><span class="metric-value">{{ result.summary.control_totals_tied_out }}</span></div>
-    <div class="metric"><span class="metric-label">Control totals NOT tied out</span><span class="metric-value">{{ result.summary.control_totals_not_tied_out }}</span></div>
+    <div class="metric">
+      <span class="metric-label">Source rows</span
+      ><span class="metric-value">{{ result.summary.source_rows }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Target rows</span
+      ><span class="metric-value">{{ result.summary.target_rows }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Matched & equal</span
+      ><span class="metric-value">{{ result.summary.matched_equal }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Matched w/ differences</span
+      ><span class="metric-value">{{ result.summary.matched_with_differences }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Matched w/ tolerance</span
+      ><span class="metric-value">{{ result.summary.matched_with_tolerance }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Source-only rows</span
+      ><span class="metric-value">{{ result.summary.source_only_rows }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Target-only rows</span
+      ><span class="metric-value">{{ result.summary.target_only_rows }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Cell diffs</span
+      ><span class="metric-value">{{ result.summary.cell_diffs }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Control totals tied out</span
+      ><span class="metric-value">{{ result.summary.control_totals_tied_out }}</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Control totals NOT tied out</span
+      ><span class="metric-value">{{ result.summary.control_totals_not_tied_out }}</span>
+    </div>
     <!-- Duplicate rows matter more than their size suggests: beyond the
          first row per key, they are NOT compared at all. Flagged when
          non-zero so the number is not read as routine. -->
     <div class="metric">
       <span class="metric-label">Source duplicate rows</span>
-      <span class="metric-value" [class.bad]="result.summary.source_duplicate_rows > 0">{{ result.summary.source_duplicate_rows | number }}</span>
+      <span class="metric-value" [class.bad]="result.summary.source_duplicate_rows > 0">{{
+        result.summary.source_duplicate_rows | number
+      }}</span>
       <span class="metric-note muted" *ngIf="result.summary.source_duplicate_rows > 0">
-        across {{ result.summary.source_duplicate_keys | number }} key{{ result.summary.source_duplicate_keys === 1 ? '' : 's' }}
+        across {{ result.summary.source_duplicate_keys | number }} key{{
+          result.summary.source_duplicate_keys === 1 ? "" : "s"
+        }}
       </span>
     </div>
     <div class="metric">
       <span class="metric-label">Target duplicate rows</span>
-      <span class="metric-value" [class.bad]="result.summary.target_duplicate_rows > 0">{{ result.summary.target_duplicate_rows | number }}</span>
+      <span class="metric-value" [class.bad]="result.summary.target_duplicate_rows > 0">{{
+        result.summary.target_duplicate_rows | number
+      }}</span>
       <span class="metric-note muted" *ngIf="result.summary.target_duplicate_rows > 0">
-        across {{ result.summary.target_duplicate_keys | number }} key{{ result.summary.target_duplicate_keys === 1 ? '' : 's' }}
+        across {{ result.summary.target_duplicate_keys | number }} key{{
+          result.summary.target_duplicate_keys === 1 ? "" : "s"
+        }}
       </span>
     </div>
   </div>
@@ -61,22 +106,92 @@
 
   <h3 id="column-diff-heading">Column differences</h3>
   <div class="tabs" role="tablist" aria-labelledby="column-diff-heading">
-    <button type="button" role="tab" [attr.aria-selected]="colTab === 'source_only'" [class.active]="colTab === 'source_only'" (click)="colTab = 'source_only'">Source-only ({{ result.column_diff.source_only.length }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="colTab === 'target_only'" [class.active]="colTab === 'target_only'" (click)="colTab = 'target_only'">Target-only ({{ result.column_diff.target_only.length }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="colTab === 'common'" [class.active]="colTab === 'common'" (click)="colTab = 'common'">Common ({{ result.column_diff.common.length }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="colTab === 'sequence'" [class.active]="colTab === 'sequence'" (click)="colTab = 'sequence'">Sequence ({{ result.column_diff.sequence_mismatches.length }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="colTab === 'dtype'" [class.active]="colTab === 'dtype'" (click)="colTab = 'dtype'">Dtype ({{ result.column_diff.dtype_mismatches.length }})</button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="colTab === 'source_only'"
+      [class.active]="colTab === 'source_only'"
+      (click)="colTab = 'source_only'"
+    >
+      Source-only ({{ result.column_diff.source_only.length }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="colTab === 'target_only'"
+      [class.active]="colTab === 'target_only'"
+      (click)="colTab = 'target_only'"
+    >
+      Target-only ({{ result.column_diff.target_only.length }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="colTab === 'common'"
+      [class.active]="colTab === 'common'"
+      (click)="colTab = 'common'"
+    >
+      Common ({{ result.column_diff.common.length }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="colTab === 'sequence'"
+      [class.active]="colTab === 'sequence'"
+      (click)="colTab = 'sequence'"
+    >
+      Sequence ({{ result.column_diff.sequence_mismatches.length }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="colTab === 'dtype'"
+      [class.active]="colTab === 'dtype'"
+      (click)="colTab = 'dtype'"
+    >
+      Dtype ({{ result.column_diff.dtype_mismatches.length }})
+    </button>
   </div>
-  <ul *ngIf="colTab === 'source_only'"><li *ngFor="let c of result.column_diff.source_only">{{ c }}</li></ul>
-  <ul *ngIf="colTab === 'target_only'"><li *ngFor="let c of result.column_diff.target_only">{{ c }}</li></ul>
-  <ul *ngIf="colTab === 'common'"><li *ngFor="let c of result.column_diff.common">{{ c }}</li></ul>
+  <ul *ngIf="colTab === 'source_only'">
+    <li *ngFor="let c of result.column_diff.source_only">{{ c }}</li>
+  </ul>
+  <ul *ngIf="colTab === 'target_only'">
+    <li *ngFor="let c of result.column_diff.target_only">{{ c }}</li>
+  </ul>
+  <ul *ngIf="colTab === 'common'">
+    <li *ngFor="let c of result.column_diff.common">{{ c }}</li>
+  </ul>
   <table *ngIf="colTab === 'sequence'" class="simple-table">
-    <thead><tr><th>Column</th><th>Source index</th><th>Target index</th></tr></thead>
-    <tbody><tr *ngFor="let m of result.column_diff.sequence_mismatches"><td>{{ m.column }}</td><td>{{ m.source_index }}</td><td>{{ m.target_index }}</td></tr></tbody>
+    <thead>
+      <tr>
+        <th>Column</th>
+        <th>Source index</th>
+        <th>Target index</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of result.column_diff.sequence_mismatches">
+        <td>{{ m.column }}</td>
+        <td>{{ m.source_index }}</td>
+        <td>{{ m.target_index }}</td>
+      </tr>
+    </tbody>
   </table>
   <table *ngIf="colTab === 'dtype'" class="simple-table">
-    <thead><tr><th>Column</th><th>Source dtype</th><th>Target dtype</th></tr></thead>
-    <tbody><tr *ngFor="let m of result.column_diff.dtype_mismatches"><td>{{ m.column }}</td><td>{{ m.source_dtype }}</td><td>{{ m.target_dtype }}</td></tr></tbody>
+    <thead>
+      <tr>
+        <th>Column</th>
+        <th>Source dtype</th>
+        <th>Target dtype</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of result.column_diff.dtype_mismatches">
+        <td>{{ m.column }}</td>
+        <td>{{ m.source_dtype }}</td>
+        <td>{{ m.target_dtype }}</td>
+      </tr>
+    </tbody>
   </table>
 
   <h3>Record differences <span class="muted">(preview — full set in the audit workbook below)</span></h3>
@@ -84,9 +199,33 @@
   <!-- Counts come from the summary, which always holds the true totals:
        the arrays themselves may be a capped preview. -->
   <div class="tabs" role="tablist" aria-label="Record differences">
-    <button type="button" role="tab" [attr.aria-selected]="rowTab === 'source_only'" [class.active]="rowTab === 'source_only'" (click)="setRowTab('source_only')">Source-only ({{ result.summary.source_only_rows | number }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="rowTab === 'target_only'" [class.active]="rowTab === 'target_only'" (click)="setRowTab('target_only')">Target-only ({{ result.summary.target_only_rows | number }})</button>
-    <button type="button" role="tab" [attr.aria-selected]="rowTab === 'value_diffs'" [class.active]="rowTab === 'value_diffs'" (click)="setRowTab('value_diffs')">Value differences ({{ result.summary.cell_diffs | number }})</button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="rowTab === 'source_only'"
+      [class.active]="rowTab === 'source_only'"
+      (click)="setRowTab('source_only')"
+    >
+      Source-only ({{ result.summary.source_only_rows | number }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="rowTab === 'target_only'"
+      [class.active]="rowTab === 'target_only'"
+      (click)="setRowTab('target_only')"
+    >
+      Target-only ({{ result.summary.target_only_rows | number }})
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="rowTab === 'value_diffs'"
+      [class.active]="rowTab === 'value_diffs'"
+      (click)="setRowTab('value_diffs')"
+    >
+      Value differences ({{ result.summary.cell_diffs | number }})
+    </button>
   </div>
 
   <div *ngIf="isTruncated" class="alert alert-warn">
@@ -98,29 +237,53 @@
     </ul>
     <p>
       Every row is in the audit workbook below — use
-      <a [href]="reportUrl()">the audit workbook</a> for the complete data.
-      Only what is drawn on this page is limited.
+      <a [href]="reportUrl()">the audit workbook</a> for the complete data. Only what is drawn on this page is
+      limited.
     </p>
   </div>
 
   <div class="table-scroll" *ngIf="rowTab === 'source_only'">
     <table class="simple-table">
-      <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
-      <tbody><tr *ngFor="let r of previewedSourceOnly; trackBy: trackByIndex"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+      <thead>
+        <tr>
+          <th *ngFor="let c of dynamicRowColumns">{{ c }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of previewedSourceOnly; trackBy: trackByIndex">
+          <td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td>
+        </tr>
+      </tbody>
     </table>
   </div>
   <div class="table-scroll" *ngIf="rowTab === 'target_only'">
     <table class="simple-table">
-      <thead><tr><th *ngFor="let c of dynamicRowColumns">{{ c }}</th></tr></thead>
-      <tbody><tr *ngFor="let r of previewedTargetOnly; trackBy: trackByIndex"><td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td></tr></tbody>
+      <thead>
+        <tr>
+          <th *ngFor="let c of dynamicRowColumns">{{ c }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of previewedTargetOnly; trackBy: trackByIndex">
+          <td *ngFor="let c of dynamicRowColumns">{{ r[c] }}</td>
+        </tr>
+      </tbody>
     </table>
   </div>
   <div class="table-scroll" *ngIf="rowTab === 'value_diffs'">
     <table class="simple-table">
       <thead>
         <tr>
-          <th *ngFor="let k of (previewedValueDiffs[0] ? keyColumnsOf(previewedValueDiffs[0]) : [])">key.{{ k }}</th>
-          <th>Source row</th><th>Target row</th><th>Column</th><th>Source value</th><th>Target value</th><th>Delta</th><th>Within tolerance</th>
+          <th *ngFor="let k of previewedValueDiffs[0] ? keyColumnsOf(previewedValueDiffs[0]) : []">
+            key.{{ k }}
+          </th>
+          <th>Source row</th>
+          <th>Target row</th>
+          <th>Column</th>
+          <th>Source value</th>
+          <th>Target value</th>
+          <th>Delta</th>
+          <th>Within tolerance</th>
         </tr>
       </thead>
       <tbody>
@@ -132,7 +295,7 @@
           <td>{{ vd.source_value }}</td>
           <td>{{ vd.target_value }}</td>
           <td>{{ vd.delta }}</td>
-          <td>{{ vd.within_tolerance ? 'yes' : 'no' }}</td>
+          <td>{{ vd.within_tolerance ? "yes" : "no" }}</td>
         </tr>
       </tbody>
     </table>
@@ -140,11 +303,22 @@
 
   <h3>Control totals</h3>
   <table *ngIf="result.control_totals.length; else noCT" class="simple-table">
-    <thead><tr><th>Column</th><th>Source total</th><th>Target total</th><th>Delta</th><th>Ties out</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Column</th>
+        <th>Source total</th>
+        <th>Target total</th>
+        <th>Delta</th>
+        <th>Ties out</th>
+      </tr>
+    </thead>
     <tbody>
       <tr *ngFor="let ct of result.control_totals">
-        <td>{{ ct.column }}</td><td>{{ ct.source_total }}</td><td>{{ ct.target_total }}</td><td>{{ ct.delta }}</td>
-        <td [class.good]="ct.ties_out" [class.bad]="!ct.ties_out">{{ ct.ties_out ? 'yes' : 'no' }}</td>
+        <td>{{ ct.column }}</td>
+        <td>{{ ct.source_total }}</td>
+        <td>{{ ct.target_total }}</td>
+        <td>{{ ct.delta }}</td>
+        <td [class.good]="ct.ties_out" [class.bad]="!ct.ties_out">{{ ct.ties_out ? "yes" : "no" }}</td>
       </tr>
     </tbody>
   </table>
@@ -152,9 +326,7 @@
 
   <h3>Download</h3>
   <p class="muted">
-    This contains the <strong>complete</strong> result — every row, however
-    many the tables above showed.
+    This contains the <strong>complete</strong> result — every row, however many the tables above showed.
   </p>
   <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
-
 </div>

@@ -34,7 +34,10 @@ function valueDiffsToRows(diffs: readonly ValueDifference[]): Array<Record<strin
 function summaryRows(report: CompareReport): Row[] {
   const cd = report.columnDiff;
   const lead: Row[] = report.audit.outcome
-    ? [["Reconciliation result", report.audit.outcome.verdict], ["", ""]]
+    ? [
+        ["Reconciliation result", report.audit.outcome.verdict],
+        ["", ""],
+      ]
     : [];
   return [
     ...lead,
@@ -64,7 +67,11 @@ function summaryRows(report: CompareReport): Row[] {
   ];
 }
 
-function addTable(ws: ExcelJS.Worksheet, columns: readonly string[], rows: ReadonlyArray<Record<string, unknown>>): void {
+function addTable(
+  ws: ExcelJS.Worksheet,
+  columns: readonly string[],
+  rows: ReadonlyArray<Record<string, unknown>>
+): void {
   ws.addRow([...columns]);
   for (const row of rows) {
     ws.addRow(columns.map((c) => (row[c] === undefined || row[c] === null ? "" : row[c])));
@@ -109,14 +116,26 @@ export async function buildExcelReport(report: CompareReport): Promise<ExcelRepo
   const extras: Record<string, string> = {};
 
   const auditWs = wb.addWorksheet("Audit Header");
-  addTable(auditWs, ["Field", "Value"], auditHeaderToRows(report.audit).map(([f, v]) => ({ Field: f, Value: v })));
+  addTable(
+    auditWs,
+    ["Field", "Value"],
+    auditHeaderToRows(report.audit).map(([f, v]) => ({ Field: f, Value: v }))
+  );
 
   const summaryWs = wb.addWorksheet("Summary");
-  addTable(summaryWs, ["Metric", "Value"], summaryRows(report).map(([m, v]) => ({ Metric: m, Value: v })));
+  addTable(
+    summaryWs,
+    ["Metric", "Value"],
+    summaryRows(report).map(([m, v]) => ({ Metric: m, Value: v }))
+  );
 
   if (report.warnings.length > 0) {
     const warnWs = wb.addWorksheet("Warnings");
-    addTable(warnWs, ["Warning"], report.warnings.map((w) => ({ Warning: w })));
+    addTable(
+      warnWs,
+      ["Warning"],
+      report.warnings.map((w) => ({ Warning: w }))
+    );
   }
 
   const cd = report.columnDiff;
@@ -151,11 +170,15 @@ export async function buildExcelReport(report: CompareReport): Promise<ExcelRepo
     if (rows.length + 1 > EXCEL_MAX_ROWS) {
       extras[csvName] = toCsv(columns, rows);
       const ws = wb.addWorksheet(sheet);
-      addTable(ws, ["Note"], [
-        {
-          Note: `Result has ${rows.length.toLocaleString()} rows which exceeds Excel's ${EXCEL_MAX_ROWS.toLocaleString()}-row limit. Full result emitted to '${csvName}'.`,
-        },
-      ]);
+      addTable(
+        ws,
+        ["Note"],
+        [
+          {
+            Note: `Result has ${rows.length.toLocaleString()} rows which exceeds Excel's ${EXCEL_MAX_ROWS.toLocaleString()}-row limit. Full result emitted to '${csvName}'.`,
+          },
+        ]
+      );
       return;
     }
     const ws = wb.addWorksheet(sheet);
@@ -166,10 +189,22 @@ export async function buildExcelReport(report: CompareReport): Promise<ExcelRepo
   };
 
   const sourceOnlyCols = report.sourceOnlyRows.length > 0 ? Object.keys(report.sourceOnlyRows[0]) : [];
-  writeOrSpill(sourceOnlyCols, report.sourceOnlyRows, "Source-Only Rows", "source_only_rows.csv", FILL_BREAK_HEX);
+  writeOrSpill(
+    sourceOnlyCols,
+    report.sourceOnlyRows,
+    "Source-Only Rows",
+    "source_only_rows.csv",
+    FILL_BREAK_HEX
+  );
 
   const targetOnlyCols = report.targetOnlyRows.length > 0 ? Object.keys(report.targetOnlyRows[0]) : [];
-  writeOrSpill(targetOnlyCols, report.targetOnlyRows, "Target-Only Rows", "target_only_rows.csv", FILL_BREAK_HEX);
+  writeOrSpill(
+    targetOnlyCols,
+    report.targetOnlyRows,
+    "Target-Only Rows",
+    "target_only_rows.csv",
+    FILL_BREAK_HEX
+  );
 
   const valueDiffRows = valueDiffsToRows(report.valueDifferences);
   const valueDiffCols =

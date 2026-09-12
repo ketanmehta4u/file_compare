@@ -1,7 +1,14 @@
 import { compareColumns } from "./columnDiff";
 import { compareRecords } from "./compareRecords";
 import { controlTotals as computeControlTotals } from "./controlTotals";
-import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, ReconciliationOutcome, Table } from "./types";
+import type {
+  ColumnMapping,
+  CompareReport,
+  CompareSettings,
+  FileMeta,
+  ReconciliationOutcome,
+  Table,
+} from "./types";
 import type { ProgressReporter } from "./progress";
 
 /** Port of comparison.py's `_file_notice_warnings`. Surfaces a file's

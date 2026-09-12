@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadCsv, decodeWithFallback, sniffDelimiter, cleanupColumnNames } from "../../src/engine/fileLoad/csv";
+import {
+  loadCsv,
+  decodeWithFallback,
+  sniffDelimiter,
+  cleanupColumnNames,
+} from "../../src/engine/fileLoad/csv";
 import { sha256Hex } from "../../src/engine/fileLoad/hash";
 
 const FIXTURES = join(__dirname, "../../../fixtures");

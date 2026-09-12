@@ -1,14 +1,7 @@
 import { normaliseCell } from "./normalise";
 import { valuesEqual } from "./equality";
 import { encodeKey } from "./rowKey";
-import type {
-  CellValue,
-  CompareSettings,
-  DuplicateStats,
-  RowStatus,
-  Table,
-  ValueDifference,
-} from "./types";
+import type { CellValue, CompareSettings, DuplicateStats, RowStatus, Table, ValueDifference } from "./types";
 import { enforcedFor } from "./types";
 import { throttleByCount, type ProgressPhase, type ProgressReporter } from "./progress";
 

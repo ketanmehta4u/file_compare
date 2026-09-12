@@ -100,7 +100,11 @@ export class CompareStateService {
     this.recomputeColumnMap();
   }
 
-  setDatasetMapping(mapping: MappingView | null, dataset: DatasetView | null, catalogId: string | null): void {
+  setDatasetMapping(
+    mapping: MappingView | null,
+    dataset: DatasetView | null,
+    catalogId: string | null
+  ): void {
     const settingsPatch: Partial<CompareFormState> = { mapping, dataset, catalogId };
     if (dataset) {
       if (dataset.case_sensitive !== null) settingsPatch.caseSensitive = dataset.case_sensitive;
@@ -144,7 +148,10 @@ export class CompareStateService {
     const common = new Set(commonColumnsOf(s));
     const keyColumns = s.keyColumns.filter((c) => common.has(c));
     const controlTotalColumns = s.controlTotalColumns.filter((c) => common.has(c));
-    if (keyColumns.length === s.keyColumns.length && controlTotalColumns.length === s.controlTotalColumns.length) {
+    if (
+      keyColumns.length === s.keyColumns.length &&
+      controlTotalColumns.length === s.controlTotalColumns.length
+    ) {
       return;
     }
     this.state.next({ ...this.state.value, keyColumns, controlTotalColumns });
@@ -164,7 +171,9 @@ export class CompareStateService {
       return;
     }
     const targetCols = new Set(targetFile.columns);
-    const bySource = new Map(mapping?.entries.map((e) => [e.source_column || e.canonical_name, e.canonical_name]) ?? []);
+    const bySource = new Map(
+      mapping?.entries.map((e) => [e.source_column || e.canonical_name, e.canonical_name]) ?? []
+    );
 
     const map: Record<string, string> = {};
     for (const col of sourceFile.columns) {

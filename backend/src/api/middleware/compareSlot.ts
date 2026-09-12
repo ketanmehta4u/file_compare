@@ -96,16 +96,24 @@ export async function compareSlot(req: Request, res: Response, next: NextFunctio
       },
       "compare.rejected_busy"
     );
-    res.status(503).set("Retry-After", "60").json({
-      detail: `Server busy — ${totalSlots} comparison(s) already running and the queue did not clear in time. Please retry shortly.`,
-    });
+    res
+      .status(503)
+      .set("Retry-After", "60")
+      .json({
+        detail: `Server busy — ${totalSlots} comparison(s) already running and the queue did not clear in time. Please retry shortly.`,
+      });
     return;
   }
 
   const queuedMs = Math.round(performance.now() - waitedFrom);
   if (queuedMs > 0) {
     log.info(
-      { ctx_request_id: req.requestId, ctx_user: currentUser(req), ctx_queued_ms: queuedMs, ctx_slots: totalSlots },
+      {
+        ctx_request_id: req.requestId,
+        ctx_user: currentUser(req),
+        ctx_queued_ms: queuedMs,
+        ctx_slots: totalSlots,
+      },
       "compare.slot_acquired"
     );
   }

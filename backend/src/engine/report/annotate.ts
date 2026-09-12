@@ -25,7 +25,12 @@ const FILL_CELL_DIFF_HEX = "FFC000";
  * hashes against each other, so only internal determinism matters, not
  * byte-for-byte parity with the original's hash algorithm.
  */
-export function recordIdForRow(row: Record<string, unknown>, keyColumns: readonly string[], settings: CompareSettings, allColumns: readonly string[]): string {
+export function recordIdForRow(
+  row: Record<string, unknown>,
+  keyColumns: readonly string[],
+  settings: CompareSettings,
+  allColumns: readonly string[]
+): string {
   if (keyColumns.length === 0) {
     const key = computeRowKey(row, [], settings, allColumns);
     return createHash("sha256").update(encodeKey(key)).digest("hex").slice(0, 12);
@@ -42,7 +47,11 @@ export function recordIdForRow(row: Record<string, unknown>, keyColumns: readonl
 /** Port of comparison.py's `_record_content_hash`: a content fingerprint
  * over EVERY column (not just the key), so identical rows share a hash
  * regardless of whether a key column uniquely identifies them. */
-export function recordContentHash(row: Record<string, unknown>, settings: CompareSettings, allColumns: readonly string[]): string {
+export function recordContentHash(
+  row: Record<string, unknown>,
+  settings: CompareSettings,
+  allColumns: readonly string[]
+): string {
   const key = computeRowKey(row, [], settings, allColumns);
   return createHash("sha256").update(encodeKey(key)).digest("hex").slice(0, 16);
 }
@@ -155,7 +164,11 @@ export async function buildAnnotatedExcel(
     });
   }
 
-  const highlightFill: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: `FF${FILL_CELL_DIFF_HEX}` } };
+  const highlightFill: ExcelJS.Fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: `FF${FILL_CELL_DIFF_HEX}` },
+  };
   for (const [rowIdx, colIdx] of highlightCells) {
     ws.getRow(rowIdx + 2).getCell(colIdx + 1).fill = highlightFill;
   }

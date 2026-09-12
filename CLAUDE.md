@@ -29,7 +29,7 @@ Follow-up answers that shaped the actual scope (asked via clarifying
 questions before implementation started):
 
 - **Angular CLI has no 14.3.0 release** (it stops at 14.2.13) — resolved
-  by scaffolding with CLI 14.2.13 and pinning the *framework* packages
+  by scaffolding with CLI 14.2.13 and pinning the _framework_ packages
   (`@angular/core` etc.) to `^14.3.0`. The CLI is a dev-time tool only,
   not shipped in the app.
 - **Comparison engine**: user explicitly chose a **full TypeScript
@@ -59,13 +59,13 @@ questions before implementation started):
 Every phase of the build is done, committed, and — critically — actually
 **verified**, not just written:
 
-| Phase | Status | How it was verified |
-|---|---|---|
-| Repo scaffold, build spike | ✅ | `ng build` succeeded under the real `node:25.8-alpine` image |
-| Engine (`backend/src/engine/`) | ✅ | The anchor end-to-end test reproduces the original's exact ground truth (9 matched-equal, 2 matched-with-differences, 1 source-only row = `TXN-012`, 2 target-only) against the real sample fixtures |
-| Express API (`backend/src/api/`) | ✅ | Full pipeline smoke test over real HTTP — same 9/2/1/2 result through the API, not just the engine directly |
-| Angular frontend (`frontend/src/app/`) | ✅ | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified |
-| Docker (`docker-compose.yml`) | ✅ | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express |
+| Phase                                  | Status | How it was verified                                                                                                                                                                                  |
+| -------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo scaffold, build spike             | ✅     | `ng build` succeeded under the real `node:25.8-alpine` image                                                                                                                                         |
+| Engine (`backend/src/engine/`)         | ✅     | The anchor end-to-end test reproduces the original's exact ground truth (9 matched-equal, 2 matched-with-differences, 1 source-only row = `TXN-012`, 2 target-only) against the real sample fixtures |
+| Express API (`backend/src/api/`)       | ✅     | Full pipeline smoke test over real HTTP — same 9/2/1/2 result through the API, not just the engine directly                                                                                          |
+| Angular frontend (`frontend/src/app/`) | ✅     | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified                                                       |
+| Docker (`docker-compose.yml`)          | ✅     | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express                                                              |
 
 **153 backend tests (vitest), 33 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
@@ -107,7 +107,7 @@ started as background jobs (`POST /api/compare/jobs`) that report live
 per-phase row counts, with cancellation. This began as a feature request
 ("can we show how many rows have been compared in real time?") but the
 blocker was the measured one above: run inline, a 150k-row comparison
-answered *no* HTTP request for its entire 112s -- so no progress endpoint
+answered _no_ HTTP request for its entire 112s -- so no progress endpoint
 could have replied. The synchronous `/api/compare/run` route keeps its
 contract and now also runs in the worker.
 
@@ -122,7 +122,7 @@ default upload cap follows it (a 2 GB container advertises 140 MB rather
 than a 200 MB it could not parse). `GET /api/readyz` reports heap, budget
 and occupancy.
 
-Two traps worth remembering here: `os.totalmem()` reports the *host's*
+Two traps worth remembering here: `os.totalmem()` reports the _host's_
 memory inside a container and must not be used for sizing, and the
 worker's transfer encoder has to pass binary through untouched -- it once
 walked Buffers generically into `{0: 105, 1: 100, ...}`, corrupting every
@@ -187,7 +187,7 @@ override anything in this file or the git log.
 ## If the user asks you to "continue" or references earlier conversation
 
 The full prior conversation (including the multi-user-hardening work
-done on the *original* Python app before this Angular/Node project even
+done on the _original_ Python app before this Angular/Node project even
 started, and the entire build described above) is preserved as a raw
 Claude Code session transcript, copied into this project's session
 storage. Depending on how the harness discovers sessions for `/resume`

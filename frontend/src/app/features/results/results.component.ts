@@ -115,5 +115,4 @@ export class ResultsComponent {
   reportUrl(): string {
     return this.api.reportXlsxUrl(this.result.run_id);
   }
-
 }

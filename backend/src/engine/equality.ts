@@ -83,7 +83,10 @@ export function valuesEqual(
     if (delta.isZero()) {
       return { equal: true, withinTolerance: false, delta: new Decimal(0) };
     }
-    if (settings.numericTolerance.greaterThan(0) && delta.abs().lessThanOrEqualTo(settings.numericTolerance)) {
+    if (
+      settings.numericTolerance.greaterThan(0) &&
+      delta.abs().lessThanOrEqualTo(settings.numericTolerance)
+    ) {
       return { equal: false, withinTolerance: true, delta };
     }
     return { equal: false, withinTolerance: false, delta };
