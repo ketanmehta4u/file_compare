@@ -4,6 +4,7 @@ import { inferColumnDtype } from "./fileLoad/csv";
 import { decodeWithFallback, sniffDelimiter, loadCsv } from "./fileLoad/csv";
 import { sha256Hex } from "./fileLoad/hash";
 import type { ColumnMapping, DatasetCatalog, DatasetEntry, FileMeta, MappingEntry, Table } from "./types";
+import { InputError } from "./errors";
 
 const TRUTHY_TOKENS = new Set(["y", "yes", "true", "t", "1", "key", "k"]);
 const FALSY_TOKENS = new Set(["n", "no", "false", "f", "0"]);
@@ -124,7 +125,7 @@ async function readSheetAsRows(
     const datasetsWs = sheetByLower.get("datasets");
     const columnsWs = sheetByLower.get("columns");
     if (!columnsWs) {
-      throw new Error(`${fileName}: catalogue workbook must contain a 'Columns' sheet.`);
+      throw new InputError(`${fileName}: catalogue workbook must contain a 'Columns' sheet.`);
     }
     return {
       datasetsRows: datasetsWs ? readSheet(datasetsWs) : null,
@@ -133,7 +134,7 @@ async function readSheetAsRows(
   }
 
   if (ext === "xls") {
-    throw new Error(`${fileName}: legacy .xls format is not supported in this port -- please re-save as .xlsx or .csv.`);
+    throw new InputError(`${fileName}: legacy .xls format is not supported in this port -- please re-save as .xlsx or .csv.`);
   }
 
   // CSV path: the file IS the Columns sheet.
@@ -152,30 +153,30 @@ async function readSheetAsRows(
  * the Columns sheet directly) into a DatasetCatalog.
  */
 export async function loadCatalog(data: Buffer, fileName: string): Promise<DatasetCatalog> {
-  if (data.length === 0) throw new Error(`${fileName}: catalogue is empty.`);
+  if (data.length === 0) throw new InputError(`${fileName}: catalogue is empty.`);
 
   const { datasetsRows, columnsRows } = await readSheetAsRows(data, fileName);
 
   const columnsHasDatasetId = columnsRows.length === 0 ? true : "dataset_id" in columnsRows[0];
   const columnsHasCanonical = columnsRows.length === 0 ? true : "canonical_name" in columnsRows[0];
   if (columnsRows.length > 0 && !columnsHasDatasetId) {
-    throw new Error(`${fileName}: Columns sheet must include a 'dataset_id' column.`);
+    throw new InputError(`${fileName}: Columns sheet must include a 'dataset_id' column.`);
   }
   if (columnsRows.length > 0 && !columnsHasCanonical) {
-    throw new Error(`${fileName}: Columns sheet must include a 'canonical_name' column.`);
+    throw new InputError(`${fileName}: Columns sheet must include a 'canonical_name' column.`);
   }
 
   const datasets: DatasetEntry[] = [];
   const seenDatasetIds = new Set<string>();
   if (datasetsRows !== null && datasetsRows.length > 0) {
     if (!("dataset_id" in datasetsRows[0])) {
-      throw new Error(`${fileName}: Datasets sheet must include a 'dataset_id' column.`);
+      throw new InputError(`${fileName}: Datasets sheet must include a 'dataset_id' column.`);
     }
     for (const r of datasetsRows) {
       const did = (r.dataset_id ?? "").trim();
       if (!did) continue;
       if (seenDatasetIds.has(did)) {
-        throw new Error(`${fileName}: duplicate dataset_id '${did}' in Datasets sheet.`);
+        throw new InputError(`${fileName}: duplicate dataset_id '${did}' in Datasets sheet.`);
       }
       seenDatasetIds.add(did);
       datasets.push({
@@ -210,13 +211,13 @@ export async function loadCatalog(data: Buffer, fileName: string): Promise<Datas
     const sourceMap = seenSource.get(did)!;
 
     if (canonicalSet.has(canonical)) {
-      throw new Error(`${fileName}: duplicate canonical_name '${canonical}' within dataset '${did}'.`);
+      throw new InputError(`${fileName}: duplicate canonical_name '${canonical}' within dataset '${did}'.`);
     }
     canonicalSet.add(canonical);
 
     const srcCol = (r.source_column ?? "").trim() || null;
     if (srcCol && sourceMap.has(srcCol)) {
-      throw new Error(
+      throw new InputError(
         `${fileName}: source_column '${srcCol}' mapped twice within dataset '${did}' ` +
           `(to '${sourceMap.get(srcCol)}' and '${canonical}').`
       );
@@ -225,7 +226,7 @@ export async function loadCatalog(data: Buffer, fileName: string): Promise<Datas
 
     const role = (r.key_role ?? "").trim().toLowerCase();
     if (!["", "primary", "composite", "surrogate"].includes(role)) {
-      throw new Error(
+      throw new InputError(
         `${fileName}: unrecognised key_role '${role}' in dataset '${did}' for canonical ` +
           `'${canonical}'. Allowed: primary, composite, surrogate.`
       );
@@ -262,8 +263,8 @@ export async function loadCatalog(data: Buffer, fileName: string): Promise<Datas
     }
   }
 
-  if (datasets.length === 0) throw new Error(`${fileName}: catalogue contains no datasets.`);
-  if (columnEntries.length === 0) throw new Error(`${fileName}: catalogue contains no column entries.`);
+  if (datasets.length === 0) throw new InputError(`${fileName}: catalogue contains no datasets.`);
+  if (columnEntries.length === 0) throw new InputError(`${fileName}: catalogue contains no column entries.`);
 
   return { datasets, columns: columnEntries, sha256: sha256Hex(data), sourceName: fileName };
 }

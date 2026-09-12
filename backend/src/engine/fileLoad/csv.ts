@@ -4,6 +4,7 @@ import { toDecimal } from "../decimal";
 import { parseDate } from "../dates";
 import type { FileMeta, Table } from "../types";
 import { sha256Hex } from "./hash";
+import { InputError } from "../errors";
 
 /** Port of comparison.py's ENCODING_CANDIDATES tried in
  * `_decode_with_fallback`. Note: "utf-8-sig" and "utf-8" have identical
@@ -119,7 +120,7 @@ export function loadCsv(
   fileName: string,
   options: LoadCsvOptions = {}
 ): { table: Table; meta: FileMeta } {
-  if (data.length === 0) throw new Error(`${fileName}: file is empty (0 bytes).`);
+  if (data.length === 0) throw new InputError(`${fileName}: file is empty (0 bytes).`);
 
   const hasHeader = options.hasHeader ?? true;
   const { text, encoding } = decodeWithFallback(data);

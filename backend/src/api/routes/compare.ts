@@ -18,6 +18,7 @@ import { compareRateLimit, downloadRateLimit } from "../middleware/rateLimit";
 import { acquireCompareSlot, releaseCompareSlot, compareSlotCount } from "../middleware/compareSlot";
 import { currentUser } from "../middleware/currentUser";
 import { compareToResponse } from "../toView";
+import { HttpError, respondWithError } from "../errors";
 import type { CompareRequest, CompareResultResponse, WriteToBlobResponse } from "../dto";
 import type { CompareJobInput } from "../../worker/compareWorker";
 
@@ -36,12 +37,6 @@ function parseTolerance(raw: string | undefined): Decimal {
   }
   if (d.isNegative()) throw new HttpError(400, "numeric_tolerance must be non-negative.");
   return d;
-}
-
-class HttpError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
 }
 
 function getFileOr404(fileId: string, side: string) {
@@ -175,7 +170,7 @@ export function storeRun(
  * immediately and reports live progress instead of holding a connection
  * open for minutes.
  */
-compareRouter.post("/compare/run", compareRateLimit, async (req, res, next) => {
+compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
   let slotHeld = false;
   try {
     const { input, complianceWarnings } = prepareCompare(req.body as CompareRequest, currentUser(req));
@@ -192,16 +187,14 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res, next) => {
     const outcome = await runComparisonInWorker(input);
     res.json(storeRun(outcome, req.body as CompareRequest, input, complianceWarnings));
   } catch (err) {
-    if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
-    if (err instanceof Error) return res.status(400).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   } finally {
     if (slotHeld) releaseCompareSlot();
   }
 });
 
 /** Starts a comparison in the background and hands back a job id to poll. */
-compareRouter.post("/compare/jobs", compareRateLimit, (req, res, next) => {
+compareRouter.post("/compare/jobs", compareRateLimit, (req, res) => {
   try {
     const user = currentUser(req);
     const body = req.body as CompareRequest;
@@ -215,9 +208,7 @@ compareRouter.post("/compare/jobs", compareRateLimit, (req, res, next) => {
     });
     res.status(202).json({ job_id: job.id, status: job.status });
   } catch (err) {
-    if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
-    if (err instanceof Error) return res.status(400).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 
@@ -249,19 +240,18 @@ function getRunOr404(runId: string) {
   return cached;
 }
 
-compareRouter.get("/compare/:runId/report.xlsx", downloadRateLimit, async (req, res, next) => {
+compareRouter.get("/compare/:runId/report.xlsx", downloadRateLimit, async (req, res) => {
   try {
     const cached = getRunOr404(String(req.params.runId));
     const { buffer } = await buildExcelReport(cached.report);
     const fname = `reconciliation_${cached.report.audit.source.sha256.slice(0, 8)}_${cached.report.audit.target.sha256.slice(0, 8)}.xlsx`;
     res.set("Content-Type", XLSX_MIME).set("Content-Disposition", `attachment; filename="${fname}"`).send(buffer);
   } catch (err) {
-    if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 
-compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (req, res, next) => {
+compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (req, res) => {
   try {
     const side = String(req.params.side);
     if (side !== "source" && side !== "target") {
@@ -319,8 +309,7 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
     }
     res.end();
   } catch (err) {
-    if (err instanceof HttpError) return res.status(err.status).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 

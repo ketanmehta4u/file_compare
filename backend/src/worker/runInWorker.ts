@@ -4,6 +4,7 @@ import { decodeAfterTransfer, encodeForTransfer } from "./transfer";
 import type { CompareJobInput, WorkerMessage } from "./compareWorker";
 import type { ProgressUpdate } from "../engine/progress";
 import type { CompareReport, FileMeta } from "../engine/types";
+import { InputError } from "../engine/errors";
 
 export interface RunInWorkerOptions {
   onProgress?: (update: ProgressUpdate) => void;
@@ -81,7 +82,11 @@ export function runComparisonInWorker(
         finish(() => resolve(result));
         return;
       }
-      finish(() => reject(new Error(message.message)));
+      // Rebuild the kind of error the worker actually threw, so the route
+      // can still tell a bad upload from an internal fault.
+      finish(() =>
+        reject(message.inputError ? new InputError(message.message) : new Error(message.message))
+      );
     });
 
     worker.on("error", (err) => finish(() => reject(err)));

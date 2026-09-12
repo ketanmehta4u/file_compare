@@ -32,6 +32,12 @@ const ACCEPTED_EXTENSIONS = ["csv", "xlsx"];
 })
 export class FileInputComponent {
   @Input() label: "Source" | "Target" = "Source";
+
+  /** Distinct per instance, so the two copies of this component do not
+   * share an id and mislabel each other. */
+  get inputId(): string {
+    return `file-input-${this.label.toLowerCase()}`;
+  }
   @Input() maxUploadBytes: number | null = null;
   @Output() loaded = new EventEmitter<FileMetaView | null>();
 

@@ -405,6 +405,15 @@ Every failure reaches the user as `{ "detail": "..." }` with a status, and
 the UI renders `detail` verbatim — so the message the engine writes is the
 message the user reads.
 
+What decides the status is the *kind* of error, in one place
+(`api/errors.ts`): an `HttpError` carries its own status; an `InputError`
+— raised by the loaders and the catalogue parser for anything wrong with
+the caller's data — is a 400 with its message; anything else is a 500
+with a generic message and the real one logged against the request id. An
+`InputError` raised inside the comparison worker keeps its meaning too: a
+class does not survive the thread boundary, so a flag travels with the
+message and the error is rebuilt on the other side.
+
 | Where it fails | Status | What the user sees |
 |---|---|---|
 | File too large (header) | 413 | "Request body exceeds the server's upload limit…" |
@@ -414,7 +423,7 @@ message the user reads.
 | Bad request (tolerance, dtype, duplicate mapping target) | 400 | the specific complaint |
 | No concurrency slot | 503 + `Retry-After` | "Server busy — N comparison(s) already running…" |
 | Failure inside the worker | job `status: "error"` | `detail` on the next poll |
-| Anything unhandled | 500 | "Internal server error." (details only in the log) |
+| Anything unhandled | 500 | "Internal server error." (the real message only in the log, against the request id) |
 
 Not everything that goes wrong is an error, and this matters for a
 reconciliation tool: hidden Excel rows, uncalculated formulas read as

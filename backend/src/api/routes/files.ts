@@ -8,10 +8,11 @@ import { uploadRateLimit } from "../middleware/rateLimit";
 import { fileMetaToView } from "../toView";
 import type { ExcelSheetsResponse, FileMetaView } from "../dto";
 import type { FileMeta, Table } from "../../engine/types";
+import { respondWithError } from "../errors";
 
 export const filesRouter = Router();
 
-filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (req, res, next) => {
+filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
     const data = req.file.buffer;
@@ -35,12 +36,11 @@ filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (
     const body: FileMetaView = fileMetaToView(meta, fileId);
     res.json(body);
   } catch (err) {
-    if (err instanceof Error) return res.status(400).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 
-filesRouter.post("/files/list-sheets", uploadRateLimit, uploadSingle("file"), async (req, res, next) => {
+filesRouter.post("/files/list-sheets", uploadRateLimit, uploadSingle("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
     if (req.file.buffer.length === 0) return res.status(400).json({ detail: "Uploaded file is empty." });
@@ -48,8 +48,7 @@ filesRouter.post("/files/list-sheets", uploadRateLimit, uploadSingle("file"), as
     const body: ExcelSheetsResponse = { sheets };
     res.json(body);
   } catch (err) {
-    if (err instanceof Error) return res.status(400).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 

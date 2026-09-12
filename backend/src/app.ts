@@ -37,7 +37,10 @@ export function createApp(): Express {
   app.use(securityHeaders);
   app.use(requestLog);
 
-  app.use(express.json());
+  // 1 MB rather than express's 100 KB default: a compare request is small,
+  // but a wide file's column_map is a name-pair per column and can run to
+  // tens of kilobytes, and the default's failure mode is an opaque 413.
+  app.use(express.json({ limit: "1mb" }));
 
   app.use("/api", healthRouter);
   app.use("/api", authRouter);

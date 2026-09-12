@@ -1,4 +1,6 @@
 import v8 from "node:v8";
+import path from "node:path";
+import { existsSync } from "node:fs";
 import { Router } from "express";
 import { fileCache, catalogCache, runCache } from "../../cache/stores";
 import { cacheBudgetBytes } from "../../config/env";
@@ -22,14 +24,24 @@ healthRouter.get("/readyz", (_req, res) => {
   const mem = process.memoryUsage();
   const heapLimit = v8.getHeapStatistics().heap_size_limit;
   const budget = cacheBudgetBytes();
-  res.json({
-    status: "ready",
+
+  // Readiness that can actually say "no". The one dependency a comparison
+  // has beyond this process is the worker entry point: if that file is
+  // missing from the build, uploads still work and every comparison fails,
+  // which is exactly the state a readiness probe exists to catch.
+  const workerEntry = path.resolve(__dirname, "..", "..", `worker/compareWorker${path.extname(__filename)}`);
+  const workerPresent = existsSync(workerEntry);
+  const ready = workerPresent;
+
+  res.status(ready ? 200 : 503).json({
+    status: ready ? "ready" : "not_ready",
     checks: {
       blob_read_configured: false,
       blob_write_configured: false,
       cache_files: fileCache.size,
       cache_catalogs: catalogCache.size,
       cache_runs: runCache.size,
+      comparison_worker_present: workerPresent,
     },
     memory: {
       heap_used_mb: Math.round(mem.heapUsed / MB),

@@ -6,6 +6,7 @@ import { uploadSingle } from "../upload";
 import { uploadRateLimit } from "../middleware/rateLimit";
 import { datasetToView, mappingEntryToView } from "../toView";
 import type { CatalogUploadResponse, MappingView } from "../dto";
+import { respondWithError } from "../errors";
 
 export const catalogRouter = Router();
 
@@ -23,7 +24,7 @@ export const catalogRouter = Router();
 
 /** Blank catalogue workbook, generated on the fly, for users starting from
  * scratch rather than editing an existing one. */
-catalogRouter.get("/catalog/template", async (_req, res, next) => {
+catalogRouter.get("/catalog/template", async (req, res) => {
   try {
     const buffer = await buildCatalogTemplate();
     res
@@ -31,13 +32,13 @@ catalogRouter.get("/catalog/template", async (_req, res, next) => {
       .set("Content-Disposition", 'attachment; filename="catalog_template.xlsx"')
       .send(buffer);
   } catch (err) {
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 
 /** Parses an uploaded catalogue and caches it under a content hash, so a
  * later compare request can name it by `catalog_id`. */
-catalogRouter.post("/catalog/upload", uploadRateLimit, uploadSingle("file"), async (req, res, next) => {
+catalogRouter.post("/catalog/upload", uploadRateLimit, uploadSingle("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
     const data = req.file.buffer;
@@ -55,8 +56,7 @@ catalogRouter.post("/catalog/upload", uploadRateLimit, uploadSingle("file"), asy
     };
     res.json(body);
   } catch (err) {
-    if (err instanceof Error) return res.status(400).json({ detail: err.message });
-    next(err);
+    respondWithError(req, res, err);
   }
 });
 

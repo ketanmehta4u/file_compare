@@ -8,6 +8,11 @@
     "build": "npm run build --prefix frontend && npm run build --prefix backend",
     "start": "npm run build && node backend/dist/server.js --serve-frontend",
     "serve": "node backend/dist/server.js --serve-frontend",
-    "test": "npm test --prefix backend && npm test --prefix frontend"
+    "test": "npm test --prefix backend && npm test --prefix frontend",
+    "format": "prettier --write \"backend/src/**/*.ts\" \"backend/test/**/*.ts\" \"frontend/src/**/*.ts\" \"frontend/src/**/*.html\" \"*.md\"",
+    "format:check": "prettier --check \"backend/src/**/*.ts\" \"backend/test/**/*.ts\" \"frontend/src/**/*.ts\" \"frontend/src/**/*.html\" \"*.md\""
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
   }
 }

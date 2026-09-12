@@ -1,6 +1,7 @@
 import { loadCsv } from "./csv";
 import { loadExcel, listExcelSheets } from "./excel";
 import type { FileMeta, Table } from "../types";
+import { InputError } from "../errors";
 
 /**
  * Everything needed to re-parse an uploaded file identically later.
@@ -34,7 +35,7 @@ export async function loadBytes(
 ): Promise<{ table: Table; meta: FileMeta }> {
   if (isExcelName(fileName)) {
     const sheet = options.sheetName || (await listExcelSheets(data, fileName))[0];
-    if (!sheet) throw new Error(`${fileName}: workbook has no sheets.`);
+    if (!sheet) throw new InputError(`${fileName}: workbook has no sheets.`);
     return loadExcel(data, fileName, { sheetName: sheet, hasHeader: options.hasHeader });
   }
   return loadCsv(data, fileName, {

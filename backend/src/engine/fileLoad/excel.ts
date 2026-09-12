@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import type { FileMeta, Table } from "../types";
 import { cleanupColumnNames, inferColumnDtype } from "./csv";
 import { sha256Hex } from "./hash";
+import { InputError } from "../errors";
 
 const XLSX_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]); // "PK\x03\x04" -- ZIP signature
 const XLS_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]); // OLE2 -- legacy .xls
@@ -13,11 +14,11 @@ const XLS_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
 function assertXlsxMagicBytes(data: Buffer, fileName: string): void {
   if (data.subarray(0, 4).equals(XLSX_MAGIC)) return;
   if (data.subarray(0, 8).equals(XLS_MAGIC)) {
-    throw new Error(
+    throw new InputError(
       `${fileName}: legacy .xls format is not supported in this port -- please re-save as .xlsx or .csv.`
     );
   }
-  throw new Error(`${fileName}: not a recognised .xlsx file (unexpected file signature).`);
+  throw new InputError(`${fileName}: not a recognised .xlsx file (unexpected file signature).`);
 }
 
 export async function listExcelSheets(data: Buffer, fileName: string): Promise<string[]> {
@@ -88,14 +89,14 @@ export async function loadExcel(
   fileName: string,
   options: LoadExcelOptions
 ): Promise<{ table: Table; meta: FileMeta }> {
-  if (data.length === 0) throw new Error(`${fileName}: file is empty (0 bytes).`);
+  if (data.length === 0) throw new InputError(`${fileName}: file is empty (0 bytes).`);
   assertXlsxMagicBytes(data, fileName);
 
   const hasHeader = options.hasHeader ?? true;
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(data as unknown as ExcelJS.Buffer);
   const ws = wb.getWorksheet(options.sheetName);
-  if (!ws) throw new Error(`${fileName}: sheet "${options.sheetName}" not found.`);
+  if (!ws) throw new InputError(`${fileName}: sheet "${options.sheetName}" not found.`);
 
   const width = ws.actualColumnCount;
   const rawRows: string[][] = [];

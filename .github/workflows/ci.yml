@@ -1,0 +1,77 @@
+name: CI
+
+# Runs the suites nobody was running. The frontend build also runs
+# check-csp-safe.js, which is the only thing standing between a strict CSP
+# and a silently unstyled page -- a guard is worth nothing if it never
+# executes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend — build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+        working-directory: backend
+
+      - name: Compile
+        run: npm run build
+        working-directory: backend
+
+      # The suite runs test files one at a time (see vitest.config.ts): the
+      # comparison specs each spawn a worker thread that compiles the
+      # engine, and a runner is a poor place to oversubscribe.
+      - name: Test
+        run: npm test
+        working-directory: backend
+
+  frontend:
+    name: Frontend — build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Angular 14's peer ranges do not satisfy npm's strict resolution
+      # against this pinned toolchain; the flag is expected, not a patch
+      # over a broken lockfile.
+      - run: npm ci --legacy-peer-deps
+        working-directory: frontend
+
+      # Also runs the postbuild CSP check.
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+
+      - name: Test
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+        working-directory: frontend
+
+  docker:
+    name: Docker — images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Proves the shipped topology still builds: the frontend image runs a
+      # production Angular build inside node:25.8-alpine, which is where
+      # toolchain surprises show up.
+      - name: Build images
+        run: docker compose build

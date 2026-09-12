@@ -1,7 +1,11 @@
 <div class="panel">
   <h3>{{ label }}</h3>
 
-  <input type="file" accept=".csv,.xlsx" (change)="onFileChosen($event)" />
+  <!-- The heading above names the control visually; screen readers need it
+       on the input itself, and the id has to differ between the two
+       instances of this component. -->
+  <label [attr.for]="inputId" class="visually-hidden">{{ label }} file (.csv or .xlsx)</label>
+  <input type="file" [id]="inputId" accept=".csv,.xlsx" (change)="onFileChosen($event)" />
   <div *ngIf="sizeError" class="alert alert-error">{{ sizeError }}</div>
   <div *ngIf="loadError" class="alert alert-error">{{ loadError }}</div>
 

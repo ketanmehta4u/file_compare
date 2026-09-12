@@ -1,6 +1,7 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { runComparison } from "../engine/runComparison";
 import { loadBytes, type LoadOptions } from "../engine/fileLoad/loadBytes";
+import { isInputError, InputError } from "../engine/errors";
 import { applyMapping } from "../engine/catalog";
 import { decodeAfterTransfer, encodeForTransfer } from "./transfer";
 import type { ProgressUpdate } from "../engine/progress";
@@ -44,7 +45,10 @@ export interface CompareJobInput {
 export type WorkerMessage =
   | { type: "progress"; update: ProgressUpdate }
   | { type: "done"; report: unknown; sourceMeta: unknown; targetMeta: unknown }
-  | { type: "error"; message: string };
+  // `inputError` rather than sending the class: an Error's prototype does
+  // not survive the thread boundary, and the main thread has to know
+  // whether this was the caller's fault (400) or ours (500).
+  | { type: "error"; message: string; inputError: boolean };
 
 if (!parentPort) {
   throw new Error("compareWorker must be run as a worker thread.");
@@ -117,6 +121,7 @@ main().catch((err: unknown) => {
   const message: WorkerMessage = {
     type: "error",
     message: err instanceof Error ? err.message : String(err),
+    inputError: isInputError(err),
   };
   port.postMessage(message);
 });

@@ -189,7 +189,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 164 tests
+cd backend && npm test     # 170 tests
 cd ../frontend && npm test # 43 tests (opens Chrome)
 ```
 
@@ -344,7 +344,7 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 164 tests
+cd backend  && npm test                            # vitest, 170 tests
 cd frontend && npm test                            # karma/jasmine, 43 tests
 
 cd backend  && npx vitest run test/engine          # one directory
@@ -453,7 +453,7 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 164 tests
+cd backend && npm test    # vitest — engine + API, 170 tests
 cd frontend && npm test   # karma/jasmine, needs Chrome — 43 tests
 ```
 
@@ -515,7 +515,7 @@ as `{"detail": "..."}`. Decimal values cross the wire as strings.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/health`, `/api/livez` | Liveness |
-| GET | `/api/readyz` | Readiness, cache sizes, and live memory/budget figures |
+| GET | `/api/readyz` | Readiness, cache sizes, and live memory/budget figures. 503 if the comparison worker is missing from the build |
 | GET | `/api/auth/me` | Current user, from proxy SSO headers. *Not called by the UI* -- the identity is recorded in the audit report rather than displayed. |
 | GET | `/api/config` | Upload cap, Excel row cap, feature flags |
 | GET | `/api/catalog/template` | Blank catalogue template `.xlsx` |
