@@ -40,13 +40,6 @@
     </label>
   </div>
 
-  <h4>Outputs</h4>
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="state.annotatedOutputs" (change)="setAnnotatedOutputs($any($event.target).checked)" />
-    Annotated source/target files
-    <span class="muted">— your own files returned with a status column and differing cells highlighted. The audit workbook is always produced.</span>
-  </label>
-
   <!-- The defaults are right for most comparisons, so these are folded
        away rather than presented as a wall of choices. -->
   <button type="button" class="link-button" (click)="toggleAdvanced()" [attr.aria-expanded]="advancedOpen">

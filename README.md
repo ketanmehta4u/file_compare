@@ -190,7 +190,7 @@ the pinned toolchain. It is expected, not a workaround for a broken
 
 ```bash
 cd backend && npm test     # 164 tests
-cd ../frontend && npm test # 45 tests (opens Chrome)
+cd ../frontend && npm test # 43 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -345,7 +345,7 @@ cd frontend && npm run watch                       # rebuild on change
 
 ```bash
 cd backend  && npm test                            # vitest, 164 tests
-cd frontend && npm test                            # karma/jasmine, 45 tests
+cd frontend && npm test                            # karma/jasmine, 43 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -432,11 +432,9 @@ git status --short
    control totals — and **Cancel** stops it for real, freeing the slot on
    the server rather than just hiding the result.
 8. Read the verdict, summary, differences and control totals. Download the
-   audit workbook, or -- if you left **Annotated source/target files**
-   ticked under Outputs -- an annotated copy of either input file with
-   differing cells highlighted. **Start over** clears everything for the
-   next pair of files. See [What you get back](#what-you-get-back) for
-   what those files contain.
+   audit workbook, which holds the complete result. **Start over** clears
+   everything for the next pair of files. See
+   [What you get back](#what-you-get-back) for what it contains.
 
 **The tables on screen are a preview.** Each detail section is capped
 (1,000 rows by default) so a large reconciliation does not have to ship
@@ -456,7 +454,7 @@ falls back to whole-row matching).
 
 ```bash
 cd backend && npm test    # vitest — engine + API, 164 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 45 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 43 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run
@@ -518,7 +516,7 @@ as `{"detail": "..."}`. Decimal values cross the wire as strings.
 |---|---|---|
 | GET | `/api/health`, `/api/livez` | Liveness |
 | GET | `/api/readyz` | Readiness, cache sizes, and live memory/budget figures |
-| GET | `/api/auth/me` | Current user, from proxy SSO headers |
+| GET | `/api/auth/me` | Current user, from proxy SSO headers. *Not called by the UI* -- the identity is recorded in the audit report rather than displayed. |
 | GET | `/api/config` | Upload cap, Excel row cap, feature flags |
 | GET | `/api/catalog/template` | Blank catalogue template `.xlsx` |
 | POST | `/api/catalog/upload` | Upload catalogue → `catalog_id` + datasets |
@@ -530,7 +528,7 @@ as `{"detail": "..."}`. Decimal values cross the wire as strings.
 | GET | `/api/compare/jobs/:jobId` | Live progress, and the result once done |
 | DELETE | `/api/compare/jobs/:jobId` | Cancel a queued or running comparison |
 | GET | `/api/compare/:runId/report.xlsx` | Audit workbook |
-| GET | `/api/compare/:runId/annotated/:side` | Annotated `source` or `target` |
+| GET | `/api/compare/:runId/annotated/:side` | Annotated `source` or `target`. *Not linked from the UI*; needs a run started with `annotated_outputs: true`. |
 
 ### Running a comparison
 
@@ -576,17 +574,19 @@ everything else is optional — `catalog_id` + `dataset_id`, `column_map`
 `case_sensitive`, `trim_whitespace`, `numeric_tolerance` (decimal
 string), `decimal_precision`, `treat_blank_as_zero`,
 `fuzzy_column_names`, `control_total_columns`, `enforced_dtypes`, and
-`annotated_outputs` (default `true`; `false` skips the annotated files
-and the per-row bookkeeping they need). An explicit `column_map` takes
-precedence over the catalogue's mapping.
+`annotated_outputs` (default `true` for a direct caller; the UI sends
+`false`, which skips the annotated files and the per-row bookkeeping they
+need). An explicit `column_map` takes precedence over the catalogue's
+mapping.
 
 ---
 
 ## What you get back
 
-Every run produces an **audit workbook**; the **annotated files** are
-optional and controlled by a checkbox (Outputs -> *Annotated
-source/target files*, on by default).
+Every run produces an **audit workbook**, and that is what the UI offers.
+The **annotated files** described below still exist as an API capability
+but are no longer surfaced in the page -- see
+[The annotated files](#the-annotated-files).
 
 ### The audit workbook (`report.xlsx`)
 
@@ -606,12 +606,17 @@ and differing cells highlighted:
 | `_record_status` | `matched_equal`, `matched_with_differences`, `matched_with_tolerance`, `source_only` or `target_only`, colour-coded |
 | `_record_hash` | A fingerprint of the row's **entire** content, so two rows sharing a key are still distinguishable |
 
-Turning them off skips the per-row status bookkeeping the export needs --
-which is the only thing that data is used for, and on a large run it is
-one entry per distinct key, per side, held for the life of the cached
-result. The audit workbook does not depend on it. If a run was made
-without them, its annotated links are not offered and the endpoint
-refuses, rather than returning a file whose every row is marked unmatched.
+**The UI does not offer these.** It sends `annotated_outputs: false`, so a
+run started from the page skips the per-row status bookkeeping the export
+needs -- the only thing that data is used for, and on a large run one
+entry per distinct key, per side, held for the life of the cached result.
+The audit workbook does not depend on it.
+
+A direct API caller can still have them: `annotated_outputs` defaults to
+`true` for anyone who omits it, and
+`GET /api/compare/{runId}/annotated/{side}` serves them. A run made
+without them refuses that endpoint with an explanation rather than
+returning a file whose every row is marked unmatched.
 
 ### How `_record_id` is calculated
 
@@ -770,8 +775,7 @@ design otherwise avoids entirely.
 - **The on-screen result is a preview; the downloads are complete.** Each
   detail section in a compare response is capped at `MAX_RESPONSE_ROWS`
   (default 1,000). The summary counts stay true, the UI says plainly when
-  a section was cut, and the audit workbook and annotated files still
-  contain every row. Measured on a 150k-row all-different run: the
+  a section was cut, and the audit workbook still contains every row. Measured on a 150k-row all-different run: the
   response went from ~28 MB to 188 KB while the workbook still carried all
   150,000 rows per side. Uncapped this was also a hard failure waiting to
   happen — V8 will not build a single string over 512 MB, so a large

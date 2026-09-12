@@ -12,10 +12,6 @@
 </header>
 
 <main class="app-main" *ngIf="state$ | async as state">
-  <div class="status-bar">
-    Signed in as: {{ user || '(unauthenticated)' }}
-  </div>
-
   <app-how-to-use [maxUploadBytes]="config?.max_upload_bytes ?? null"></app-how-to-use>
 
   <!-- The two uploads come first: they are the whole job. The optional

@@ -115,8 +115,5 @@ export class ResultsComponent {
   reportUrl(): string {
     return this.api.reportXlsxUrl(this.result.run_id);
   }
-  annotatedUrl(side: "source" | "target"): string {
-    return this.api.annotatedUrl(this.result.run_id, side);
-  }
 
 }

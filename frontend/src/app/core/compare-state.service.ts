@@ -23,9 +23,12 @@ export interface CompareFormState {
   decimalPrecision: number | null;
   controlTotalColumns: string[];
   previewRows: number;
-  /** Produce the annotated source/target files for this run. On by
-   * default; turning it off frees the per-row status maps the run would
-   * otherwise hold for the life of the cached result. */
+  /** Produce the annotated source/target files for this run.
+   *
+   * Off: the UI does not offer them, so asking for them would make every
+   * run hold the per-row status maps -- one entry per distinct key, per
+   * side -- for nothing. The server still supports them for a direct API
+   * caller, which is why the flag is sent explicitly rather than dropped. */
   annotatedOutputs: boolean;
 }
 
@@ -48,7 +51,7 @@ function initialState(): CompareFormState {
     decimalPrecision: null,
     controlTotalColumns: [],
     previewRows: 100,
-    annotatedOutputs: true,
+    annotatedOutputs: false,
   };
 }
 

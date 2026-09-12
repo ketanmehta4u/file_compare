@@ -10,9 +10,6 @@
  * changes; field names stay snake_case to match the wire format exactly.
  */
 
-export interface AuthMe {
-  user: string;
-}
 
 export interface ConfigInfo {
   blob_read_enabled: boolean;

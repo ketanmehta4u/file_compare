@@ -79,7 +79,7 @@
     <tbody><tr *ngFor="let m of result.column_diff.dtype_mismatches"><td>{{ m.column }}</td><td>{{ m.source_dtype }}</td><td>{{ m.target_dtype }}</td></tr></tbody>
   </table>
 
-  <h3>Record differences <span class="muted">(preview — full set in the downloads below)</span></h3>
+  <h3>Record differences <span class="muted">(preview — full set in the audit workbook below)</span></h3>
 
   <!-- Counts come from the summary, which always holds the true totals:
        the arrays themselves may be a capped preview. -->
@@ -97,9 +97,9 @@
       </li>
     </ul>
     <p>
-      Every row is in the downloads below — use
-      <a [href]="reportUrl()">the audit workbook</a> or the annotated files
-      for the complete data. Only what is drawn on this page is limited.
+      Every row is in the audit workbook below — use
+      <a [href]="reportUrl()">the audit workbook</a> for the complete data.
+      Only what is drawn on this page is limited.
     </p>
   </div>
 
@@ -150,19 +150,10 @@
   </table>
   <ng-template #noCT><p class="muted">No control totals were computed.</p></ng-template>
 
-  <h3>Downloads</h3>
+  <h3>Download</h3>
   <p class="muted">
-    These contain the <strong>complete</strong> result — every row, however
+    This contains the <strong>complete</strong> result — every row, however
     many the tables above showed.
-  </p>
-  <p *ngIf="result.annotated_outputs">
-    <a [href]="annotatedUrl('source')">Annotated source file</a> ·
-    <a [href]="annotatedUrl('target')">Annotated target file</a>
-  </p>
-  <p *ngIf="!result.annotated_outputs" class="muted">
-    Annotated files were not produced for this run — tick
-    <strong>Annotated source/target files</strong> under Outputs and run it
-    again to get them.
   </p>
   <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
 

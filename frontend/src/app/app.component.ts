@@ -1,17 +1,20 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Observable, Subscription, timer } from "rxjs";
 import { switchMap } from "rxjs/operators";
-import { AuthService } from "./core/auth.service";
 import { ConfigService } from "./core/config.service";
 import { ApiService } from "./core/api.service";
 import { CompareStateService, type CompareFormState } from "./core/compare-state.service";
 import { theme } from "./theme";
 import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView, JobProgress } from "./shared/models/dto";
 
-/** Root shell -- port of the original's App.tsx. Bootstraps auth/config,
- * renders the branded header/footer (from theme.ts), and composes the
- * catalog picker, source/target file inputs, settings panel, run button,
- * and results into one page (no router -- single-page app). */
+/** Root shell -- port of the original's App.tsx. Loads the server's
+ * limits, renders the branded header/footer (from theme.ts), and composes
+ * the file inputs, catalogue picker, settings panel, run button and
+ * results into one page (no router -- single-page app).
+ *
+ * The identity the server reports is deliberately not shown: there is no
+ * login here, so "(unauthenticated)" told a user nothing useful. It is
+ * still recorded server-side in every audit report. */
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
@@ -19,7 +22,6 @@ import type { CompareRequest, CompareResultResponse, ConfigInfo, FileMetaView, J
 export class AppComponent implements OnInit, OnDestroy {
   readonly theme = theme;
   config: ConfigInfo | null = null;
-  user = "";
 
   result: CompareResultResponse | null = null;
   runError = "";
@@ -35,16 +37,13 @@ export class AppComponent implements OnInit, OnDestroy {
   elapsedLabel = "";
 
   constructor(
-    private readonly auth: AuthService,
     private readonly configService: ConfigService,
     private readonly api: ApiService,
     readonly compareState: CompareStateService
   ) {}
 
   ngOnInit(): void {
-    this.auth.load();
     this.configService.load();
-    this.auth.user$.subscribe((u) => (this.user = u));
     this.configService.config$.subscribe((c) => (this.config = c));
   }
 

@@ -2,7 +2,6 @@ import { HttpClient, HttpEvent, HttpEventType } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import type {
-  AuthMe,
   CompareJobCancelled,
   CompareJobStarted,
   CompareJobView,
@@ -21,17 +20,16 @@ export interface UploadProgress {
 
 /** Thin HttpClient wrapper -- one method per backend route this app
  * actually uses. The blob-storage routes are not among them: the server
- * ships them hard-disabled, so a client for them would be dead weight. Download endpoints (report.xlsx, annotated
- * files, the catalog template) are exposed as URL builders rather than
- * fetch calls, same as the original: they're meant to be used as <a href>
- * targets so the browser handles Content-Disposition itself. */
+ * ships them hard-disabled, so a client for them would be dead weight.
+ * Nor is /api/auth/me: there is no login, and the identity it reports is
+ * recorded server-side in the audit report rather than shown in the page.
+ *
+ * Download endpoints (report.xlsx, the catalogue template) are exposed as
+ * URL builders rather than fetch calls: they are meant to be used as
+ * <a href> targets so the browser handles Content-Disposition itself. */
 @Injectable({ providedIn: "root" })
 export class ApiService {
   constructor(private readonly http: HttpClient) {}
-
-  authMe(): Observable<AuthMe> {
-    return this.http.get<AuthMe>("/api/auth/me");
-  }
 
   config(): Observable<ConfigInfo> {
     return this.http.get<ConfigInfo>("/api/config");
@@ -99,10 +97,6 @@ export class ApiService {
 
   reportXlsxUrl(runId: string): string {
     return `/api/compare/${encodeURIComponent(runId)}/report.xlsx`;
-  }
-
-  annotatedUrl(runId: string, side: "source" | "target"): string {
-    return `/api/compare/${encodeURIComponent(runId)}/annotated/${side}`;
   }
 }
 

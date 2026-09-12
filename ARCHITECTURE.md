@@ -66,12 +66,16 @@ Without Docker, nginx is absent and Express serves the built SPA itself
 
 ### 1. The page loads
 
-`AppComponent.ngOnInit()` fires two requests, both fire-and-forget:
+`AppComponent.ngOnInit()` fires one request, fire-and-forget:
 
 | Call | Why |
 |---|---|
-| `GET /api/auth/me` | Who the caller is, per the proxy's identity header. Shown in the status bar; stamped into the audit report. Empty string when unauthenticated. |
 | `GET /api/config` | The limits the UI must respect: `max_upload_bytes` (checked before uploading) and `max_response_rows` (bounds the preview-rows input). |
+
+The server also exposes `GET /api/auth/me`, but the page does not call
+it: there is no login here, so displaying "(unauthenticated)" told a user
+nothing. The identity a fronting proxy vouches for is still recorded in
+every audit report, server-side.
 
 Before any of that, an `APP_INITIALIZER` applies the branding from
 `theme.ts` — CSS custom properties, page title, favicon — so the first
@@ -165,16 +169,19 @@ always holds the true totals.
 
 ### 9. Downloads
 
-These are plain `<a href>` links, not fetches, so the browser handles
+A plain `<a href>` link, not a fetch, so the browser handles
 `Content-Disposition` itself:
 
 - `GET /api/compare/{runId}/report.xlsx` — the multi-sheet audit workbook
-- `GET /api/compare/{runId}/annotated/source` (and `/target`) — the user's
-  own file with a `_record_status` column and differing cells highlighted
 
-**Downloads are never capped.** The server still holds the complete report
-for that run, and the annotated exports are rebuilt on demand by
-re-parsing the cached upload.
+**It is never capped**, however trimmed the on-screen tables were: the
+server still holds the complete report for that run.
+
+The server also serves `GET /api/compare/{runId}/annotated/{side}` -- the
+user's own file with a `_record_status` column and differing cells
+highlighted -- but the page does not link it, and sends
+`annotated_outputs: false` so runs do not carry the per-row statuses that
+export needs. It remains available to a direct API caller.
 
 ---
 
@@ -185,18 +192,16 @@ Every request the SPA can make, in the order it typically makes them.
 
 | # | When | Method | Path | Sends | Gets back |
 |---|---|---|---|---|---|
-| 1 | Bootstrap | GET | `/api/auth/me` | — | `{ user }` |
-| 2 | Bootstrap | GET | `/api/config` | — | limits + capability flags |
-| 3 | Workbook picked | POST | `/api/files/list-sheets` | multipart file | `{ sheets: [...] }` |
-| 4 | "Load" clicked | POST | `/api/files/upload` | file + sheet/header/delimiter | `FileMetaView` incl. `file_id` |
-| 5 | Catalogue uploaded | POST | `/api/catalog/upload` | multipart file | `catalog_id` + datasets |
-| 6 | Dataset picked | GET | `/api/catalog/{id}/datasets/{ds}/mapping` | — | mapping + default key columns |
-| 7 | Guide link | GET | `/api/catalog/template` | — | blank catalogue `.xlsx` |
-| 8 | "Run comparison" | POST | `/api/compare/jobs` | `CompareRequest` | `202 { job_id, status }` |
-| 9 | Every 400 ms | GET | `/api/compare/jobs/{jobId}` | — | status, progress, result when done |
-| 10 | "Cancel" | DELETE | `/api/compare/jobs/{jobId}` | — | `{ cancelled }` |
-| 11 | Download link | GET | `/api/compare/{runId}/report.xlsx` | — | workbook |
-| 12 | Download link | GET | `/api/compare/{runId}/annotated/{side}` | — | annotated file |
+| 1 | Bootstrap | GET | `/api/config` | — | limits + capability flags |
+| 2 | Workbook picked | POST | `/api/files/list-sheets` | multipart file | `{ sheets: [...] }` |
+| 3 | "Load" clicked | POST | `/api/files/upload` | file + sheet/header/delimiter | `FileMetaView` incl. `file_id` |
+| 4 | Catalogue uploaded | POST | `/api/catalog/upload` | multipart file | `catalog_id` + datasets |
+| 5 | Dataset picked | GET | `/api/catalog/{id}/datasets/{ds}/mapping` | — | mapping + default key columns |
+| 6 | Guide link | GET | `/api/catalog/template` | — | blank catalogue `.xlsx` |
+| 7 | "Run comparison" | POST | `/api/compare/jobs` | `CompareRequest` | `202 { job_id, status }` |
+| 8 | Every 400 ms | GET | `/api/compare/jobs/{jobId}` | — | status, progress, result when done |
+| 9 | "Cancel" | DELETE | `/api/compare/jobs/{jobId}` | — | `{ cancelled }` |
+| 10 | Download link | GET | `/api/compare/{runId}/report.xlsx` | — | workbook |
 
 Conventions across all of them:
 

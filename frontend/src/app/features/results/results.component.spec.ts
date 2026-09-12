@@ -146,20 +146,13 @@ describe("ResultsComponent truncation notice", () => {
     expect(tile?.textContent).toContain("across 3 keys");
   });
 
-  it("offers the annotated downloads when the run produced them", () => {
-    const el = render(result());
-    expect(el.textContent).toContain("Annotated source file");
-    expect(el.textContent).toContain("Annotated target file");
-  });
-
-  // The run decides, not the current form state -- so a result that was
-  // produced without them must not offer links the server will refuse.
-  it("explains their absence instead of offering a broken link", () => {
-    const el = render(result({ annotated_outputs: false }));
-    expect(el.textContent).not.toContain("Annotated source file");
-    expect(el.textContent).toContain("were not produced for this run");
-    // The audit workbook is unconditional.
+  // The annotated files are not offered in this UI at all, whatever the
+  // run reports -- only the audit workbook is.
+  it("offers the audit workbook and no annotated links", () => {
+    const el = render(result({ annotated_outputs: true }));
     expect(el.textContent).toContain("Audit workbook");
+    expect(el.textContent).not.toContain("Annotated source file");
+    expect(el.textContent).not.toContain("Annotated target file");
   });
 
   it("lists only the sections that were actually cut", () => {
