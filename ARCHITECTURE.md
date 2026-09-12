@@ -57,8 +57,9 @@ I/O and state; the worker owns CPU and data.** The main thread stays
 responsive because it never does the heavy work — that is what makes live
 progress possible at all.
 
-Without Docker, nginx is absent and Express serves the built SPA itself
-(`npm run start:spa`); everything below is otherwise identical.
+Without Docker, nginx is absent and one Express process serves the built
+SPA as well as the API (`npm start` from the repository root); everything
+below is otherwise identical.
 
 ---
 
@@ -214,9 +215,10 @@ Every request the SPA can make, in the order it typically makes them.
 
 Conventions across all of them:
 
-- **Same origin.** In production nginx proxies `/api/*` to the backend; in
-  development `ng serve` proxies it (`frontend/proxy.conf.json`). The
-  frontend never holds a base URL, and there is no CORS in the normal path.
+- **Same origin.** The page and the API always share one: with Docker,
+  nginx serves the SPA and proxies `/api/*` to the backend; without it,
+  one Express process serves both. The frontend never holds a base URL,
+  and CORS never comes into it.
 - **JSON is `snake_case`** on the wire, matching the original app's
   contract. Decimals cross as **strings** and dates as ISO strings — a
   money value is never a JavaScript `number`.

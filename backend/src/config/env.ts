@@ -83,7 +83,11 @@ export function maxResponseRows(): number {
 }
 
 export function corsOrigins(): string[] {
-  const raw = process.env.CORS_ORIGINS ?? "http://localhost:4200";
+  // Defaults to the single-process origin. Neither supported topology
+  // needs CORS at all -- the page and the API share an origin in both --
+  // so this only matters to someone deliberately serving the SPA from
+  // somewhere else.
+  const raw = process.env.CORS_ORIGINS ?? "http://localhost:3000";
   return raw
     .split(",")
     .map((s) => s.trim())

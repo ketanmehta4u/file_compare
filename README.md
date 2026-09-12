@@ -21,9 +21,9 @@ thread**, so the server stays responsive and the page shows live progress
   release on the 14.x line).
 - **Express 5** + TypeScript backend, with the comparison engine written
   from scratch in TypeScript.
-- Two Docker containers: nginx serving the built SPA and proxying
-  `/api/*` to the backend — or, without Docker, a single Node process
-  that serves both.
+- Runs as **one Node process** serving both the built SPA and the API, or
+  as two Docker containers with nginx in front. There is no separate
+  frontend server to start.
 - Memory limits **size themselves to the machine**, so the same build
   behaves sensibly on a laptop and in a small container.
 
@@ -55,15 +55,19 @@ parallel rebuild in its own repository, not a migration.
 
 ## Quick start
 
-With Docker installed, from the repository root:
+One command, from the repository root:
 
 ```bash
-docker compose up --build
+npm run setup     # first time only: installs both halves
+npm start         # builds both, then serves them as one process
 ```
 
-Then open <http://localhost:8080>. Sample files to try it with are in
+Then open <http://localhost:3000>. Sample files to try it with are in
 `fixtures/` — upload `sample_source.csv` as Source and
 `sample_target.csv` as Target.
+
+With Docker instead: `docker compose up --build`, then
+<http://localhost:8080>.
 
 ---
 
@@ -92,41 +96,7 @@ Windows users: any directory works, but avoid paths with spaces or
 non-ASCII characters, and prefer a local drive over a network share
 (`npm install` is slow and occasionally flaky over SMB).
 
-### 2a. Docker setup (recommended)
-
-```bash
-docker compose up --build
-```
-
-First build takes a few minutes — it installs dependencies and runs a
-production Angular build inside the image. Subsequent starts are fast.
-Verify it is up:
-
-```bash
-curl -I http://localhost:8080/          # SPA shell -> 200
-curl http://localhost:8080/api/livez    # -> {"status":"alive"}
-```
-
-To stop: `Ctrl+C`, then `docker compose down`.
-
-If **port 8080 is already in use** (this project's own default, and a
-common one), map a different host port without editing the committed
-file:
-
-```bash
-# docker-compose.override.yml
-services:
-  frontend:
-    ports: !override
-      - "8081:8080"
-```
-
-`docker compose up` picks that file up automatically, and the app is then
-on <http://localhost:8081>. The `!override` tag matters — without it
-Compose _appends_ to the port list rather than replacing it, and the
-original `8080` binding still conflicts.
-
-### 2b. Without Docker — one process, one command
+### 2a. One process, one command (simplest)
 
 The backend can serve the built Angular app itself, so the whole
 application runs as a single Node process. From the repository root:
@@ -159,32 +129,39 @@ front of the app. For a handful of users on an internal network that is
 fine; for anything public, put a reverse proxy in front regardless of how
 you run this (and set `TRUST_PROXY` to match).
 
-### 2c. Native setup (hot reload for development)
-
-Two terminals, from the repository root:
+### 2b. With Docker: two containers, nginx in front
 
 ```bash
-# Terminal 1 — backend on :3000
-cd backend
-npm install
-npm run dev
+docker compose up --build
 ```
+
+First build takes a few minutes — it installs dependencies and runs a
+production Angular build inside the image. Subsequent starts are fast.
+Verify it is up:
 
 ```bash
-# Terminal 2 — frontend on :4200
-cd frontend
-npm install --legacy-peer-deps
-npm start
+curl -I http://localhost:8080/          # SPA shell -> 200
+curl http://localhost:8080/api/livez    # -> {"status":"alive"}
 ```
 
-Open <http://localhost:4200>. The dev server proxies `/api/*` to
-`:3000` (see `frontend/proxy.conf.json`), so both halves behave as they
-do in production.
+To stop: `Ctrl+C`, then `docker compose down`.
 
-`--legacy-peer-deps` is required for the frontend: Angular 14's peer
-dependency ranges do not satisfy npm's default strict resolution against
-the pinned toolchain. It is expected, not a workaround for a broken
-`package.json`.
+If **port 8080 is already in use** (this project's own default, and a
+common one), map a different host port without editing the committed
+file:
+
+```bash
+# docker-compose.override.yml
+services:
+  frontend:
+    ports: !override
+      - "8081:8080"
+```
+
+`docker compose up` picks that file up automatically, and the app is then
+on <http://localhost:8081>. The `!override` tag matters — without it
+Compose _appends_ to the port list rather than replacing it, and the
+original `8080` binding still conflicts.
 
 ### 3. Confirm the install is good
 
@@ -247,15 +224,12 @@ deployment. Before putting it in front of users:
 
 ## Running the app
 
-|                                              | Command                                    | URL                                |
-| -------------------------------------------- | ------------------------------------------ | ---------------------------------- |
-| Docker (prod shape)                          | `docker compose up --build`                | <http://localhost:8080>            |
-| **One process, one command** (from the root) | `npm start`                                | <http://localhost:3000>            |
-| Same, without rebuilding                     | `npm run serve`                            | <http://localhost:3000>            |
-| Backend only (dev)                           | `cd backend && npm run dev`                | <http://localhost:3000>            |
-| Frontend only (dev)                          | `cd frontend && npm start`                 | <http://localhost:4200>            |
-| Backend production build                     | `cd backend && npm run build && npm start` | <http://localhost:3000>            |
-| Frontend production build                    | `cd frontend && npm run build`             | output in `frontend/dist/frontend` |
+|                                              | Command                     | URL                     |
+| -------------------------------------------- | --------------------------- | ----------------------- |
+| **One process, one command** (from the root) | `npm start`                 | <http://localhost:3000> |
+| Same, without rebuilding                     | `npm run serve`             | <http://localhost:3000> |
+| Docker (two containers, nginx in front)      | `docker compose up --build` | <http://localhost:8080> |
+| Build only, no serve                         | `npm run build`             | —                       |
 
 ---
 
@@ -310,27 +284,20 @@ docker compose logs -f frontend  # follow nginx logs
 docker compose up --build --force-recreate   # rebuild from changed source
 ```
 
-### Run — no Docker, single process
+### Run — one process
 
 ```bash
-cd frontend && npm run build     # build the SPA first
+npm start        # build both halves, then serve them together   -> :3000
+npm run serve    # serve an existing build                       -> :3000
+```
+
+Equivalently, per package:
+
+```bash
+cd frontend && npm run build     # build the SPA
 cd ../backend && npm run build   # compile the backend
-npm run start:spa                # serves SPA + API together        -> :3000
+npm run start:spa                # serve SPA + API together       -> :3000
 ```
-
-### Run — development, hot reload
-
-```bash
-# terminal 1
-cd backend && npm run dev        # tsx watch                        -> :3000
-
-# terminal 2
-cd frontend && npm start         # ng serve, proxies /api to :3000  -> :4200
-```
-
-Open <http://localhost:4200> — **not** `127.0.0.1:4200`, which the
-Angular dev server does not listen on (see
-[Troubleshooting](#troubleshooting)).
 
 ### Build
 
@@ -390,8 +357,7 @@ curl http://localhost:3000/api/config    # limits the UI reads
 curl -I http://localhost:8080/           # SPA headers through nginx
 ```
 
-Use `:8080` for Docker, `:3000` for the single-process run, `:4200` for
-the dev server.
+Use `:3000` for the single-process run and `:8080` for Docker.
 
 `/api/readyz` is the one to check on a deployed instance — it reports what
 the process actually gave itself on that machine:
@@ -483,7 +449,7 @@ Backend environment variables (all optional):
 | Variable                     | Default                                 | Meaning                                                                                                                                                                                                     |
 | ---------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PORT`                       | `3000`                                  | Listen port.                                                                                                                                                                                                |
-| `CORS_ORIGINS`               | `http://localhost:4200`                 | Comma-separated allowed origins.                                                                                                                                                                            |
+| `CORS_ORIGINS`               | `http://localhost:3000`                 | Comma-separated allowed origins. Neither supported topology needs CORS -- page and API share an origin in both -- so this matters only if you serve the SPA from elsewhere.                                 |
 | `MAX_UPLOAD_BYTES`           | half the cache budget, capped at 200 MB | Per-file upload cap. Unset, it follows the machine rather than promising 200 MB a small container could never parse (a 2 GB container lands at 140 MB). Keep nginx's `client_max_body_size` at or above it. |
 | `MAX_CONCURRENT_COMPARISONS` | `3`                                     | Comparison concurrency cap (restart to change).                                                                                                                                                             |
 | `COMPARE_QUEUE_TIMEOUT_S`    | `120`                                   | How long a queued comparison waits for a slot before a 503.                                                                                                                                                 |
@@ -876,7 +842,7 @@ design otherwise avoids entirely.
 holds 8080 — often another instance of this app. Either stop it
 (`docker ps`, then `docker compose down` in that project) or map a
 different host port with the `docker-compose.override.yml` shown
-[above](#2a-docker-setup-recommended).
+[above](#2b-with-docker-two-containers-nginx-in-front).
 
 **Frontend `npm install` fails with peer dependency errors.** Use
 `npm install --legacy-peer-deps` (frontend only; the backend installs
@@ -914,11 +880,6 @@ raise the container's `MEM_LIMIT`, and see
 **An annotated download says the file is no longer cached.** The upload
 was evicted, and annotated files are re-parsed from it on demand. Upload
 the file again and re-run the comparison.
-
-**`ng serve` is running but `http://127.0.0.1:4200` is refused.** The
-Angular dev server binds IPv6 loopback (`::1`) only — use
-`http://localhost:4200` instead, or `ng serve --host 0.0.0.0`. (Verified
-on this toolchain: `localhost` and `[::1]` answer, `127.0.0.1` does not.)
 
 **Frontend tests do nothing / cannot find a browser.** Karma needs
 Chrome. Install it, or point `CHROME_BIN` at a Chromium binary.
@@ -991,9 +952,9 @@ detail.
   configuration, and `frontend/scripts/check-csp-safe.js` runs after every
   build and fails it if `index.html` regains an inline handler or a
   print-deferred stylesheet. Note this only ever affected the _production_
-  build served under the app's own CSP -- `ng serve` sets no CSP and uses
-  the development configuration, so the two-terminal dev setup always
-  looked right.
+  build served under the app's own CSP; a plain dev server sets no CSP and
+  builds the development configuration, which is why this only ever
+  appeared once the app was served the way it ships.
 - **`add_header` does not merge across nginx `location` levels.** A child
   block defining any `add_header` of its own drops every header inherited
   from the server level. The SPA's `location = /index.html` (reached by
