@@ -1,0 +1,13 @@
+{
+  "name": "compare-file",
+  "version": "1.0.0",
+  "private": true,
+  "description": "File comparison tool -- root scripts so the whole app can be built, run and tested with one command from here.",
+  "scripts": {
+    "setup": "npm install --prefix backend && npm install --prefix frontend --legacy-peer-deps",
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
+    "start": "npm run build && node backend/dist/server.js --serve-frontend",
+    "serve": "node backend/dist/server.js --serve-frontend",
+    "test": "npm test --prefix backend && npm test --prefix frontend"
+  }
+}

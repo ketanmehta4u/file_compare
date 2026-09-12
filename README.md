@@ -126,16 +126,25 @@ on <http://localhost:8081>. The `!override` tag matters — without it
 Compose *appends* to the port list rather than replacing it, and the
 original `8080` binding still conflicts.
 
-### 2b. Without Docker — one process, no nginx
+### 2b. Without Docker — one process, one command
 
 The backend can serve the built Angular app itself, so the whole
-application runs as a single Node process with nothing else installed:
+application runs as a single Node process. From the repository root:
 
 ```bash
-cd frontend && npm install --legacy-peer-deps && npm run build
-cd ../backend && npm install && npm run build
-npm run start:spa           # http://localhost:3000
+npm run setup     # installs both halves (once)
+npm start         # builds both, then serves on http://localhost:3000
 ```
+
+`npm run serve` starts it again without rebuilding.
+
+> **Windows PowerShell:** run these from the root as shown. The
+> `cd x && npm ...` form used elsewhere in this README is POSIX shell
+> syntax — PowerShell 5.1 rejects `&&` outright with *"The token '&&' is
+> not a valid statement separator in this version"*, and nothing runs. The
+> root scripts above avoid the problem because npm executes its own
+> scripts through `cmd`, whatever shell you called it from. See
+> [Command reference](#command-reference) for the per-shell forms.
 
 That is a real production run: the built SPA (not a dev server), the API,
 and the engine in one process. `start:spa` passes `--serve-frontend`;
@@ -241,7 +250,8 @@ deployment. Before putting it in front of users:
 | | Command | URL |
 |---|---|---|
 | Docker (prod shape) | `docker compose up --build` | <http://localhost:8080> |
-| Single process, no Docker | `cd backend && npm run start:spa` | <http://localhost:3000> |
+| **One process, one command** (from the root) | `npm start` | <http://localhost:3000> |
+| Same, without rebuilding | `npm run serve` | <http://localhost:3000> |
 | Backend only (dev) | `cd backend && npm run dev` | <http://localhost:3000> |
 | Frontend only (dev) | `cd frontend && npm start` | <http://localhost:4200> |
 | Backend production build | `cd backend && npm run build && npm start` | <http://localhost:3000> |
@@ -253,6 +263,33 @@ deployment. Before putting it in front of users:
 
 Every command in one place. All paths are relative to the repository
 root, and `cd` back to the root between blocks.
+
+> **The `&&` in these blocks is POSIX shell syntax.** It works in bash,
+> zsh, Git Bash and cmd.exe. **PowerShell 5.1 does not accept it at all** --
+> `cd frontend && npm run build` fails to parse with *"The token '&&' is
+> not a valid statement separator in this version"*, so nothing runs, not
+> even the first half. Two ways round it:
+>
+> ```powershell
+> cd frontend; npm run build          # run both regardless of the first result
+> cd frontend; if ($?) { npm run build }   # only if the first succeeded
+> ```
+>
+> Or avoid the issue entirely and use the root scripts, which chain
+> internally through npm: `npm run setup`, `npm run build`, `npm start`,
+> `npm run serve`, `npm test`.
+
+### Everything, from the root
+
+```bash
+npm run setup     # install both halves (once)
+npm run build     # build frontend then backend
+npm start         # build both, then serve as one process   -> :3000
+npm run serve     # serve without rebuilding                -> :3000
+npm test          # backend suite, then frontend suite
+```
+
+These work identically in every shell.
 
 ### Install
 
@@ -890,6 +927,7 @@ frontend/         Angular 14 SPA
   nginx.conf        static serving + /api proxy (production image)
 fixtures/         sample CSV/XLSX used by tests and manual checks
 docker-compose.yml
+package.json      root scripts: setup / build / start / serve / test
 ARCHITECTURE.md   how it works: workflow, API calls, internals
 BUILD_PROMPT.md   full specification of this app, written from the code
 prompt.md         an earlier, rejected specification -- kept for reference
