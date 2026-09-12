@@ -966,6 +966,21 @@ detail.
   binary**, and a later Windows-side production build fails with
   `esbuild-wasm: The service was stopped`. Reinstall
   `node_modules` on whichever platform you build on next.
+- **Angular's `inlineCritical` optimisation is incompatible with a strict
+  CSP, and fails silently.** The production build used to inline the
+  critical CSS and defer the real stylesheet as
+  `<link rel="stylesheet" media="print" onload="this.media='all'">`. Under
+  `script-src 'self'` that inline `onload` never runs, so the stylesheet
+  stays print-only and the page renders with just the inlined fragment --
+  background and font, no panels, no layout. Nothing errors: the
+  stylesheet returns 200 and contains every rule, it is simply never
+  applied. It is now disabled in `angular.json`'s production
+  configuration, and `frontend/scripts/check-csp-safe.js` runs after every
+  build and fails it if `index.html` regains an inline handler or a
+  print-deferred stylesheet. Note this only ever affected the *production*
+  build served under the app's own CSP -- `ng serve` sets no CSP and uses
+  the development configuration, so the two-terminal dev setup always
+  looked right.
 - **`add_header` does not merge across nginx `location` levels.** A child
   block defining any `add_header` of its own drops every header inherited
   from the server level. The SPA's `location = /index.html` (reached by
