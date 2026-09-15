@@ -22,11 +22,35 @@ describe("AppComponent", () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it("renders the themed product name in the header", () => {
+  it("shows the logo and the product name in the blue strip", () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const strip = (fixture.nativeElement as HTMLElement).querySelector(".utility-bar")!;
+
+    expect(strip.querySelector("img.logo")?.getAttribute("src")).toBe("assets/wbg-logo-white.svg");
+    expect(strip.querySelector("h1")?.textContent?.trim()).toBe("File Reconciliation");
+    expect(strip.textContent).not.toContain("The World Bank"); // the logo replaces the text
+  });
+
+  it("goes straight from the strip to the page, with no second title or logo", () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector("h1")?.textContent).toContain("Financial File Reconciliation");
+
+    expect(compiled.querySelectorAll("h1").length).toBe(1);
+    expect(compiled.querySelectorAll("img.logo").length).toBe(1);
+    expect(compiled.querySelector(".app-header")).toBeNull();
+  });
+
+  it("shows the disclaimer at the bottom of the page", () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const footer = (fixture.nativeElement as HTMLElement).querySelector("footer.app-footer")!;
+
+    expect(footer.querySelector(".disclaimer")?.textContent?.trim()).toBe(
+      "Compare and reconcile two financial-reporting files. Outputs an audit-ready report. " +
+        "This tool assists reconciliation but does not replace independent verification or sign-off."
+    );
   });
 
   it("disables Run until both files are loaded", () => {

@@ -34,9 +34,12 @@ export interface Theme {
   orgLegalName: string;
   productName: string;
   ribbonTagline: string;
-  description: string;
+  /** The disclaimer shown at the bottom of every page. */
   footerNote: string;
   logoSrc: string;
+  /** The logo for the dark blue strip: the same mark with white lettering,
+   * since the standard navy lettering disappears against navy. */
+  logoOnDarkSrc: string;
   logoAlt: string;
   faviconSrc: string;
   colors: ThemeColors;
@@ -47,17 +50,15 @@ export interface Theme {
 export const theme: Theme = {
   orgName: "The World Bank",
   orgLegalName: "The World Bank Group",
-  productName: "Financial File Reconciliation",
+  productName: "File Reconciliation",
   ribbonTagline: "Product Control",
-  description:
+  footerNote:
     "Compare and reconcile two financial-reporting files. Outputs an audit-ready " +
     "report. This tool assists reconciliation but does not replace independent " +
     "verification or sign-off.",
-  footerNote:
-    "Financial File Reconciliation. This tool assists reconciliation but does not " +
-    "replace independent verification or sign-off.",
 
   logoSrc: "assets/wbg-logo.svg",
+  logoOnDarkSrc: "assets/wbg-logo-white.svg",
   logoAlt: "World Bank Group",
   faviconSrc: "favicon.ico",
 

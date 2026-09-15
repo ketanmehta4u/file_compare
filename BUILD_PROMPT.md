@@ -511,6 +511,13 @@ A single page, no router. Components:
   paged tables of source-only/target-only rows and cell differences,
   control totals, warnings, the audit header, and download links.
 - **Guide**: a collapsible how-to.
+- **Branding**: a dark blue strip across the top with the logo on the left
+  (a white-lettered variant, since standard navy lettering vanishes on
+  navy), the product name centred as the page's single `h1`, and a tagline
+  on the right that is dropped on a phone; the disclaimer at the bottom of
+  every page. Read every name, logo, colour and the disclaimer from one
+  `theme.ts`, so a re-brand is a one-file edit. System fonts only — the CSP
+  allows no third-party font host.
 
 Hold the shared state in one service. Two subtleties that are easy to get
 wrong and that the tests should pin:

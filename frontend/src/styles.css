@@ -27,37 +27,57 @@ body {
   color: var(--text);
 }
 
+/* The blue strip. Three columns with equal outer tracks, so the title sits
+   in the true centre of the page whatever the widths of the logo and the
+   tagline either side of it. */
 .utility-bar {
   background: var(--wb-navy);
   color: #fff;
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 14px 24px;
+  border-bottom: 4px solid var(--wb-blue);
+}
+.utility-bar .logo {
+  height: 44px;
+  justify-self: start;
+}
+/* System fonts only: the page's CSP allows no third-party font hosts, and
+   the app must look the same on a machine with no internet access. */
+.utility-bar h1 {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.utility-bar .tagline {
+  justify-self: end;
   font-size: 0.8rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
-
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: var(--panel);
-  border-bottom: 3px solid var(--wb-blue);
-}
-.app-header .logo {
-  height: 48px;
-}
-.app-header h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: var(--wb-navy);
-}
-.app-header p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  max-width: 60ch;
+/* On a phone there is no room for all three: drop the tagline and let the
+   title take the rest of the strip beside the logo. */
+@media (max-width: 640px) {
+  .utility-bar {
+    grid-template-columns: auto 1fr;
+    min-height: 60px;
+    padding: 10px 16px;
+  }
+  .utility-bar .logo {
+    height: 30px;
+  }
+  .utility-bar h1 {
+    font-size: 1.2rem;
+  }
+  .utility-bar .tagline {
+    display: none;
+  }
 }
 
 .app-main {
@@ -332,4 +352,11 @@ button:disabled {
 .app-footer a {
   color: #fff;
   margin-right: 12px;
+}
+.app-footer nav span {
+  margin-right: 8px;
+}
+.app-footer .disclaimer {
+  color: #fff;
+  max-width: 90ch;
 }

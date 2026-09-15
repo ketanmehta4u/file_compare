@@ -167,7 +167,7 @@ original `8080` binding still conflicts.
 
 ```bash
 cd backend && npm test     # 186 tests
-cd ../frontend && npm test # 44 tests (opens Chrome)
+cd ../frontend && npm test # 45 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -312,7 +312,7 @@ cd frontend && npm run watch                       # rebuild on change
 
 ```bash
 cd backend  && npm test                            # vitest, 186 tests
-cd frontend && npm test                            # karma/jasmine, 44 tests
+cd frontend && npm test                            # karma/jasmine, 45 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -379,6 +379,18 @@ git status --short
 
 ## Using it
 
+**The page.** A dark blue strip across the top carries the World Bank
+Group logo on the left and the product name, **File Reconciliation**, in
+the centre (with the "Product Control" tagline on the right, hidden on a
+phone). The disclaimer sits at the bottom of every page: _"Compare and
+reconcile two financial-reporting files. Outputs an audit-ready report.
+This tool assists reconciliation but does not replace independent
+verification or sign-off."_ All of this -- names, logo, colours,
+disclaimer, footer links -- comes from `frontend/src/app/theme.ts`, so a
+re-brand is a one-file edit. The logo on the strip is
+`assets/wbg-logo-white.svg`, the standard mark with white lettering so it
+stays legible on the dark blue.
+
 1. Upload the **Source** file (`.csv` or `.xlsx`). For a workbook, pick
    the sheet; for CSV, confirm the header row and delimiter.
 2. Upload the **Target** file the same way.
@@ -420,7 +432,7 @@ falls back to whole-row matching).
 
 ```bash
 cd backend && npm test    # vitest — engine + API, 186 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 44 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 45 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run

@@ -1,14 +1,9 @@
+<!-- The blue strip: logo on the left, the product name centred (it is the
+     page's one h1), and the tagline on the right. -->
 <header class="utility-bar">
-  <span>{{ theme.orgName }}</span>
-  <span>{{ theme.ribbonTagline }}</span>
-</header>
-
-<header class="app-header">
-  <img [src]="theme.logoSrc" [alt]="theme.logoAlt" class="logo" />
-  <div>
-    <h1>{{ theme.productName }}</h1>
-    <p>{{ theme.description }}</p>
-  </div>
+  <img [src]="theme.logoOnDarkSrc" [alt]="theme.logoAlt" class="logo" />
+  <h1>{{ theme.productName }}</h1>
+  <span class="tagline">{{ theme.ribbonTagline }}</span>
 </header>
 
 <main class="app-main" *ngIf="state$ | async as state">
@@ -67,7 +62,7 @@
 </main>
 
 <footer class="app-footer">
-  <p>{{ theme.footerNote }}</p>
+  <p class="disclaimer">{{ theme.footerNote }}</p>
   <p>&copy; {{ theme.orgLegalName }}</p>
   <nav>
     <span>{{ theme.footerLinksTitle }}:</span>

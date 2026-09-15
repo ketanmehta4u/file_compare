@@ -80,7 +80,10 @@ every audit report, server-side.
 
 Before any of that, an `APP_INITIALIZER` applies the branding from
 `theme.ts` — CSS custom properties, page title, favicon — so the first
-paint is already themed.
+paint is already themed. The template reads the rest of the branding from
+the same object: the blue strip (white-lettered logo, the product name as
+the page's single `h1`, the tagline) and the footer (the disclaimer and
+the links).
 
 ### 2. The user picks a source file
 
