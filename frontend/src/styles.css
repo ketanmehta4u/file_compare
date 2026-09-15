@@ -1,8 +1,9 @@
 /* ==========================================================================
    Design tokens. The brand colours (--bg, --wb-navy, ...) are also written at
    startup from theme.ts by ThemeService; the rest are CSS-only refinements.
-   System fonts only: the page's CSP allows no third-party font hosts, and the
-   app must look the same on a machine with no internet access.
+   Body text uses system fonts; the one bundled typeface is the title's
+   Montserrat (see .utility-bar h1). The page's CSP allows no third-party
+   font hosts, and the app must work on a machine with no internet access.
    ========================================================================== */
 :root {
   --bg: #f4f6f9;
@@ -117,12 +118,17 @@ code {
   height: 44px;
   justify-self: start;
 }
+/* The title's typeface: Montserrat Bold, bundled with the app from the
+   @fontsource/montserrat package (SIL Open Font License) -- only its Latin
+   700 weight, added in angular.json. Served from the app's own origin, so
+   it works offline and under the CSP; the system fonts are fallbacks while
+   it loads (font-display: swap). */
 .utility-bar h1 {
   margin: 0;
-  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   text-align: center;
 }
 .utility-bar .tagline {

@@ -381,7 +381,7 @@ git status --short
 
 **The page.** A dark blue strip across the top carries the World Bank
 Group logo on the left and the product name, **File Reconciliation**, in
-the centre (with the "Product Control" tagline on the right, hidden on a
+the centre in Montserrat Bold (with the "Product Control" tagline on the right, hidden on a
 phone). The disclaimer sits at the bottom of every page: _"Compare and
 reconcile two financial-reporting files. Outputs an audit-ready report.
 This tool assists reconciliation but does not replace independent

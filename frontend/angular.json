@@ -23,6 +23,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/@fontsource/montserrat/latin-700.css",
               "src/styles.css"
             ],
             "scripts": []
@@ -101,6 +102,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/@fontsource/montserrat/latin-700.css",
               "src/styles.css"
             ],
             "scripts": []

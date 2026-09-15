@@ -516,8 +516,11 @@ A single page, no router. Components:
   navy), the product name centred as the page's single `h1`, and a tagline
   on the right that is dropped on a phone; the disclaimer at the bottom of
   every page. Read every name, logo, colour and the disclaimer from one
-  `theme.ts`, so a re-brand is a one-file edit. System fonts only — the CSP
-  allows no third-party font host.
+  `theme.ts`, so a re-brand is a one-file edit. The title is set in
+  Montserrat Bold, bundled from the `@fontsource/montserrat` npm package
+  (Latin 700 weight only, SIL Open Font License) and served from the app's
+  own origin; everything else uses system fonts. Never load fonts from a
+  third-party host — the CSP forbids it and the app must work offline.
 
 Hold the shared state in one service. Two subtleties that are easy to get
 wrong and that the tests should pin:
