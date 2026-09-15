@@ -167,7 +167,7 @@ original `8080` binding still conflicts.
 
 ```bash
 cd backend && npm test     # 186 tests
-cd ../frontend && npm test # 45 tests (opens Chrome)
+cd ../frontend && npm test # 50 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -312,7 +312,7 @@ cd frontend && npm run watch                       # rebuild on change
 
 ```bash
 cd backend  && npm test                            # vitest, 186 tests
-cd frontend && npm test                            # karma/jasmine, 45 tests
+cd frontend && npm test                            # karma/jasmine, 50 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -391,6 +391,15 @@ re-brand is a one-file edit. The logo on the strip is
 `assets/wbg-logo-white.svg`, the standard mark with white lettering so it
 stays legible on the dark blue.
 
+Below the strip, a three-step indicator (**Upload files → Review settings
+→ Run & review**) follows you down the page. Each file has its own card
+with a drop zone: drag a file onto it or click to browse, and once loaded
+the card shows the file name with its row, column and size badges. The
+settings card offers key and control-total columns as clickable chips,
+and the results open with the verdict banner and a download button, then
+colour-coded summary tiles (green for matched, red for breaks), tabbed
+detail tables, control totals and the full download.
+
 1. Upload the **Source** file (`.csv` or `.xlsx`). For a workbook, pick
    the sheet; for CSV, confirm the header row and delimiter.
 2. Upload the **Target** file the same way.
@@ -432,7 +441,7 @@ falls back to whole-row matching).
 
 ```bash
 cd backend && npm test    # vitest — engine + API, 186 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 45 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 50 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run

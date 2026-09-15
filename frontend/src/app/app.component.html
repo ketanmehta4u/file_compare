@@ -7,12 +7,52 @@
 </header>
 
 <main class="app-main" *ngIf="state$ | async as state">
+  <section class="intro">
+    <div class="intro-text">
+      <h2>Reconcile two files</h2>
+      <p>
+        Upload a source and a target file, check how their columns line up, and get a verdict with a complete
+        audit workbook.
+      </p>
+    </div>
+    <ol class="stepper" aria-label="Progress">
+      <li
+        *ngFor="let step of steps(state); let i = index; trackBy: trackByLabel"
+        class="step"
+        [class.step-done]="step.status === 'done'"
+        [class.step-current]="step.status === 'current'"
+        [attr.aria-current]="step.status === 'current' ? 'step' : null"
+      >
+        <span class="step-marker">
+          <svg
+            *ngIf="step.status === 'done'"
+            class="icon icon-sm"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
+          <ng-container *ngIf="step.status !== 'done'">{{ i + 1 }}</ng-container>
+        </span>
+        <span class="step-text">
+          <strong>{{ step.label }}</strong>
+          <span>{{ step.hint }}</span>
+        </span>
+      </li>
+    </ol>
+  </section>
+
   <app-how-to-use [maxUploadBytes]="config?.max_upload_bytes ?? null"></app-how-to-use>
 
   <!-- The two uploads come first: they are the whole job. The optional
        catalogue sits below them, collapsed, so it stops competing with
        the primary flow for a user who just wants to compare two files. -->
-  <div class="row">
+  <div class="upload-grid">
     <app-file-input
       label="Source"
       [maxUploadBytes]="config?.max_upload_bytes ?? null"
@@ -29,17 +69,43 @@
 
   <app-settings-panel [maxPreviewRows]="config?.max_response_rows ?? null"></app-settings-panel>
 
-  <div class="panel">
-    <button type="button" (click)="run(state)" [disabled]="!canRun(state)">
-      {{ running ? "Running…" : "Run comparison" }}
-    </button>
-    <button type="button" *ngIf="running" class="link-button" (click)="cancel()">Cancel</button>
-    <button type="button" *ngIf="!running && result" class="link-button" (click)="startOver()">
-      Start over
-    </button>
-    <span *ngIf="!state.sourceFile || !state.targetFile" class="muted"
-      >Load both a source and target file to run a comparison.</span
-    >
+  <section class="panel run-card" [class.is-ready]="canRun(state) && !result">
+    <div class="run-row">
+      <button type="button" class="btn-primary btn-lg" (click)="run(state)" [disabled]="!canRun(state)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+        </svg>
+        {{ running ? "Running…" : "Run comparison" }}
+      </button>
+      <button type="button" *ngIf="running" class="btn-secondary" (click)="cancel()">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+        Cancel
+      </button>
+      <button type="button" *ngIf="!running && result" class="btn-ghost" (click)="startOver()">
+        <svg
+          class="icon icon-sm"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 11a8 8 0 1 0-2.34 5.66" />
+          <path d="M20 4v7h-7" />
+        </svg>
+        Start over
+      </button>
+      <p *ngIf="!state.sourceFile || !state.targetFile" class="run-hint">
+        Load both a source and target file to run a comparison.
+      </p>
+      <p *ngIf="canRun(state) && !result" class="run-hint">
+        Both files are loaded. Check the settings above, then run the comparison.
+      </p>
+    </div>
 
     <div *ngIf="running" class="run-progress" role="status" aria-live="polite">
       <div class="progress-bar">
@@ -55,19 +121,35 @@
       </p>
     </div>
 
-    <div *ngIf="runError" class="alert alert-error">{{ runError }}</div>
-  </div>
+    <div *ngIf="runError" class="alert alert-error" role="alert">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9 9l6 6M15 9l-6 6" />
+      </svg>
+      <span>{{ runError }}</span>
+    </div>
+  </section>
 
   <app-results *ngIf="result" [result]="result" [previewRows]="state.previewRows"></app-results>
 </main>
 
 <footer class="app-footer">
-  <p class="disclaimer">{{ theme.footerNote }}</p>
-  <p>&copy; {{ theme.orgLegalName }}</p>
-  <nav>
-    <span>{{ theme.footerLinksTitle }}:</span>
-    <a *ngFor="let link of theme.footerLinks" [href]="link.href" target="_blank" rel="noopener">{{
-      link.label
-    }}</a>
-  </nav>
+  <div class="footer-inner">
+    <p class="disclaimer">{{ theme.footerNote }}</p>
+    <p>&copy; {{ theme.orgLegalName }}</p>
+    <nav>
+      <span>{{ theme.footerLinksTitle }}:</span>
+      <a *ngFor="let link of theme.footerLinks" [href]="link.href" target="_blank" rel="noopener">{{
+        link.label
+      }}</a>
+    </nav>
+  </div>
 </footer>

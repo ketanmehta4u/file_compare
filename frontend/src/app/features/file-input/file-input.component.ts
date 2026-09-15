@@ -18,6 +18,13 @@ function isExcelName(name: string): boolean {
  * round-trip. */
 const ACCEPTED_EXTENSIONS = ["csv", "xlsx"];
 
+/** A file size for people: "845 B", "12.4 KB", "3.2 MB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /**
  * Port of the original's FileInput.tsx, reused for both Source and
  * Target. Blob-URL mode is dropped entirely in this port -- blob storage
@@ -51,6 +58,10 @@ export class FileInputComponent {
   progress: number | null = null;
   meta: FileMetaView | null = null;
   sheetsLoading = false;
+  /** A file is being dragged over the drop zone. */
+  dragging = false;
+
+  readonly formatBytes = formatBytes;
 
   constructor(private readonly api: ApiService) {}
 
@@ -58,8 +69,31 @@ export class FileInputComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (!file) return;
+    if (file) this.chooseFile(file);
+  }
 
+  /** Must cancel the default, or the browser refuses the drop (and would
+   * open the file in the tab instead). */
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging = true;
+  }
+
+  onDragLeave(): void {
+    this.dragging = false;
+  }
+
+  /** A dropped file goes through exactly the same checks as a picked one. */
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.chooseFile(file);
+  }
+
+  /** Validates a picked or dropped file, and lists its sheets if it is a
+   * workbook. Nothing is uploaded until load(). */
+  chooseFile(file: File): void {
     this.sizeError = "";
     this.loadError = "";
     this.sheets = [];

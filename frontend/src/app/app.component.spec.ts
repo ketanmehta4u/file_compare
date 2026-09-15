@@ -2,6 +2,8 @@ import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { HttpClientTestingModule } from "@angular/common/http/testing";
 import { AppComponent } from "./app.component";
+import { CompareStateService } from "./core/compare-state.service";
+import type { FileMetaView } from "./shared/models/dto";
 
 // CUSTOM_ELEMENTS_SCHEMA lets Angular ignore the child feature components'
 // own selectors/inputs here -- this is a smoke test for the shell itself
@@ -51,6 +53,33 @@ describe("AppComponent", () => {
       "Compare and reconcile two financial-reporting files. Outputs an audit-ready report. " +
         "This tool assists reconciliation but does not replace independent verification or sign-off."
     );
+  });
+
+  // The indicator is derived from state, so it follows the user through
+  // the page: upload first, then settings once both files are in.
+  it("walks the step indicator from uploading to reviewing settings", () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const current = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('.step[aria-current="step"]')?.textContent ?? "";
+    expect(current()).toContain("Upload files");
+
+    const state = TestBed.inject(CompareStateService);
+    const meta = (id: string) =>
+      ({
+        file_id: id,
+        filename: `${id}.csv`,
+        columns: ["id"],
+        dtypes: [["id", "text"]],
+      }) as unknown as FileMetaView;
+    state.setSourceFile(meta("src"));
+    state.setTargetFile(meta("tgt"));
+    fixture.detectChanges();
+
+    expect(current()).toContain("Review settings");
+    const done = (fixture.nativeElement as HTMLElement).querySelectorAll(".step-done");
+    expect(done.length).toBe(1);
+    expect(done[0].textContent).toContain("Upload files");
   });
 
   it("disables Run until both files are loaded", () => {

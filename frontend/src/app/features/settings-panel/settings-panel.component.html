@@ -1,131 +1,221 @@
-<div class="panel">
-  <h3>Comparison settings</h3>
+<section class="panel">
+  <header class="card-head">
+    <span class="card-icon">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+        <circle cx="15" cy="6" r="2" />
+        <circle cx="9" cy="12" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </svg>
+    </span>
+    <div class="card-title">
+      <h3>Comparison settings</h3>
+      <p>How rows line up between the two files, and what counts as a match.</p>
+    </div>
+  </header>
 
-  <div *ngIf="bothFilesLoaded">
-    <h4>Column mapping</h4>
-    <button type="button" (click)="autoMatch()">Auto-match by name</button>
-    <table class="simple-table">
-      <thead>
-        <tr>
-          <th>Source column</th>
-          <th>Compare against (target)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let col of state.sourceFile!.columns">
-          <td>{{ col }}</td>
-          <td>
-            <select [ngModel]="state.columnMap[col] || ''" (ngModelChange)="onColumnMapChange(col, $event)">
-              <option value="">(ignore)</option>
-              <option
-                *ngFor="let t of state.targetFile!.columns"
-                [value]="t"
-                [disabled]="usedTargets.has(t) && state.columnMap[col] !== t"
-              >
-                {{ t }}
-              </option>
-            </select>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div *ngIf="!bothFilesLoaded" class="empty-state">
+    <svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 12h1v4h1" />
+    </svg>
+    <span>Load both files to map their columns and choose the key columns.</span>
   </div>
 
-  <div *ngIf="commonColumns.length">
-    <h4>Key columns <span class="muted">(empty = compare full row)</span></h4>
-    <label *ngFor="let col of commonColumns" class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.keyColumns.includes(col)"
-        (change)="toggleKeyColumn(col, $any($event.target).checked)"
-      />
-      {{ col }}
-    </label>
+  <div *ngIf="bothFilesLoaded" class="settings-section">
+    <div class="section-head">
+      <h4>Column mapping</h4>
+      <button type="button" class="btn-secondary btn-sm" (click)="autoMatch()">Auto-match by name</button>
+    </div>
+    <div class="table-scroll table-scroll-short">
+      <table class="simple-table">
+        <thead>
+          <tr>
+            <th>Source column</th>
+            <th>Compare against (target)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let col of state.sourceFile!.columns">
+            <td>{{ col }}</td>
+            <td>
+              <select
+                [ngModel]="state.columnMap[col] || ''"
+                (ngModelChange)="onColumnMapChange(col, $event)"
+                [attr.aria-label]="'Target column for ' + col"
+              >
+                <option value="">(ignore)</option>
+                <option
+                  *ngFor="let t of state.targetFile!.columns"
+                  [value]="t"
+                  [disabled]="usedTargets.has(t) && state.columnMap[col] !== t"
+                >
+                  {{ t }}
+                </option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    <h4>Control-total columns <span class="muted">(empty = auto, all numeric)</span></h4>
-    <label *ngFor="let col of numericColumns" class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.controlTotalColumns.includes(col)"
-        (change)="toggleControlTotalColumn(col, $any($event.target).checked)"
-      />
-      {{ col }}
-    </label>
+  <div *ngIf="commonColumns.length" class="settings-section">
+    <h4>
+      Key columns
+      <span class="muted">— the columns that identify a row; none picked compares whole rows</span>
+    </h4>
+    <div class="chip-group">
+      <label
+        *ngFor="let col of commonColumns"
+        class="chip-check"
+        [class.is-checked]="state.keyColumns.includes(col)"
+      >
+        <input
+          type="checkbox"
+          [checked]="state.keyColumns.includes(col)"
+          (change)="toggleKeyColumn(col, $any($event.target).checked)"
+        />
+        <span>{{ col }}</span>
+      </label>
+    </div>
+
+    <h4>Control-total columns <span class="muted">— none picked totals every numeric column</span></h4>
+    <div class="chip-group">
+      <label
+        *ngFor="let col of numericColumns"
+        class="chip-check"
+        [class.is-checked]="state.controlTotalColumns.includes(col)"
+      >
+        <input
+          type="checkbox"
+          [checked]="state.controlTotalColumns.includes(col)"
+          (change)="toggleControlTotalColumn(col, $any($event.target).checked)"
+        />
+        <span>{{ col }}</span>
+      </label>
+    </div>
   </div>
 
   <!-- The defaults are right for most comparisons, so these are folded
        away rather than presented as a wall of choices. -->
-  <button type="button" class="link-button" (click)="toggleAdvanced()" [attr.aria-expanded]="advancedOpen">
-    {{ advancedOpen ? "Hide ▴" : "Show ▾" }} Matching options
-    <span class="muted" *ngIf="!advancedOpen">({{ optionsSummary }})</span>
-  </button>
-
-  <div *ngIf="advancedOpen">
-    <label class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.caseSensitive"
-        (change)="setCaseSensitive($any($event.target).checked)"
-      />
-      Case sensitive <span class="muted">— “ACME” differs from “Acme”</span>
-    </label>
-    <label class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.trimWhitespace"
-        (change)="setTrimWhitespace($any($event.target).checked)"
-      />
-      Trim whitespace <span class="muted">— ignore leading and trailing spaces</span>
-    </label>
-    <label class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.treatBlankAsZero"
-        (change)="setTreatBlankAsZero($any($event.target).checked)"
-      />
-      Treat blank as 0.00 <span class="muted">— an empty cell equals zero</span>
-    </label>
-    <label class="checkbox-row">
-      <input
-        type="checkbox"
-        [checked]="state.fuzzyColumnNames"
-        (change)="setFuzzyColumnNames($any($event.target).checked)"
-      />
-      Fuzzy column names <span class="muted">— match names differing only by case or spacing</span>
-    </label>
-
-    <label>
-      Numeric tolerance <span class="muted">(0 = exact; e.g. 0.01 allows a penny)</span>
-      <input
-        type="text"
-        inputmode="decimal"
-        [ngModel]="state.numericTolerance"
-        (ngModelChange)="setNumericTolerance($event)"
-      />
-    </label>
-    <label>
-      Decimal precision <span class="muted">(blank = compare in full)</span>
-      <input
-        type="number"
-        min="0"
-        [ngModel]="state.decimalPrecision"
-        (ngModelChange)="setDecimalPrecision($event === null ? '' : $event.toString())"
-      />
-    </label>
-    <label>
-      Rows to show per section
-      <span class="muted"
-        >(display only — downloads always contain every row<ng-container *ngIf="maxPreviewRows"
-          >, and the server sends at most {{ maxPreviewRows | number }}</ng-container
-        >)</span
+  <div class="settings-section">
+    <button
+      type="button"
+      class="disclosure disclosure-inline"
+      (click)="toggleAdvanced()"
+      [attr.aria-expanded]="advancedOpen"
+    >
+      <span class="disclosure-title">Matching options</span>
+      <span class="muted" *ngIf="!advancedOpen">({{ optionsSummary }})</span>
+      <svg
+        class="icon icon-sm chevron"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
       >
-      <input
-        type="number"
-        min="10"
-        [max]="maxPreviewRows || null"
-        [ngModel]="state.previewRows"
-        (ngModelChange)="setPreviewRows($event === null ? '' : $event.toString())"
-      />
-    </label>
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </button>
+
+    <div *ngIf="advancedOpen" class="reveal">
+      <div class="options-grid">
+        <label class="toggle-card">
+          <input
+            type="checkbox"
+            [checked]="state.caseSensitive"
+            (change)="setCaseSensitive($any($event.target).checked)"
+          />
+          <span><strong>Case sensitive</strong><span>“ACME” differs from “Acme”</span></span>
+        </label>
+        <label class="toggle-card">
+          <input
+            type="checkbox"
+            [checked]="state.trimWhitespace"
+            (change)="setTrimWhitespace($any($event.target).checked)"
+          />
+          <span><strong>Trim whitespace</strong><span>Ignore leading and trailing spaces</span></span>
+        </label>
+        <label class="toggle-card">
+          <input
+            type="checkbox"
+            [checked]="state.treatBlankAsZero"
+            (change)="setTreatBlankAsZero($any($event.target).checked)"
+          />
+          <span><strong>Treat blank as 0.00</strong><span>An empty cell equals zero</span></span>
+        </label>
+        <label class="toggle-card">
+          <input
+            type="checkbox"
+            [checked]="state.fuzzyColumnNames"
+            (change)="setFuzzyColumnNames($any($event.target).checked)"
+          />
+          <span
+            ><strong>Fuzzy column names</strong
+            ><span>Match names differing only by case or spacing</span></span
+          >
+        </label>
+      </div>
+
+      <div class="fields-grid">
+        <label class="field">
+          Numeric tolerance
+          <span class="muted">0 = exact; e.g. 0.01 allows a penny</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            [ngModel]="state.numericTolerance"
+            (ngModelChange)="setNumericTolerance($event)"
+          />
+        </label>
+        <label class="field">
+          Decimal precision
+          <span class="muted">Blank = compare in full</span>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="state.decimalPrecision"
+            (ngModelChange)="setDecimalPrecision($event === null ? '' : $event.toString())"
+          />
+        </label>
+        <label class="field">
+          Rows to show per section
+          <span class="muted"
+            >Display only — downloads always contain every row<ng-container *ngIf="maxPreviewRows"
+              >; the server sends at most {{ maxPreviewRows | number }}</ng-container
+            ></span
+          >
+          <input
+            type="number"
+            min="10"
+            [max]="maxPreviewRows || null"
+            [ngModel]="state.previewRows"
+            (ngModelChange)="setPreviewRows($event === null ? '' : $event.toString())"
+          />
+        </label>
+      </div>
+    </div>
   </div>
-</div>
+</section>

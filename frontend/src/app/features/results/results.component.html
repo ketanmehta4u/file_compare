@@ -1,74 +1,173 @@
-<div class="panel">
-  <div *ngIf="result.catalog_compliance_warnings.length" class="alert alert-warn">
-    <div *ngFor="let w of result.catalog_compliance_warnings">{{ w }}</div>
-  </div>
-  <div *ngIf="result.warnings.length" class="alert alert-warn">
-    <div *ngFor="let w of result.warnings">{{ w }}</div>
-  </div>
-
-  <div
-    *ngIf="result.audit.outcome as outcome"
-    class="verdict-banner"
-    [class.verdict-ok]="outcome.reconciled"
-    [class.verdict-bad]="!outcome.reconciled"
-  >
-    <span class="verdict-badge">{{ outcome.reconciled ? "✓" : "!" }}</span>
-    <strong>{{ outcome.verdict }}</strong>
-    <div class="muted">
-      source-only: {{ outcome.source_only_rows }} · target-only: {{ outcome.target_only_rows }} · matched with
-      differences: {{ outcome.matched_with_differences }} · cell diffs: {{ outcome.cell_differences }}
-      <span *ngIf="outcome.control_totals_not_tied_out">
-        · control totals NOT tied out: {{ outcome.control_totals_not_tied_out }}</span
+<section class="panel results-head">
+  <div class="card-head">
+    <span class="card-icon">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
       >
+        <path d="M4 20V11M10 20V4M16 20v-6M21 20H3" />
+      </svg>
+    </span>
+    <div class="card-title">
+      <h2>Results</h2>
+      <p>Every count comes from the complete comparison; the tables below are a preview.</p>
     </div>
   </div>
+  <a class="btn btn-primary" [href]="reportUrl()">
+    <svg
+      class="icon icon-sm"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 4v11" />
+      <path d="M7.5 10.5L12 15l4.5-4.5" />
+      <path d="M4 20h16" />
+    </svg>
+    Download audit workbook
+  </a>
+</section>
 
-  <h3>Summary</h3>
+<section
+  *ngIf="result.audit.outcome as outcome"
+  class="verdict-banner"
+  [class.verdict-ok]="outcome.reconciled"
+  [class.verdict-bad]="!outcome.reconciled"
+>
+  <span class="verdict-icon">
+    <svg
+      *ngIf="outcome.reconciled"
+      class="icon icon-lg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+    <svg
+      *ngIf="!outcome.reconciled"
+      class="icon icon-lg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 6v8" />
+      <path d="M12 18.5h.01" />
+    </svg>
+  </span>
+  <div>
+    <strong class="verdict-title">{{ outcome.verdict }}</strong>
+    <ul class="verdict-stats">
+      <li>
+        <strong>{{ outcome.source_only_rows | number }}</strong> source-only
+      </li>
+      <li>
+        <strong>{{ outcome.target_only_rows | number }}</strong> target-only
+      </li>
+      <li>
+        <strong>{{ outcome.matched_with_differences | number }}</strong> matched with differences
+      </li>
+      <li>
+        <strong>{{ outcome.cell_differences | number }}</strong> cell diffs
+      </li>
+      <li *ngIf="outcome.control_totals_not_tied_out" class="bad">
+        {{ outcome.control_totals_not_tied_out | number }} control totals NOT tied out
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section
+  *ngIf="result.catalog_compliance_warnings.length || result.warnings.length"
+  class="alert alert-warn alert-block"
+  role="alert"
+>
+  <svg
+    class="icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+    <path d="M12 9v4M12 17h.01" />
+  </svg>
+  <div>
+    <strong>Read these before relying on the numbers</strong>
+    <ul>
+      <li *ngFor="let w of result.catalog_compliance_warnings">{{ w }}</li>
+      <li *ngFor="let w of result.warnings">{{ w }}</li>
+    </ul>
+  </div>
+</section>
+
+<section class="panel">
+  <h3 class="section-title">Summary</h3>
   <div class="metric-grid">
-    <div class="metric">
+    <div class="metric tone-info">
       <span class="metric-label">Source rows</span
-      ><span class="metric-value">{{ result.summary.source_rows }}</span>
+      ><span class="metric-value">{{ result.summary.source_rows | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric tone-info">
       <span class="metric-label">Target rows</span
-      ><span class="metric-value">{{ result.summary.target_rows }}</span>
+      ><span class="metric-value">{{ result.summary.target_rows | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric tone-good">
       <span class="metric-label">Matched & equal</span
-      ><span class="metric-value">{{ result.summary.matched_equal }}</span>
+      ><span class="metric-value">{{ result.summary.matched_equal | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.matched_with_differences > 0">
       <span class="metric-label">Matched w/ differences</span
-      ><span class="metric-value">{{ result.summary.matched_with_differences }}</span>
+      ><span class="metric-value">{{ result.summary.matched_with_differences | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-warn]="result.summary.matched_with_tolerance > 0">
       <span class="metric-label">Matched w/ tolerance</span
-      ><span class="metric-value">{{ result.summary.matched_with_tolerance }}</span>
+      ><span class="metric-value">{{ result.summary.matched_with_tolerance | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.source_only_rows > 0">
       <span class="metric-label">Source-only rows</span
-      ><span class="metric-value">{{ result.summary.source_only_rows }}</span>
+      ><span class="metric-value">{{ result.summary.source_only_rows | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.target_only_rows > 0">
       <span class="metric-label">Target-only rows</span
-      ><span class="metric-value">{{ result.summary.target_only_rows }}</span>
+      ><span class="metric-value">{{ result.summary.target_only_rows | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.cell_diffs > 0">
       <span class="metric-label">Cell diffs</span
-      ><span class="metric-value">{{ result.summary.cell_diffs }}</span>
+      ><span class="metric-value">{{ result.summary.cell_diffs | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-good]="result.summary.control_totals_tied_out > 0">
       <span class="metric-label">Control totals tied out</span
-      ><span class="metric-value">{{ result.summary.control_totals_tied_out }}</span>
+      ><span class="metric-value">{{ result.summary.control_totals_tied_out | number }}</span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.control_totals_not_tied_out > 0">
       <span class="metric-label">Control totals NOT tied out</span
-      ><span class="metric-value">{{ result.summary.control_totals_not_tied_out }}</span>
+      ><span class="metric-value">{{ result.summary.control_totals_not_tied_out | number }}</span>
     </div>
     <!-- Duplicate rows matter more than their size suggests: beyond the
          first row per key, they are NOT compared at all. Flagged when
          non-zero so the number is not read as routine. -->
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.source_duplicate_rows > 0">
       <span class="metric-label">Source duplicate rows</span>
       <span class="metric-value" [class.bad]="result.summary.source_duplicate_rows > 0">{{
         result.summary.source_duplicate_rows | number
@@ -79,7 +178,7 @@
         }}
       </span>
     </div>
-    <div class="metric">
+    <div class="metric" [class.tone-bad]="result.summary.target_duplicate_rows > 0">
       <span class="metric-label">Target duplicate rows</span>
       <span class="metric-value" [class.bad]="result.summary.target_duplicate_rows > 0">{{
         result.summary.target_duplicate_rows | number
@@ -92,19 +191,25 @@
     </div>
   </div>
 
-  <details>
-    <summary>Audit header</summary>
-    <table class="simple-table">
-      <tbody>
-        <tr *ngFor="let row of result.audit.rows">
-          <td>{{ row[0] }}</td>
-          <td>{{ row[1] }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <details class="details-card">
+    <summary>Audit header — who ran it, which files, which settings</summary>
+    <div class="table-scroll table-scroll-short">
+      <table class="simple-table">
+        <tbody>
+          <tr *ngFor="let row of result.audit.rows">
+            <td>
+              <strong>{{ row[0] }}</strong>
+            </td>
+            <td class="wrap">{{ row[1] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </details>
+</section>
 
-  <h3 id="column-diff-heading">Column differences</h3>
+<section class="panel">
+  <h3 id="column-diff-heading" class="section-title">Column differences</h3>
   <div class="tabs" role="tablist" aria-labelledby="column-diff-heading">
     <button
       type="button"
@@ -113,7 +218,7 @@
       [class.active]="colTab === 'source_only'"
       (click)="colTab = 'source_only'"
     >
-      Source-only ({{ result.column_diff.source_only.length }})
+      Source-only <span class="count">{{ result.column_diff.source_only.length }}</span>
     </button>
     <button
       type="button"
@@ -122,7 +227,7 @@
       [class.active]="colTab === 'target_only'"
       (click)="colTab = 'target_only'"
     >
-      Target-only ({{ result.column_diff.target_only.length }})
+      Target-only <span class="count">{{ result.column_diff.target_only.length }}</span>
     </button>
     <button
       type="button"
@@ -131,7 +236,7 @@
       [class.active]="colTab === 'common'"
       (click)="colTab = 'common'"
     >
-      Common ({{ result.column_diff.common.length }})
+      Common <span class="count">{{ result.column_diff.common.length }}</span>
     </button>
     <button
       type="button"
@@ -140,7 +245,7 @@
       [class.active]="colTab === 'sequence'"
       (click)="colTab = 'sequence'"
     >
-      Sequence ({{ result.column_diff.sequence_mismatches.length }})
+      Sequence <span class="count">{{ result.column_diff.sequence_mismatches.length }}</span>
     </button>
     <button
       type="button"
@@ -149,52 +254,60 @@
       [class.active]="colTab === 'dtype'"
       (click)="colTab = 'dtype'"
     >
-      Dtype ({{ result.column_diff.dtype_mismatches.length }})
+      Dtype <span class="count">{{ result.column_diff.dtype_mismatches.length }}</span>
     </button>
   </div>
-  <ul *ngIf="colTab === 'source_only'">
+  <ul *ngIf="colTab === 'source_only'" class="column-list">
     <li *ngFor="let c of result.column_diff.source_only">{{ c }}</li>
   </ul>
-  <ul *ngIf="colTab === 'target_only'">
+  <ul *ngIf="colTab === 'target_only'" class="column-list">
     <li *ngFor="let c of result.column_diff.target_only">{{ c }}</li>
   </ul>
-  <ul *ngIf="colTab === 'common'">
+  <ul *ngIf="colTab === 'common'" class="column-list">
     <li *ngFor="let c of result.column_diff.common">{{ c }}</li>
   </ul>
-  <table *ngIf="colTab === 'sequence'" class="simple-table">
-    <thead>
-      <tr>
-        <th>Column</th>
-        <th>Source index</th>
-        <th>Target index</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let m of result.column_diff.sequence_mismatches">
-        <td>{{ m.column }}</td>
-        <td>{{ m.source_index }}</td>
-        <td>{{ m.target_index }}</td>
-      </tr>
-    </tbody>
-  </table>
-  <table *ngIf="colTab === 'dtype'" class="simple-table">
-    <thead>
-      <tr>
-        <th>Column</th>
-        <th>Source dtype</th>
-        <th>Target dtype</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let m of result.column_diff.dtype_mismatches">
-        <td>{{ m.column }}</td>
-        <td>{{ m.source_dtype }}</td>
-        <td>{{ m.target_dtype }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div *ngIf="colTab === 'sequence'" class="table-scroll">
+    <table class="simple-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th class="num">Source index</th>
+          <th class="num">Target index</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of result.column_diff.sequence_mismatches">
+          <td>{{ m.column }}</td>
+          <td class="num">{{ m.source_index }}</td>
+          <td class="num">{{ m.target_index }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="colTab === 'dtype'" class="table-scroll">
+    <table class="simple-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Source dtype</th>
+          <th>Target dtype</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of result.column_diff.dtype_mismatches">
+          <td>{{ m.column }}</td>
+          <td>{{ m.source_dtype }}</td>
+          <td>{{ m.target_dtype }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
-  <h3>Record differences <span class="muted">(preview — full set in the audit workbook below)</span></h3>
+<section class="panel">
+  <h3 class="section-title">
+    Record differences <span class="muted">— a preview; the full set is in the audit workbook</span>
+  </h3>
 
   <!-- Counts come from the summary, which always holds the true totals:
        the arrays themselves may be a capped preview. -->
@@ -206,7 +319,7 @@
       [class.active]="rowTab === 'source_only'"
       (click)="setRowTab('source_only')"
     >
-      Source-only ({{ result.summary.source_only_rows | number }})
+      Source-only <span class="count">{{ result.summary.source_only_rows | number }}</span>
     </button>
     <button
       type="button"
@@ -215,7 +328,7 @@
       [class.active]="rowTab === 'target_only'"
       (click)="setRowTab('target_only')"
     >
-      Target-only ({{ result.summary.target_only_rows | number }})
+      Target-only <span class="count">{{ result.summary.target_only_rows | number }}</span>
     </button>
     <button
       type="button"
@@ -224,22 +337,36 @@
       [class.active]="rowTab === 'value_diffs'"
       (click)="setRowTab('value_diffs')"
     >
-      Value differences ({{ result.summary.cell_diffs | number }})
+      Value differences <span class="count">{{ result.summary.cell_diffs | number }}</span>
     </button>
   </div>
 
   <div *ngIf="isTruncated" class="alert alert-warn">
-    <strong>This is a partial view — not the complete result.</strong>
-    <ul>
-      <li *ngFor="let s of truncatedSections">
-        {{ s.name }}: showing {{ s.returned | number }} of {{ s.total | number }}
-      </li>
-    </ul>
-    <p>
-      Every row is in the audit workbook below — use
-      <a [href]="reportUrl()">the audit workbook</a> for the complete data. Only what is drawn on this page is
-      limited.
-    </p>
+    <svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+    <div>
+      <strong>This is a partial view — not the complete result.</strong>
+      <ul>
+        <li *ngFor="let s of truncatedSections">
+          {{ s.name }}: showing {{ s.returned | number }} of {{ s.total | number }}
+        </li>
+      </ul>
+      <p>
+        Every row is in the audit workbook — use <a [href]="reportUrl()">the audit workbook</a> for the
+        complete data. Only what is drawn on this page is limited.
+      </p>
+    </div>
   </div>
 
   <div class="table-scroll" *ngIf="rowTab === 'source_only'">
@@ -277,56 +404,91 @@
           <th *ngFor="let k of previewedValueDiffs[0] ? keyColumnsOf(previewedValueDiffs[0]) : []">
             key.{{ k }}
           </th>
-          <th>Source row</th>
-          <th>Target row</th>
+          <th class="num">Source row</th>
+          <th class="num">Target row</th>
           <th>Column</th>
           <th>Source value</th>
           <th>Target value</th>
-          <th>Delta</th>
+          <th class="num">Delta</th>
           <th>Within tolerance</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let vd of previewedValueDiffs; trackBy: trackByIndex">
           <td *ngFor="let k of keyColumnsOf(vd)">{{ vd.key[k] }}</td>
-          <td>{{ vd.source_row }}</td>
-          <td>{{ vd.target_row }}</td>
+          <td class="num">{{ vd.source_row }}</td>
+          <td class="num">{{ vd.target_row }}</td>
           <td>{{ vd.column }}</td>
           <td>{{ vd.source_value }}</td>
           <td>{{ vd.target_value }}</td>
-          <td>{{ vd.delta }}</td>
-          <td>{{ vd.within_tolerance ? "yes" : "no" }}</td>
+          <td class="num">{{ vd.delta }}</td>
+          <td>
+            <span
+              class="pill"
+              [class.pill-good]="vd.within_tolerance"
+              [class.pill-muted]="!vd.within_tolerance"
+              >{{ vd.within_tolerance ? "yes" : "no" }}</span
+            >
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
+</section>
 
-  <h3>Control totals</h3>
-  <table *ngIf="result.control_totals.length; else noCT" class="simple-table">
-    <thead>
-      <tr>
-        <th>Column</th>
-        <th>Source total</th>
-        <th>Target total</th>
-        <th>Delta</th>
-        <th>Ties out</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let ct of result.control_totals">
-        <td>{{ ct.column }}</td>
-        <td>{{ ct.source_total }}</td>
-        <td>{{ ct.target_total }}</td>
-        <td>{{ ct.delta }}</td>
-        <td [class.good]="ct.ties_out" [class.bad]="!ct.ties_out">{{ ct.ties_out ? "yes" : "no" }}</td>
-      </tr>
-    </tbody>
-  </table>
-  <ng-template #noCT><p class="muted">No control totals were computed.</p></ng-template>
+<section class="panel">
+  <h3 class="section-title">Control totals</h3>
+  <div *ngIf="result.control_totals.length; else noCT" class="table-scroll">
+    <table class="simple-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th class="num">Source total</th>
+          <th class="num">Target total</th>
+          <th class="num">Delta</th>
+          <th>Ties out</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ct of result.control_totals">
+          <td>{{ ct.column }}</td>
+          <td class="num">{{ ct.source_total }}</td>
+          <td class="num">{{ ct.target_total }}</td>
+          <td class="num">{{ ct.delta }}</td>
+          <td [class.good]="ct.ties_out" [class.bad]="!ct.ties_out">
+            <span class="pill" [class.pill-good]="ct.ties_out" [class.pill-bad]="!ct.ties_out">{{
+              ct.ties_out ? "yes" : "no"
+            }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ng-template #noCT><p class="muted flush">No control totals were computed.</p></ng-template>
+</section>
 
-  <h3>Download</h3>
-  <p class="muted">
-    This contains the <strong>complete</strong> result — every row, however many the tables above showed.
-  </p>
-  <p><a [href]="reportUrl()">Audit workbook (report.xlsx)</a></p>
-</div>
+<section class="panel download-card">
+  <div class="card-head">
+    <span class="card-icon">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 4v11" />
+        <path d="M7.5 10.5L12 15l4.5-4.5" />
+        <path d="M4 20h16" />
+      </svg>
+    </span>
+    <div class="card-title">
+      <h3>Download</h3>
+      <p>The <strong>complete</strong> result — every row, however many the tables above showed.</p>
+    </div>
+  </div>
+  <a class="btn btn-primary" [href]="reportUrl()">Audit workbook (report.xlsx)</a>
+</section>

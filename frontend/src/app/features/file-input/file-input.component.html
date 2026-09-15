@@ -1,40 +1,183 @@
-<div class="panel">
-  <h3>{{ label }}</h3>
+<section class="panel upload-card" [class.is-loaded]="!!meta">
+  <header class="card-head">
+    <span class="card-icon">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+        <path d="M9 13h6M9 17h4" />
+      </svg>
+    </span>
+    <div class="card-title">
+      <h3>{{ label }}</h3>
+      <p>{{ label === "Source" ? "The file you are checking" : "The file you are checking it against" }}</p>
+    </div>
+    <span *ngIf="meta" class="pill pill-good">
+      <svg
+        class="icon icon-sm"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+      Loaded
+    </span>
+  </header>
 
-  <!-- The heading above names the control visually; screen readers need it
-       on the input itself, and the id has to differ between the two
-       instances of this component. -->
-  <label [attr.for]="inputId" class="visually-hidden">{{ label }} file (.csv or .xlsx)</label>
-  <input type="file" [id]="inputId" accept=".csv,.xlsx" (change)="onFileChosen($event)" />
-  <div *ngIf="sizeError" class="alert alert-error">{{ sizeError }}</div>
-  <div *ngIf="loadError" class="alert alert-error">{{ loadError }}</div>
+  <!-- The whole zone is the label for the (visually hidden) file input, so a
+       click anywhere opens the picker, and a file can also be dropped on it.
+       The input keeps its own accessible name, distinct per instance. -->
+  <label
+    class="dropzone"
+    [attr.for]="inputId"
+    [class.is-dragging]="dragging"
+    [class.is-compact]="!!pickedFile || !!meta"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <span class="dropzone-icon">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 15V4" />
+        <path d="M7.5 8.5L12 4l4.5 4.5" />
+        <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+      </svg>
+    </span>
+    <span class="dropzone-text">
+      <strong>{{ pickedFile || meta ? "Drop another file to replace it" : "Drop a file here" }}</strong>
+      or <span class="dropzone-browse">browse</span>
+    </span>
+    <span class="dropzone-meta"
+      >.csv or .xlsx<ng-container *ngIf="maxUploadBytes">
+        · up to {{ maxUploadBytes / (1024 * 1024) | number: "1.0-0" }} MB</ng-container
+      ></span
+    >
+    <input
+      type="file"
+      class="visually-hidden"
+      [id]="inputId"
+      accept=".csv,.xlsx"
+      [attr.aria-label]="label + ' file (.csv or .xlsx)'"
+      (change)="onFileChosen($event)"
+    />
+  </label>
+
+  <div *ngIf="sizeError" class="alert alert-error" role="alert">
+    <svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6M15 9l-6 6" />
+    </svg>
+    <span>{{ sizeError }}</span>
+  </div>
+  <div *ngIf="loadError" class="alert alert-error" role="alert">
+    <svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6M15 9l-6 6" />
+    </svg>
+    <span>{{ loadError }}</span>
+  </div>
 
   <div *ngIf="pickedFile && !sizeError">
-    <label class="checkbox-row">
-      <input type="checkbox" [(ngModel)]="hasHeader" />
-      First row is header
-    </label>
+    <!-- Once loaded, the green summary below names the file; the chip would repeat it. -->
+    <div *ngIf="!meta" class="file-chip">
+      <svg
+        class="icon icon-sm"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+      </svg>
+      <span class="file-chip-name" [title]="pickedFile.name">{{ pickedFile.name }}</span>
+      <span class="file-chip-size">{{ formatBytes(pickedFile.size) }}</span>
+    </div>
 
-    <label *ngIf="!isExcel">
-      Delimiter
-      <select [(ngModel)]="delimiter">
-        <option value="">auto-detect</option>
-        <option value=",">comma</option>
-        <option value=";">semicolon</option>
-        <option value="\t">tab</option>
-        <option value="|">pipe</option>
-      </select>
-    </label>
+    <div class="option-row">
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="hasHeader" />
+        First row is header
+      </label>
 
-    <label *ngIf="isExcel">
-      Sheet
-      <select [(ngModel)]="chosenSheet" [disabled]="sheetsLoading">
-        <option *ngFor="let s of sheets" [value]="s">{{ s }}</option>
-      </select>
-      <span *ngIf="sheetsLoading">Loading sheets…</span>
-    </label>
+      <label *ngIf="!isExcel" class="field">
+        Delimiter
+        <select [(ngModel)]="delimiter">
+          <option value="">auto-detect</option>
+          <option value=",">comma</option>
+          <option value=";">semicolon</option>
+          <option value="\t">tab</option>
+          <option value="|">pipe</option>
+        </select>
+      </label>
 
-    <button type="button" (click)="load()" [disabled]="progress !== null">Load {{ label }}</button>
+      <label *ngIf="isExcel" class="field">
+        Sheet
+        <select [(ngModel)]="chosenSheet" [disabled]="sheetsLoading">
+          <option *ngFor="let s of sheets" [value]="s">{{ s }}</option>
+        </select>
+        <span *ngIf="sheetsLoading" class="muted">Loading sheets…</span>
+      </label>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="load()" [disabled]="progress !== null">
+      <svg
+        class="icon icon-sm"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 15V4" />
+        <path d="M7.5 8.5L12 4l4.5 4.5" />
+        <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+      </svg>
+      {{ meta ? "Reload " + label : "Load " + label }}
+    </button>
 
     <div *ngIf="progress !== null" class="progress-bar">
       <div class="progress-bar-fill" [style.width.%]="progress"></div>
@@ -42,16 +185,40 @@
     </div>
   </div>
 
-  <div *ngIf="meta" class="alert alert-success">
-    Loaded {{ meta.filename }} — {{ meta.row_count }} rows × {{ meta.column_count }} columns
-    <span *ngIf="meta.sheet_name">(sheet: {{ meta.sheet_name }})</span>
+  <div *ngIf="meta" class="file-summary">
+    <div class="file-summary-name">
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8 12.5l2.5 2.5L16 9.5" />
+      </svg>
+      <strong>{{ meta.filename }}</strong>
+    </div>
+    <ul class="badges">
+      <li class="badge">{{ meta.row_count | number }} rows</li>
+      <li class="badge">{{ meta.column_count | number }} columns</li>
+      <li class="badge">{{ formatBytes(meta.size_bytes) }}</li>
+      <li class="badge" *ngIf="meta.sheet_name">Sheet: {{ meta.sheet_name }}</li>
+    </ul>
     <div *ngIf="meta.hidden_columns.length || meta.hidden_row_count" class="alert alert-warn">
-      Contains hidden data ({{ meta.hidden_columns.length }} column(s), {{ meta.hidden_row_count }} row(s)) —
-      included in the comparison, not skipped.
+      <span
+        >Contains hidden data ({{ meta.hidden_columns.length }} column(s), {{ meta.hidden_row_count }} row(s))
+        — included in the comparison, not skipped.</span
+      >
     </div>
     <div *ngIf="meta.formula_blank_count" class="alert alert-warn">
-      {{ meta.formula_blank_count }} uncalculated formula cell(s) read as blank in:
-      {{ meta.formula_blank_columns.join(", ") }}.
+      <span
+        >{{ meta.formula_blank_count }} uncalculated formula cell(s) read as blank in:
+        {{ meta.formula_blank_columns.join(", ") }}.</span
+      >
     </div>
   </div>
-</div>
+</section>

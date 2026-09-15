@@ -13,6 +13,15 @@ import type {
   JobProgress,
 } from "./shared/models/dto";
 
+export type StepStatus = "done" | "current" | "todo";
+
+/** One entry in the step indicator at the top of the page. */
+export interface Step {
+  label: string;
+  hint: string;
+  status: StepStatus;
+}
+
 /** Root shell -- port of the original's App.tsx. Loads the server's
  * limits, renders the branded header/footer (from theme.ts), and composes
  * the file inputs, catalogue picker, settings panel, run button and
@@ -69,6 +78,33 @@ export class AppComponent implements OnInit, OnDestroy {
 
   canRun(state: CompareFormState): boolean {
     return !!state.sourceFile && !!state.targetFile && !this.running;
+  }
+
+  /** The three-step indicator at the top of the page: where the user is in
+   * upload -> settings -> run, derived from state rather than stored, so it
+   * cannot disagree with what the page is actually showing. */
+  steps(state: CompareFormState): Step[] {
+    const filesReady = !!state.sourceFile && !!state.targetFile;
+    const finished = !!this.result;
+    return [
+      { label: "Upload files", hint: "Source and target", status: filesReady ? "done" : "current" },
+      {
+        label: "Review settings",
+        hint: "Mapping and key columns",
+        status: !filesReady ? "todo" : finished || this.running ? "done" : "current",
+      },
+      {
+        label: "Run & review",
+        hint: "Verdict and download",
+        status: finished ? "done" : this.running ? "current" : "todo",
+      },
+    ];
+  }
+
+  /** steps() builds fresh objects each check; tracking by label keeps the
+   * rendered steps rather than rebuilding them every time. */
+  trackByLabel(_index: number, step: Step): string {
+    return step.label;
   }
 
   /** Stops polling a job we are no longer interested in. */

@@ -87,8 +87,9 @@ the links).
 
 ### 2. The user picks a source file
 
-Choosing a file in a `FileInputComponent` does **not** upload it. The
-component first validates locally:
+Choosing a file in a `FileInputComponent` -- by clicking its drop zone or
+dropping a file onto it; both paths go through the same `chooseFile()` --
+does **not** upload it. The component first validates locally:
 
 - the extension is `.csv` or `.xlsx` (a `.xls` is refused here, with the
   same message the server would give, rather than after a wasted upload);
