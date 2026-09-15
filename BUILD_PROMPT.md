@@ -1,4 +1,4 @@
-# Build prompt — Financial File Reconciliation (Angular + Express)
+# Build prompt — File Reconciliation (Angular + Express)
 
 This is a **specification prompt for the application that actually lives in
 this repository**. Hand it to a developer or an AI assistant and it should
