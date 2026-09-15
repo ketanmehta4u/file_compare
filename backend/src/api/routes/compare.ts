@@ -12,13 +12,14 @@ import { runComparisonInWorker, type WorkerComparison } from "../../worker/runIn
 import { startCompareJob, getJob, cancelJob } from "../compareJobs";
 import { defaultSettings } from "../../engine/types";
 import type { ColumnMapping, CompareReport, CompareSettings, FileMeta, Table } from "../../engine/types";
-import { buildExcelReport, EXCEL_MAX_ROWS } from "../../engine/report/buildExcelReport";
+import { EXCEL_MAX_ROWS, ReportAbortedError, writeExcelReport } from "../../engine/report/buildExcelReport";
 import { annotateForExcel, diffCellsForAnnotated, buildAnnotatedExcel } from "../../engine/report/annotate";
 import { compareRateLimit, downloadRateLimit } from "../middleware/rateLimit";
 import { acquireCompareSlot, releaseCompareSlot, compareSlotCount } from "../middleware/compareSlot";
 import { currentUser } from "../middleware/currentUser";
 import { compareToResponse } from "../toView";
 import { HttpError, respondWithError } from "../errors";
+import { log } from "../middleware/requestLog";
 import type { CompareRequest, CompareResultResponse, WriteToBlobResponse } from "../dto";
 import type { CompareJobInput } from "../../worker/compareWorker";
 
@@ -246,17 +247,39 @@ function getRunOr404(runId: string) {
   return cached;
 }
 
+// Streamed: the workbook is written into the response as it is built, so a
+// multi-million-row result is never held whole in memory, and nothing is
+// dropped -- rows beyond one sheet's limit continue on further sheets.
 compareRouter.get("/compare/:runId/report.xlsx", downloadRateLimit, async (req, res) => {
+  let cached;
   try {
-    const cached = getRunOr404(String(req.params.runId));
-    const { buffer } = await buildExcelReport(cached.report);
-    const fname = `reconciliation_${cached.report.audit.source.sha256.slice(0, 8)}_${cached.report.audit.target.sha256.slice(0, 8)}.xlsx`;
-    res
-      .set("Content-Type", XLSX_MIME)
-      .set("Content-Disposition", `attachment; filename="${fname}"`)
-      .send(buffer);
+    cached = getRunOr404(String(req.params.runId));
   } catch (err) {
-    respondWithError(req, res, err);
+    return respondWithError(req, res, err);
+  }
+
+  const fname = `reconciliation_${cached.report.audit.source.sha256.slice(0, 8)}_${cached.report.audit.target.sha256.slice(0, 8)}.xlsx`;
+  res.set("Content-Type", XLSX_MIME).set("Content-Disposition", `attachment; filename="${fname}"`);
+  try {
+    await writeExcelReport(cached.report, res);
+  } catch (err) {
+    if (err instanceof ReportAbortedError) return; // the client went away; nothing to answer
+    if (!res.headersSent) {
+      res.removeHeader("Content-Disposition");
+      return respondWithError(req, res, err);
+    }
+    // Part of the file has already gone out, so no error status can be sent.
+    // Cutting the connection makes the download fail visibly, where ending it
+    // normally would hand the user a truncated workbook as if it were whole.
+    log.error(
+      {
+        ctx_request_id: req.requestId,
+        ctx_path: req.originalUrl.split("?")[0],
+        err: err instanceof Error ? (err.stack ?? err.message) : String(err),
+      },
+      "report.stream_failed"
+    );
+    res.destroy(err instanceof Error ? err : new Error(String(err)));
   }
 });
 

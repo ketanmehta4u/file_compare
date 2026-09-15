@@ -5,7 +5,7 @@ export default defineConfig({
     include: ["test/**/*.spec.ts"],
 
     // Generous on purpose. Two kinds of test here are slow by nature: the
-    // EXCEL_MAX_ROWS spill case builds a >1,048,576-row report, and every
+    // EXCEL_MAX_ROWS case writes a >1,048,576-row workbook, and every
     // comparison test spawns an OS worker thread that compiles the engine
     // on startup. Both are fine alone, and both stretch badly when the
     // machine is busy -- running this suite at the same time as the

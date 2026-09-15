@@ -166,8 +166,8 @@ original `8080` binding still conflicts.
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 170 tests
-cd ../frontend && npm test # 43 tests (opens Chrome)
+cd backend && npm test     # 186 tests
+cd ../frontend && npm test # 44 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -311,8 +311,8 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 170 tests
-cd frontend && npm test                            # karma/jasmine, 43 tests
+cd backend  && npm test                            # vitest, 186 tests
+cd frontend && npm test                            # karma/jasmine, 44 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -419,8 +419,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 170 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 43 tests
+cd backend && npm test    # vitest — engine + API, 186 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 44 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run
@@ -565,7 +565,15 @@ but are no longer surfaced in the page -- see
 
 ### The audit workbook (`report.xlsx`)
 
-Always produced. Sheets for the audit header, the summary counts, any
+Always produced. It opens on a **How to Read** sheet -- a plain-language
+guide written into the workbook itself, so it travels with the file to
+whoever receives it. The guide states that run's verdict, explains each
+sheet present in that particular workbook (it only mentions Warnings when
+there were warnings), the red/amber colours, how rows were matched for
+that run's key columns, and the rules that most often surprise a reader
+(duplicate keys, day-first dates, exact decimals, leading zeros).
+
+After the guide come sheets for the audit header, the summary counts, any
 warnings, the column differences, the source-only / target-only / value
 difference detail, and the control totals. This is the complete result --
 it is never trimmed the way the on-screen tables are.
@@ -763,12 +771,20 @@ design otherwise avoids entirely.
   to re-slice the row arrays and re-derive the column list once per
   rendered row, costing ~15ms per event and making the page crawl while
   the next pair of files loaded. It now costs ~0.01ms.
-- Building the workbook for a very large result is itself slow: 300,000
-  rows across the two sheets took about 135 seconds and produced a 10 MB
-  file.
-- The audit workbook respects Excel's 1,048,576-row limit by spilling
-  oversized sheets to CSV attachments; oversized annotated exports stream
-  as CSV instead of `.xlsx`.
+- The audit workbook is streamed to the browser as it is built, so its
+  size does not drive server memory. Measured on this machine: 300,000
+  detail rows took about 22 seconds (a 9 MB file) and peaked at roughly
+  200 MB above what the cached result already used; 2,500,000 rows (a
+  75 MB workbook split across three sheets) took about 3 minutes and
+  peaked at roughly the same, about 160-240 MB. The previous in-memory
+  builder needed about 2 GB for the 300,000-row case. Large workbooks are
+  still slow to build -- the time goes into generating and compressing
+  the XML -- and very large ones are slow for Excel to open.
+- Excel allows 1,048,576 rows per sheet. A detail table longer than that
+  continues on further sheets in the same workbook ("Value Differences (2)",
+  "(3)", ...), each repeating the header, and the How to Read sheet names
+  every part -- nothing is dropped. Oversized annotated exports stream as
+  CSV instead of `.xlsx`.
 
 **State and deployment**
 

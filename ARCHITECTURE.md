@@ -182,10 +182,25 @@ always holds the true totals.
 A plain `<a href>` link, not a fetch, so the browser handles
 `Content-Disposition` itself:
 
-- `GET /api/compare/{runId}/report.xlsx` — the multi-sheet audit workbook
+- `GET /api/compare/{runId}/report.xlsx` — the multi-sheet audit workbook (its first sheet, How to Read, explains the rest)
 
 **It is never capped**, however trimmed the on-screen tables were: the
 server still holds the complete report for that run.
+
+The workbook is **streamed** into the response (exceljs's streaming
+`WorkbookWriter`): rows are written as they are produced and each finished
+sheet is flushed into the zip and released. Streaming alone was not enough:
+exceljs's own per-sheet buffer ignores backpressure, so rows outran the
+compressor and the uncompressed XML queued in memory until the end. Each
+sheet is therefore written through a plain Node `PassThrough`
+(`SheetXmlStream`), and every thousand rows the writer waits until that
+stream's queue is under 4 MB and the response has room -- so memory stays
+bounded however large the result. A
+detail table longer than Excel's 1,048,576-row sheet limit continues on
+"Name (2)", "Name (3)" and so on in the same workbook. If the client
+disconnects, writing stops; if something fails after the first bytes have
+gone out, the connection is cut rather than ending normally, so a
+truncated file cannot pass for a complete one.
 
 The server also serves `GET /api/compare/{runId}/annotated/{side}` -- the
 user's own file with a `_record_status` column and differing cells

@@ -261,11 +261,22 @@ the mapping used, and the user the request was attributed to.
 
 ### 4.7 Reports
 
-**Audit workbook** (`.xlsx`): sheets for Audit Header, Summary, Warnings,
-Column Differences, the row/difference detail sheets, and Control Totals.
-Excel's hard limit is 1,048,576 rows — when a sheet would exceed it, spill
-that sheet's data to a CSV attachment and leave a placeholder note in the
-sheet rather than truncating or crashing.
+**Audit workbook** (`.xlsx`): a first sheet, How to Read, that explains the
+workbook in plain language and is generated from the report (this run's
+verdict and key columns; Warnings described only when that sheet exists;
+the names of every sheet a split detail table runs across), followed by Audit
+Header, Summary, Warnings, Column Differences, the row/difference detail
+sheets, and Control Totals.
+Excel's hard limit is 1,048,576 rows per sheet, header included — when a
+detail table would exceed it, continue it on further sheets ("Value
+Differences (2)", "(3)", …), each repeating the header, rather than
+truncating, crashing or moving rows out of the workbook. Stream the workbook
+into the HTTP response (exceljs's streaming `WorkbookWriter`, committing each
+row and each finished sheet) and pace row production against both the
+compressor and the response. exceljs's per-sheet buffer ignores
+backpressure, so route each sheet through a plain Node `PassThrough` and wait
+whenever its queued bytes pass a small bound (4 MB) -- otherwise the rows
+outrun deflate and the uncompressed XML piles up in memory anyway.
 
 **Annotated file export**: return the user's own source or target file
 back with a `_record_status` column added and differing cells highlighted

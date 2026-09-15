@@ -67,7 +67,7 @@ Every phase of the build is done, committed, and — critically — actually
 | Angular frontend (`frontend/src/app/`) | ✅     | `ng build`/`ng test` pass; a real `ng serve` + real backend were run simultaneously and a genuine file upload was proxied through and verified                                                       |
 | Docker (`docker-compose.yml`)          | ✅     | Both images built in the real base images and the full stack was run in containers, verified with a real upload through nginx → Express                                                              |
 
-**153 backend tests (vitest), 33 frontend tests (karma/jasmine), all
+**186 backend tests (vitest), 44 frontend tests (karma/jasmine), all
 passing.** Run them yourself: `cd backend && npm test`,
 `cd frontend && npm test`.
 
@@ -97,7 +97,7 @@ verified rather than assumed:
   it read `req.path` in the `finish` handler after Express had rewritten
   the URL for the mounted router.
 
-One test (the `EXCEL_MAX_ROWS` spill case, which builds a >1M-row report)
+One test (the `EXCEL_MAX_ROWS` case, which builds a >1M-row report)
 was also failing on vitest's 5s default timeout; the suite now allows 30s.
 
 ### Live progress and worker threads
