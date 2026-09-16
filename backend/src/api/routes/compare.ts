@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { fileCache, catalogCache, runCache, newRunId } from "../../cache/stores";
 import {
   applyMapping,
@@ -17,6 +17,8 @@ import { annotateForExcel, diffCellsForAnnotated, buildAnnotatedExcel } from "..
 import { compareRateLimit, downloadRateLimit } from "../middleware/rateLimit";
 import { acquireCompareSlot, releaseCompareSlot, compareSlotCount } from "../middleware/compareSlot";
 import { currentUser } from "../middleware/currentUser";
+import { currentSession } from "../middleware/session";
+import { runIsolationEnabled } from "../../config/env";
 import { compareToResponse } from "../toView";
 import { HttpError, respondWithError } from "../errors";
 import { log } from "../middleware/requestLog";
@@ -143,7 +145,8 @@ export function storeRun(
   outcome: WorkerComparison,
   body: CompareRequest,
   input: CompareJobInput,
-  complianceWarnings: string[]
+  complianceWarnings: string[],
+  session: string
 ): CompareResultResponse {
   const runId = newRunId();
   runCache.set(runId, {
@@ -157,6 +160,7 @@ export function storeRun(
     mapping: input.mapping,
     dropUnmapped: input.dropUnmapped,
     annotatedOutputs: input.annotatedOutputs,
+    session,
     cachedAt: Date.now(),
   });
   return compareToResponse(outcome.report, runId, complianceWarnings, input.annotatedOutputs);
@@ -192,7 +196,7 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
     }
 
     const outcome = await runComparisonInWorker(input);
-    res.json(storeRun(outcome, req.body as CompareRequest, input, complianceWarnings));
+    res.json(storeRun(outcome, req.body as CompareRequest, input, complianceWarnings, currentSession(req)));
   } catch (err) {
     respondWithError(req, res, err);
   } finally {
@@ -208,6 +212,7 @@ compareRouter.post("/compare/jobs", compareRateLimit, (req, res) => {
     const { input, complianceWarnings } = prepareCompare(body, user);
     const job = startCompareJob(input, {
       user,
+      session: currentSession(req),
       requestId: req.requestId,
       complianceWarnings,
       sourceFileId: body.source_file_id,
@@ -222,7 +227,9 @@ compareRouter.post("/compare/jobs", compareRateLimit, (req, res) => {
 /** Live progress for a job, and the full result once it has finished. */
 compareRouter.get("/compare/jobs/:jobId", (req, res) => {
   const job = getJob(String(req.params.jobId));
-  if (!job) return res.status(404).json({ detail: "Job not found — it may have expired." });
+  if (!job || !ownsJob(job, req)) {
+    return res.status(404).json({ detail: "Job not found — it may have expired." });
+  }
   res.json({
     job_id: job.id,
     status: job.status,
@@ -232,18 +239,34 @@ compareRouter.get("/compare/jobs/:jobId", (req, res) => {
   });
 });
 
+/** Whether this request's browser is the one that started the job. Same
+ * reasoning as getRunOr404: a job that is not yours reads as missing. */
+function ownsJob(job: { session: string }, req: Request): boolean {
+  return !runIsolationEnabled() || job.session === currentSession(req);
+}
+
 /** Cancels a queued or running job. */
 compareRouter.delete("/compare/jobs/:jobId", (req, res) => {
   const id = String(req.params.jobId);
   const job = getJob(id);
-  if (!job) return res.status(404).json({ detail: "Job not found — it may have expired." });
+  if (!job || !ownsJob(job, req)) {
+    return res.status(404).json({ detail: "Job not found — it may have expired." });
+  }
   const cancelled = cancelJob(id);
   res.json({ job_id: id, status: cancelled ? "cancelled" : job.status, cancelled });
 });
 
-function getRunOr404(runId: string) {
+/**
+ * A run belongs to the browser session that produced it (see
+ * api/middleware/session.ts). Another session is answered 404 rather than
+ * 403: this deployment is shared and anonymous, so to anyone else the run
+ * may as well not exist, and "forbidden" would confirm the id is real.
+ */
+function getRunOr404(runId: string, session: string) {
   const cached = runCache.get(runId);
-  if (!cached) throw new HttpError(404, "Run not found — it may have been evicted.");
+  const notFound = new HttpError(404, "Run not found — it may have been evicted.");
+  if (!cached) throw notFound;
+  if (runIsolationEnabled() && cached.session !== session) throw notFound;
   return cached;
 }
 
@@ -253,7 +276,7 @@ function getRunOr404(runId: string) {
 compareRouter.get("/compare/:runId/report.xlsx", downloadRateLimit, async (req, res) => {
   let cached;
   try {
-    cached = getRunOr404(String(req.params.runId));
+    cached = getRunOr404(String(req.params.runId), currentSession(req));
   } catch (err) {
     return respondWithError(req, res, err);
   }
@@ -289,7 +312,7 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
     if (side !== "source" && side !== "target") {
       return res.status(400).json({ detail: "side must be 'source' or 'target'." });
     }
-    const cached = getRunOr404(String(req.params.runId));
+    const cached = getRunOr404(String(req.params.runId), currentSession(req));
     if (!cached.annotatedOutputs) {
       throw new HttpError(
         400,

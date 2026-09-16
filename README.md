@@ -166,7 +166,7 @@ original `8080` binding still conflicts.
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 186 tests
+cd backend && npm test     # 192 tests
 cd ../frontend && npm test # 50 tests (opens Chrome)
 ```
 
@@ -215,6 +215,15 @@ deployment. Before putting it in front of users:
   front of the backend.
 - Run **one backend process**. The caches are in-process; replicas break
   file lookups (see [Limitations](#limitations)).
+- Results are bound to the browser that produced them (an httpOnly session
+  cookie, no login involved), so on a shared instance one person's
+  reconciliation is not downloadable by another. `RUN_ISOLATION=off` turns
+  that off for script-driven API use.
+- Step-by-step guides for both supported targets — Docker on a VM and IIS
+  on Windows — are in [docs/deployment.md](docs/deployment.md). Why the
+  frontend still talks HTTP rather than calling backend functions is
+  recorded in
+  [docs/function-call-analysis.md](docs/function-call-analysis.md).
 - Set the container's memory limit deliberately (`MEM_LIMIT`, default
   `2g`). It is the single knob that decides how big a file the deployment
   can handle — the heap, the cache budget and the upload cap all follow
@@ -311,7 +320,7 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 186 tests
+cd backend  && npm test                            # vitest, 192 tests
 cd frontend && npm test                            # karma/jasmine, 50 tests
 
 cd backend  && npx vitest run test/engine          # one directory
@@ -440,7 +449,7 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 186 tests
+cd backend && npm test    # vitest — engine + API, 192 tests
 cd frontend && npm test   # karma/jasmine, needs Chrome — 50 tests
 ```
 
@@ -476,6 +485,8 @@ Backend environment variables (all optional):
 | `COMPARE_QUEUE_TIMEOUT_S`    | `120`                                   | How long a queued comparison waits for a slot before a 503.                                                                                                                                                 |
 | `TRUST_PROXY`                | `1`                                     | Proxy hops to trust for the client address. The default suits the shipped nginx topology; set `false` when the backend is directly exposed, so a client-supplied `X-Forwarded-For` is not believed.         |
 | `MAX_RESPONSE_ROWS`          | `1000`                                  | Rows per detail section put in a compare response. Downloads are never capped.                                                                                                                              |
+| `MAX_CACHED_RUNS`            | `50`                                    | Finished runs kept downloadable, newest first, shared across everyone using the instance. When it overflows the oldest result's link stops working. Read once at startup.                                   |
+| `RUN_ISOLATION`              | on                                      | Bind each run to the browser session that produced it, so another browser cannot download it. Set `off` for a script driving the HTTP API with no cookie jar.                                               |
 | `MAX_CACHE_BYTES`            | 25% of the V8 heap limit                | Bytes of uploaded files the cache may hold. Derived from the machine, so it self-sizes on a laptop and in a container.                                                                                      |
 | `MEM_LIMIT` (compose)        | `2g`                                    | The backend container's memory limit. V8 sizes its heap from this, and the cache budget and upload cap follow the heap.                                                                                     |
 | `LOG_LEVEL` / `LOG_FORMAT`   | `info` / `json`                         | Logging. `LOG_FORMAT=text` gives pretty-printed dev output.                                                                                                                                                 |

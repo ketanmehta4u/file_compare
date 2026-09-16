@@ -8,6 +8,9 @@ import { fileCache, catalogCache, runCache } from "../../src/cache/stores";
 process.env.MAX_RESPONSE_ROWS = "25";
 const { createApp } = await import("../../src/app");
 const app = createApp();
+// One agent is one browser: it keeps the session cookie that downloads and
+// job polling are bound to (see api/middleware/session.ts).
+const agent = request.agent(app);
 
 beforeEach(() => {
   fileCache.clear();
@@ -33,9 +36,9 @@ function csvPair(rows: number): { source: Buffer; target: Buffer } {
 
 async function compare(rows: number) {
   const { source, target } = csvPair(rows);
-  const src = await request(app).post("/api/files/upload").attach("file", source, "source.csv");
-  const tgt = await request(app).post("/api/files/upload").attach("file", target, "target.csv");
-  const run = await request(app)
+  const src = await agent.post("/api/files/upload").attach("file", source, "source.csv");
+  const tgt = await agent.post("/api/files/upload").attach("file", target, "target.csv");
+  const run = await agent
     .post("/api/compare/run")
     .send({ source_file_id: src.body.file_id, target_file_id: tgt.body.file_id, key_columns: ["id"] });
   expect(run.status).toBe(200);
@@ -44,7 +47,7 @@ async function compare(rows: number) {
 
 describe("capping the detail rows in a compare response", () => {
   it("reports the cap in /api/config so the UI knows what it is getting", async () => {
-    const r = await request(app).get("/api/config");
+    const r = await agent.get("/api/config");
     expect(r.body.max_response_rows).toBe(25);
   });
 
@@ -80,7 +83,7 @@ describe("capping the detail rows in a compare response", () => {
     const body = await compare(100);
     expect(body.source_only_rows).toHaveLength(25);
 
-    const report = await request(app)
+    const report = await agent
       .get(`/api/compare/${body.run_id}/report.xlsx`)
       .buffer(true)
       .parse((res, cb) => {
@@ -100,7 +103,7 @@ describe("capping the detail rows in a compare response", () => {
 
   it("still annotates every row of the source file for download", async () => {
     const body = await compare(100);
-    const annotated = await request(app)
+    const annotated = await agent
       .get(`/api/compare/${body.run_id}/annotated/source`)
       .buffer(true)
       .parse((res, cb) => {

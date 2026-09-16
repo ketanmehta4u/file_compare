@@ -21,6 +21,10 @@ import type { CompareResultResponse } from "./dto";
 
 export interface JobContext {
   user: string;
+  /** The browser session that started this job (see
+   * api/middleware/session.ts): polling, cancelling and the resulting run's
+   * downloads are limited to it. */
+  session: string;
   requestId?: string;
   complianceWarnings: string[];
   /** Kept so a finished run can point the annotated downloads back at the
@@ -47,6 +51,7 @@ export interface CompareJob {
   result: CompareResultResponse | null;
   error: string | null;
   user: string;
+  session: string;
   createdAt: number;
   updatedAt: number;
   worker: Worker | null;
@@ -112,6 +117,7 @@ export function startCompareJob(input: CompareJobInput, ctx: JobContext): Compar
     result: null,
     error: null,
     user: ctx.user,
+    session: ctx.session,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     worker: null,
@@ -171,6 +177,7 @@ async function run(job: CompareJob, input: CompareJobInput, ctx: JobContext): Pr
       mapping: input.mapping,
       dropUnmapped: input.dropUnmapped,
       annotatedOutputs: input.annotatedOutputs,
+      session: ctx.session,
       cachedAt: Date.now(),
     });
 

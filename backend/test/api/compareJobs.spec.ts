@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { join } from "node:path";
 import request from "supertest";
-import type { Express } from "express";
 import { createApp } from "../../src/app";
 import { fileCache, catalogCache, runCache } from "../../src/cache/stores";
 
 const FIXTURES = join(__dirname, "../../../fixtures");
 const app = createApp();
+// One agent is one browser: it keeps the session cookie that downloads and
+// job polling are bound to (see api/middleware/session.ts).
+const agent = request.agent(app);
 
 beforeEach(() => {
   fileCache.clear();
@@ -14,9 +16,9 @@ beforeEach(() => {
   runCache.clear();
 });
 
-async function uploadSamples(a: Express) {
-  const src = await request(a).post("/api/files/upload").attach("file", join(FIXTURES, "sample_source.csv"));
-  const tgt = await request(a).post("/api/files/upload").attach("file", join(FIXTURES, "sample_target.csv"));
+async function uploadSamples() {
+  const src = await agent.post("/api/files/upload").attach("file", join(FIXTURES, "sample_source.csv"));
+  const tgt = await agent.post("/api/files/upload").attach("file", join(FIXTURES, "sample_target.csv"));
   return { sourceId: src.body.file_id as string, targetId: tgt.body.file_id as string };
 }
 
@@ -43,10 +45,10 @@ interface JobView {
 
 /** Polls until the job leaves the queued/running states, collecting every
  * progress snapshot it saw on the way. */
-async function pollToCompletion(a: Express, jobId: string): Promise<{ final: JobView; seen: JobView[] }> {
+async function pollToCompletion(jobId: string): Promise<{ final: JobView; seen: JobView[] }> {
   const seen: JobView[] = [];
   for (let i = 0; i < 200; i++) {
-    const r = await request(a).get(`/api/compare/jobs/${jobId}`);
+    const r = await agent.get(`/api/compare/jobs/${jobId}`);
     expect(r.status).toBe(200);
     const view = r.body as JobView;
     seen.push(view);
@@ -58,8 +60,8 @@ async function pollToCompletion(a: Express, jobId: string): Promise<{ final: Job
 
 describe("background comparison jobs", () => {
   it("accepts a job immediately instead of holding the connection open", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const started = await request(app)
+    const { sourceId, targetId } = await uploadSamples();
+    const started = await agent
       .post("/api/compare/jobs")
       .send({ source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST });
 
@@ -69,14 +71,14 @@ describe("background comparison jobs", () => {
   });
 
   it("runs to completion and returns the same result the synchronous route does", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
+    const { sourceId, targetId } = await uploadSamples();
     const body = { source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST };
 
-    const sync = await request(app).post("/api/compare/run").send(body);
+    const sync = await agent.post("/api/compare/run").send(body);
     expect(sync.status).toBe(200);
 
-    const started = await request(app).post("/api/compare/jobs").send(body);
-    const { final } = await pollToCompletion(app, started.body.job_id);
+    const started = await agent.post("/api/compare/jobs").send(body);
+    const { final } = await pollToCompletion(started.body.job_id);
 
     expect(final.status).toBe("done");
     expect(final.detail).toBeNull();
@@ -88,12 +90,12 @@ describe("background comparison jobs", () => {
   });
 
   it("reports progress with a phase, a label and a percentage", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const started = await request(app)
+    const { sourceId, targetId } = await uploadSamples();
+    const started = await agent
       .post("/api/compare/jobs")
       .send({ source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST });
 
-    const { final, seen } = await pollToCompletion(app, started.body.job_id);
+    const { final, seen } = await pollToCompletion(started.body.job_id);
     expect(final.status).toBe("done");
 
     const withProgress = seen.filter((v) => v.progress !== null);
@@ -112,20 +114,20 @@ describe("background comparison jobs", () => {
   });
 
   it("makes the finished run's report downloadable", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const started = await request(app)
+    const { sourceId, targetId } = await uploadSamples();
+    const started = await agent
       .post("/api/compare/jobs")
       .send({ source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST });
-    const { final } = await pollToCompletion(app, started.body.job_id);
+    const { final } = await pollToCompletion(started.body.job_id);
 
-    const report = await request(app).get(`/api/compare/${final.result!.run_id}/report.xlsx`);
+    const report = await agent.get(`/api/compare/${final.result!.run_id}/report.xlsx`);
     expect(report.status).toBe(200);
     expect(report.headers["content-type"]).toContain("spreadsheetml");
   });
 
   it("rejects a bad request up front rather than failing inside the job", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const r = await request(app).post("/api/compare/jobs").send({
+    const { sourceId, targetId } = await uploadSamples();
+    const r = await agent.post("/api/compare/jobs").send({
       source_file_id: sourceId,
       target_file_id: targetId,
       numeric_tolerance: "not-a-number",
@@ -135,42 +137,42 @@ describe("background comparison jobs", () => {
   });
 
   it("404s for an unknown job", async () => {
-    const r = await request(app).get("/api/compare/jobs/deadbeefdeadbeef");
+    const r = await agent.get("/api/compare/jobs/deadbeefdeadbeef");
     expect(r.status).toBe(404);
-    const c = await request(app).delete("/api/compare/jobs/deadbeefdeadbeef");
+    const c = await agent.delete("/api/compare/jobs/deadbeefdeadbeef");
     expect(c.status).toBe(404);
   });
 
   it("reports a job that was cancelled", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const started = await request(app)
+    const { sourceId, targetId } = await uploadSamples();
+    const started = await agent
       .post("/api/compare/jobs")
       .send({ source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST });
 
     // Cancel straight away: the fixtures are small, so this races the run
     // itself. Either outcome is legitimate -- what must hold is that the
     // job reaches a terminal state and a cancelled one carries no result.
-    await request(app).delete(`/api/compare/jobs/${started.body.job_id}`);
-    const { final } = await pollToCompletion(app, started.body.job_id);
+    await agent.delete(`/api/compare/jobs/${started.body.job_id}`);
+    const { final } = await pollToCompletion(started.body.job_id);
 
     expect(["cancelled", "done"]).toContain(final.status);
     if (final.status === "cancelled") expect(final.result).toBeNull();
   });
 
   it("cancelling a job that already finished changes nothing", async () => {
-    const { sourceId, targetId } = await uploadSamples(app);
-    const started = await request(app)
+    const { sourceId, targetId } = await uploadSamples();
+    const started = await agent
       .post("/api/compare/jobs")
       .send({ source_file_id: sourceId, target_file_id: targetId, ...MAPPED_REQUEST });
-    const { final } = await pollToCompletion(app, started.body.job_id);
+    const { final } = await pollToCompletion(started.body.job_id);
     expect(final.status).toBe("done");
 
-    const cancel = await request(app).delete(`/api/compare/jobs/${started.body.job_id}`);
+    const cancel = await agent.delete(`/api/compare/jobs/${started.body.job_id}`);
     expect(cancel.status).toBe(200);
     expect(cancel.body.cancelled).toBe(false);
     expect(cancel.body.status).toBe("done");
 
-    const after = await request(app).get(`/api/compare/jobs/${started.body.job_id}`);
+    const after = await agent.get(`/api/compare/jobs/${started.body.job_id}`);
     expect(after.body.status).toBe("done");
     expect(after.body.result).not.toBeNull();
   });

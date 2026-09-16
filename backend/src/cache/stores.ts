@@ -1,7 +1,7 @@
 import { LRUCache } from "lru-cache";
 import type { ColumnMapping, DatasetCatalog, FileMeta } from "../engine/types";
 import type { LoadOptions } from "../engine/fileLoad/loadBytes";
-import { cacheBudgetBytes } from "../config/env";
+import { cacheBudgetBytes, maxCachedRuns } from "../config/env";
 import type { CompareReport } from "../engine/types";
 
 export interface CachedFile {
@@ -43,6 +43,12 @@ export interface CachedRun {
    * endpoints refuse rather than returning a file with every row marked
    * as an unmatched break. */
   annotatedOutputs: boolean;
+  /** The browser session that produced this run (see
+   * api/middleware/session.ts). Downloads are refused to any other session
+   * unless RUN_ISOLATION is off -- on a shared, anonymous deployment a run
+   * id is otherwise the only thing standing between one user's
+   * reconciliation and another user. */
+  session: string;
   cachedAt: number;
 }
 
@@ -72,8 +78,11 @@ export const fileCache = new LRUCache<string, CachedFile>({
 export const catalogCache = new LRUCache<string, CachedCatalog>({ max: 60 });
 
 /** Runs hold a report (whose size follows the number of differences found)
- * plus small metadata -- no row data from the input files any more. */
-export const runCache = new LRUCache<string, CachedRun>({ max: 10 });
+ * plus small metadata -- no row data from the input files any more. The
+ * size is shared across everyone using the instance, so it follows
+ * MAX_CACHED_RUNS rather than a fixed 10 that a handful of concurrent
+ * users could churn through before anyone downloaded anything. */
+export const runCache = new LRUCache<string, CachedRun>({ max: maxCachedRuns() });
 
 export function newRunId(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
