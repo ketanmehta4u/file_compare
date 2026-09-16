@@ -61,6 +61,10 @@ describe("the session cookie", () => {
     // download link the user clicks.
     expect(setCookie?.join(";")).toContain("HttpOnly");
     expect(setCookie?.join(";")).toContain("SameSite=Lax");
+    // No Max-Age and no Expires: it ends with the browser, so a later visit
+    // starts clean and cannot reach anything from this one.
+    expect(setCookie?.join(";")).not.toContain("Max-Age");
+    expect(setCookie?.join(";")).not.toContain("Expires");
 
     const second = await me.get("/api/config");
     expect(second.headers["set-cookie"]).toBeUndefined();

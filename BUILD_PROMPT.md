@@ -488,8 +488,8 @@ occupancy from the readiness endpoint so an operator can see all of it.
 The deployed app is shared and anonymous, so a run id is otherwise the only
 thing between one user's reconciliation and everyone else. Issue every browser
 an opaque id on its first request (128 bits, httpOnly cookie, `SameSite=Lax`,
-`Secure` only when the request actually arrived over HTTPS) and stamp it on each
-run and job. Report downloads, annotated downloads, job polling and job
+`Secure` only when the request actually arrived over HTTPS, and **no expiry**, so
+it ends when the browser closes) and stamp it on each run and job. Report downloads, annotated downloads, job polling and job
 cancellation must all refuse any other session — with **404, not 403**, since
 "forbidden" confirms the id is real.
 

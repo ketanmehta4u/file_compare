@@ -5,9 +5,9 @@ the application as **one Node process** (plus nginx in the Docker case).
 
 There is **no sign-in**. Anyone who can reach the URL can use the app, so the
 access control is where you put it: an internal network, a VPN, or a firewall
-rule. Results are bound to the browser that created them (a session cookie), so
-one person's reconciliation is not fetchable by another, but that is isolation,
-not authentication.
+rule. Results are bound to the browser that created them (a session cookie that
+ends when the browser closes), so one person's reconciliation is not fetchable by
+another, and a later visit starts clean. That is isolation, not authentication.
 
 ## Before either target
 

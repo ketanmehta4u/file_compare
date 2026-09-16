@@ -8,7 +8,6 @@ declare module "express-serve-static-core" {
 }
 
 const COOKIE_NAME = "fr_session";
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Reads one cookie straight off the header rather than adding a
@@ -43,7 +42,8 @@ function readSessionCookie(header: string | undefined): string | undefined {
  * SameSite=Lax so it still arrives on a download link the user clicks, and
  * Secure only when the request actually arrived over HTTPS (behind a TLS
  * terminator that means X-Forwarded-Proto, which `req.secure` honours via
- * Express's trust-proxy setting).
+ * Express's trust-proxy setting). It carries no expiry, so it lasts only as
+ * long as the browser stays open.
  */
 export function sessionCookie(req: Request, res: Response, next: NextFunction): void {
   const existing = readSessionCookie(req.headers.cookie);
@@ -54,7 +54,9 @@ export function sessionCookie(req: Request, res: Response, next: NextFunction): 
       httpOnly: true,
       sameSite: "lax",
       secure: req.secure,
-      maxAge: ONE_DAY_MS,
+      // Deliberately no maxAge/expires: a session cookie, discarded when the
+      // browser closes. The next visit is a clean slate -- nothing from the
+      // previous session is reachable, even by someone holding an old link.
       path: "/",
     });
   }

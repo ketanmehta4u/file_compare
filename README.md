@@ -787,6 +787,10 @@ design otherwise avoids entirely.
   for the same report, annotated file, job progress or cancellation gets a
   404, the same answer as an id that never existed. `RUN_ISOLATION=off`
   restores shared access for script-driven API use.
+- **Closing the browser ends the session.** The cookie carries no expiry, so
+  the next visit starts clean and nothing from the previous one is
+  reachable, even with an old link. The page itself stores nothing —
+  reloading always starts blank.
 - **Finished runs are kept, newest first, up to `MAX_CACHED_RUNS`**
   (default 50) shared across everyone on the instance. Past that the oldest
   result's link stops working.
