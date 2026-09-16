@@ -293,6 +293,7 @@ Middleware order in `app.ts`, and why it is that order:
     ├─ bodySizeGuard           413 on Content-Length before a byte streams
     ├─ securityHeaders         CSP, nosniff, frame-deny, HSTS
     ├─ requestLog              correlation id; one structured line per response
+    ├─ sessionCookie           opaque per-browser id, httpOnly; runs are bound to it
     ├─ express.json()          JSON bodies (multipart is per-route, via multer)
     │
     ├─ /api  health · auth · config · catalog · files · compare

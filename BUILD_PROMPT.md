@@ -103,7 +103,7 @@ backend/src/
     toView.ts            engine types -> DTOs (Decimal/Date -> string)
     upload.ts            multer, memory storage
     middleware/          bodySizeGuard, securityHeaders, requestLog,
-                         rateLimit, compareSlot, currentUser
+                         session, rateLimit, compareSlot, currentUser
     routes/              health, auth, config, catalog, files, compare
   engine/
     decimal.ts dates.ts normalise.ts equality.ts   primitives
@@ -482,6 +482,24 @@ in a 512 MB container, which would size the cache seven times too large).
 Let the default upload cap follow the same budget rather than promising a
 fixed size the machine cannot process, and report heap, budget and cache
 occupancy from the readiness endpoint so an operator can see all of it.
+
+### Results belong to the browser that made them
+
+The deployed app is shared and anonymous, so a run id is otherwise the only
+thing between one user's reconciliation and everyone else. Issue every browser
+an opaque id on its first request (128 bits, httpOnly cookie, `SameSite=Lax`,
+`Secure` only when the request actually arrived over HTTPS) and stamp it on each
+run and job. Report downloads, annotated downloads, job polling and job
+cancellation must all refuse any other session — with **404, not 403**, since
+"forbidden" confirms the id is real.
+
+This is **not** authentication: there is no login, and the id says nothing about
+who anyone is. Provide an off switch (`RUN_ISOLATION=off`) for a script driving
+the HTTP API with no cookie jar.
+
+Retention is a shared resource too: keep finished runs under a configurable cap
+(`MAX_CACHED_RUNS`) rather than a fixed handful, or a few concurrent users will
+evict each other's results before they are downloaded.
 
 ### Caching
 

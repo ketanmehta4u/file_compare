@@ -175,10 +175,37 @@ rearchitecture was done or requested; `prompt.md` is kept only for
 reference and carries its own warning banner at the top. Don't let it
 override anything in this file or the git log.
 
+### Shared deployment: result isolation and retention
+
+The app is deployed as a web app for several concurrent users (Docker on a
+VM, or IIS on Windows), with **no sign-in**. Two things that were fine for
+one user were not fine for several, and both are now fixed:
+
+- **Results are bound to a browser.** `api/middleware/session.ts` issues an
+  opaque 128-bit id in an httpOnly cookie; runs and jobs carry it, and
+  downloads, polling and cancellation answer **404** to any other session
+  (404 rather than 403, so the id is not confirmed). It is isolation, not
+  authentication. `RUN_ISOLATION=off` restores the old shared behaviour for
+  script-driven API use.
+- **Run retention is configurable** (`MAX_CACHED_RUNS`, default 50). It was
+  a fixed 10 shared by everyone, so concurrent users evicted each other's
+  results before they could download them.
+
+Two decision records live in `docs/`: `function-call-analysis.md` (why the
+frontend still talks HTTP — a browser and Node share no memory, so direct
+function calls are impossible; Electron would allow them but is a desktop
+app) and `deployment.md` (both targets, including the IIS defaults that
+silently break uploads and downloads).
+
+Note for tests: API specs must drive the app through **one supertest
+agent** (`request.agent(app)`), which keeps the cookie. Plain
+`request(app)` is a fresh browser per call, and downloads then 404.
+
 ## What's NOT done
 
-- Nothing has been pushed to the GitHub remote — confirm current state,
-  don't assume.
+- Confirm the current git state rather than assuming it: `git status`,
+  `git log origin/main`. Work has been pushed to the remote, and a
+  restore point is tagged `stable-2026-09-17` (see `RESTORE.md`).
 - `.xls` legacy Excel support (deferred by explicit decision, see above).
 - Azure Blob storage (stubbed as 400-returning routes, matching the
   original app's own already-disabled state — not a gap, a deliberate

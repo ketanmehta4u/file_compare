@@ -777,6 +777,22 @@ design otherwise avoids entirely.
 - Hidden rows and columns **are included** in the comparison. The app
   warns that they exist rather than silently skipping them.
 
+**Access and isolation**
+
+- **There is no sign-in.** Anyone who can reach the URL can use the app, so
+  access control is where you deploy it: an internal network, a VPN, or a
+  firewall rule.
+- **Results are bound to the browser that produced them** — an httpOnly
+  session cookie issued on first use, not a login. Another browser asking
+  for the same report, annotated file, job progress or cancellation gets a
+  404, the same answer as an id that never existed. `RUN_ISOLATION=off`
+  restores shared access for script-driven API use.
+- **Finished runs are kept, newest first, up to `MAX_CACHED_RUNS`**
+  (default 50) shared across everyone on the instance. Past that the oldest
+  result's link stops working.
+- **Nothing survives a restart.** A deploy or crash clears uploads, results
+  and in-flight comparisons; users re-upload and re-run.
+
 **Scale and memory**
 
 - Everything is in memory, and a comparison needs both files parsed at
@@ -950,6 +966,7 @@ frontend/         Angular 14 SPA
 fixtures/         sample CSV/XLSX used by tests and manual checks
 docker-compose.yml
 package.json      root scripts: setup / build / start / serve / test
+docs/             deployment guide (Docker, IIS) and the function-call analysis
 ARCHITECTURE.md   how it works: workflow, API calls, internals
 BUILD_PROMPT.md   full specification of this app, written from the code
 prompt.md         an earlier, rejected specification -- kept for reference
