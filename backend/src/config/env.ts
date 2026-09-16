@@ -6,6 +6,7 @@ const MULTIPART_SLACK_BYTES = 1024 * 1024;
 const DEFAULT_MAX_CONCURRENT_COMPARISONS = 3;
 const DEFAULT_COMPARE_QUEUE_TIMEOUT_S = 120;
 const DEFAULT_MAX_RESPONSE_ROWS = 1000;
+const DEFAULT_MAX_CACHED_RUNS = 50;
 
 function envInt(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -80,6 +81,34 @@ export function compareQueueTimeoutMs(): number {
  */
 export function maxResponseRows(): number {
   return envInt("MAX_RESPONSE_ROWS", DEFAULT_MAX_RESPONSE_ROWS);
+}
+
+/**
+ * How many finished runs stay downloadable, newest first.
+ *
+ * Shared by everyone using the instance: the cache was a fixed 10, so on a
+ * busy shared deployment one person's result could be evicted by other
+ * people's runs before they had downloaded it, and their link then 404s.
+ * Each entry holds that run's differences, so a large result costs more --
+ * raise it with the memory to match. Read once at startup: an LRU cache
+ * cannot be resized after construction.
+ */
+export function maxCachedRuns(): number {
+  return envInt("MAX_CACHED_RUNS", DEFAULT_MAX_CACHED_RUNS);
+}
+
+/**
+ * Whether a run may only be fetched by the browser session that created it
+ * (see api/middleware/session.ts). On by default, because the deployed app
+ * is shared and anonymous.
+ *
+ * Set RUN_ISOLATION=off for a non-browser caller that drives the HTTP API
+ * with a script and keeps no cookie jar; every run then remains fetchable
+ * by anyone holding its id.
+ */
+export function runIsolationEnabled(): boolean {
+  const raw = (process.env.RUN_ISOLATION ?? "").trim().toLowerCase();
+  return !(raw === "off" || raw === "false" || raw === "0" || raw === "no");
 }
 
 export function corsOrigins(): string[] {

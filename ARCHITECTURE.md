@@ -191,6 +191,17 @@ A plain `<a href>` link, not a fetch, so the browser handles
 **It is never capped**, however trimmed the on-screen tables were: the
 server still holds the complete report for that run.
 
+**A run belongs to one browser.** `api/middleware/session.ts` gives every
+browser an opaque 128-bit id on its first request, in an httpOnly cookie
+with no expiry — so it is discarded when the browser closes, and the next
+visit starts clean. Runs and jobs are stamped with that id, and the report
+download, the annotated download, job polling and job cancellation all
+refuse any other session with **404** — the same answer as an id that never
+existed, because "403 Forbidden" would confirm the run is real. This is
+isolation on a shared, anonymous deployment, not authentication: there is no
+login, and the id says nothing about who anyone is. `RUN_ISOLATION=off`
+disables it for a script driving the API with no cookie jar.
+
 The workbook is **streamed** into the response (exceljs's streaming
 `WorkbookWriter`): rows are written as they are produced and each finished
 sheet is flushed into the zip and released. Streaming alone was not enough:
@@ -293,6 +304,7 @@ Middleware order in `app.ts`, and why it is that order:
     ├─ bodySizeGuard           413 on Content-Length before a byte streams
     ├─ securityHeaders         CSP, nosniff, frame-deny, HSTS
     ├─ requestLog              correlation id; one structured line per response
+    ├─ sessionCookie           opaque per-browser id, httpOnly; runs are bound to it
     ├─ express.json()          JSON bodies (multipart is per-route, via multer)
     │
     ├─ /api  health · auth · config · catalog · files · compare

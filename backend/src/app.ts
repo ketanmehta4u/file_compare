@@ -4,6 +4,7 @@ import { corsOrigins, serveFrontendEnabled, trustProxy } from "./config/env";
 import { bodySizeGuard } from "./api/middleware/bodySizeGuard";
 import { securityHeaders } from "./api/middleware/securityHeaders";
 import { requestLog, log } from "./api/middleware/requestLog";
+import { sessionCookie } from "./api/middleware/session";
 import { healthRouter } from "./api/routes/health";
 import { authRouter } from "./api/routes/auth";
 import { configRouter } from "./api/routes/config";
@@ -36,6 +37,11 @@ export function createApp(): Express {
   app.use(bodySizeGuard);
   app.use(securityHeaders);
   app.use(requestLog);
+
+  // Gives each browser an opaque id in a cookie. Not a login -- it binds a
+  // result to the browser that produced it, so on a shared deployment one
+  // person's reconciliation is not fetchable by another.
+  app.use(sessionCookie);
 
   // 1 MB rather than express's 100 KB default: a compare request is small,
   // but a wide file's column_map is a name-pair per column and can run to

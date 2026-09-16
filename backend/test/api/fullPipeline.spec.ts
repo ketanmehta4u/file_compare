@@ -7,6 +7,9 @@ import { fileCache, catalogCache, runCache } from "../../src/cache/stores";
 
 const FIXTURES = join(__dirname, "../../../fixtures");
 const app = createApp();
+// One agent is one browser: it keeps the session cookie that downloads and
+// job polling are bound to (see api/middleware/session.ts).
+const agent = request.agent(app);
 
 beforeEach(() => {
   fileCache.clear();
@@ -23,7 +26,7 @@ beforeEach(() => {
  */
 describe("full pipeline: catalog -> files -> compare -> report", () => {
   it("reproduces the documented sanity check end to end over HTTP", async () => {
-    const catalogUpload = await request(app)
+    const catalogUpload = await agent
       .post("/api/catalog/upload")
       .attach("file", join(FIXTURES, "sample_catalog.xlsx"));
     expect(catalogUpload.status).toBe(200);
@@ -32,22 +35,22 @@ describe("full pipeline: catalog -> files -> compare -> report", () => {
       "GL_MONTHLY"
     );
 
-    const mapping = await request(app).get(`/api/catalog/${catalogId}/datasets/GL_MONTHLY/mapping`);
+    const mapping = await agent.get(`/api/catalog/${catalogId}/datasets/GL_MONTHLY/mapping`);
     expect(mapping.status).toBe(200);
     expect(mapping.body.default_key_columns).toEqual(["transaction_id"]);
 
-    const srcUpload = await request(app)
+    const srcUpload = await agent
       .post("/api/files/upload")
       .attach("file", join(FIXTURES, "sample_source.csv"));
     expect(srcUpload.status).toBe(200);
     expect(srcUpload.body.row_count).toBe(12);
 
-    const tgtUpload = await request(app)
+    const tgtUpload = await agent
       .post("/api/files/upload")
       .attach("file", join(FIXTURES, "sample_target.csv"));
     expect(tgtUpload.status).toBe(200);
 
-    const run = await request(app).post("/api/compare/run").send({
+    const run = await agent.post("/api/compare/run").send({
       source_file_id: srcUpload.body.file_id,
       target_file_id: tgtUpload.body.file_id,
       catalog_id: catalogId,
@@ -65,22 +68,22 @@ describe("full pipeline: catalog -> files -> compare -> report", () => {
     // superagent doesn't know the xlsx MIME type, so it won't parse
     // res.body into a Buffer automatically -- assert via headers instead
     // of reading raw bytes.
-    const report = await request(app).get(`/api/compare/${run.body.run_id}/report.xlsx`);
+    const report = await agent.get(`/api/compare/${run.body.run_id}/report.xlsx`);
     expect(report.status).toBe(200);
     expect(report.headers["content-type"]).toContain("spreadsheetml.sheet");
     expect(report.headers["content-disposition"]).toContain("reconciliation_");
 
-    const annotated = await request(app).get(`/api/compare/${run.body.run_id}/annotated/source`);
+    const annotated = await agent.get(`/api/compare/${run.body.run_id}/annotated/source`);
     expect(annotated.status).toBe(200);
   });
 
   it("returns 404 for an unknown run id", async () => {
-    const res = await request(app).get("/api/compare/does-not-exist/report.xlsx");
+    const res = await agent.get("/api/compare/does-not-exist/report.xlsx");
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for a compare/run against an uncached file id", async () => {
-    const res = await request(app)
+    const res = await agent
       .post("/api/compare/run")
       .send({ source_file_id: "nope", target_file_id: "nope2" });
     expect(res.status).toBe(404);
