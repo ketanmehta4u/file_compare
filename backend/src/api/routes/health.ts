@@ -36,8 +36,6 @@ healthRouter.get("/readyz", (_req, res) => {
   res.status(ready ? 200 : 503).json({
     status: ready ? "ready" : "not_ready",
     checks: {
-      blob_read_configured: false,
-      blob_write_configured: false,
       cache_files: fileCache.size,
       cache_catalogs: catalogCache.size,
       cache_runs: runCache.size,

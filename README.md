@@ -487,6 +487,10 @@ Backend environment variables (all optional):
 | `MAX_RESPONSE_ROWS`          | `1000`                                  | Rows per detail section put in a compare response. Downloads are never capped.                                                                                                                              |
 | `MAX_CACHED_RUNS`            | `50`                                    | Finished runs kept downloadable, newest first, shared across everyone using the instance. When it overflows the oldest result's link stops working. Read once at startup.                                   |
 | `RUN_ISOLATION`              | on                                      | Bind each run to the browser session that produced it, so another browser cannot download it. Set `off` for a script driving the HTTP API with no cookie jar.                                               |
+| `RATE_LIMIT_WINDOW_S`        | `60`                                    | Window for the per-client rate limits below.                                                                                                                                                                |
+| `UPLOAD_RATE_LIMIT`          | `30`                                    | Uploads, catalogue uploads and sheet listings allowed per window, per client.                                                                                                                               |
+| `COMPARE_RATE_LIMIT`         | `10`                                    | Comparisons started per window, per client. Worth raising for people who iterate on settings, or for script-driven use.                                                                                     |
+| `DOWNLOAD_RATE_LIMIT`        | `20`                                    | Report and annotated downloads per window, per client.                                                                                                                                                      |
 | `MAX_CACHE_BYTES`            | 25% of the V8 heap limit                | Bytes of uploaded files the cache may hold. Derived from the machine, so it self-sizes on a laptop and in a container.                                                                                      |
 | `MEM_LIMIT` (compose)        | `2g`                                    | The backend container's memory limit. V8 sizes its heap from this, and the cache budget and upload cap follow the heap.                                                                                     |
 | `LOG_LEVEL` / `LOG_FORMAT`   | `info` / `json`                         | Logging. `LOG_FORMAT=text` gives pretty-printed dev output.                                                                                                                                                 |
@@ -880,9 +884,9 @@ design otherwise avoids entirely.
 
 **Functionality not built**
 
-- **Azure Blob storage is stubbed** — the routes exist and return 400,
-  matching the original app's own already-disabled state. Upload and
-  download are local only.
+- **No cloud storage integration.** Uploads and downloads are local only.
+  The original's disabled Azure Blob stubs have been removed rather than
+  left as routes that only ever answer 400.
 - No comparison history, saved configurations, or scheduled runs — each
   comparison starts from scratch.
 - No i18n; the UI is English only.

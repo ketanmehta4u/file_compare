@@ -23,7 +23,7 @@ import { compareToResponse } from "../toView";
 import { compareRequestSchema } from "../schemas";
 import { HttpError, respondWithError } from "../errors";
 import { log } from "../middleware/requestLog";
-import type { CompareRequest, CompareResultResponse, WriteToBlobResponse } from "../dto";
+import type { CompareRequest, CompareResultResponse } from "../dto";
 import type { CompareJobInput } from "../../worker/compareWorker";
 
 export const compareRouter = Router();
@@ -373,11 +373,4 @@ compareRouter.get("/compare/:runId/annotated/:side", downloadRateLimit, async (r
   } catch (err) {
     respondWithError(req, res, err);
   }
-});
-
-// Blob storage is out of scope for this port -- literal stub matching the
-// original's already-disabled state.
-compareRouter.post("/compare/:runId/write-to-blob", compareRateLimit, (_req, res) => {
-  const body: WriteToBlobResponse = { written: [], failed: [] };
-  res.status(400).json({ detail: "Azure Storage is disabled on this server.", ...body });
 });

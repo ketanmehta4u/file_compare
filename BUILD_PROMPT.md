@@ -39,7 +39,7 @@ correct path.
 - No client-side parsing. The browser uploads bytes; the server does all
   the work.
 - No legacy `.xls` (OLE2) support.
-- No cloud blob storage integration.
+- No cloud storage integration: uploads and downloads are local only.
 
 ---
 

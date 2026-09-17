@@ -26,12 +26,8 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * Port of the original's FileInput.tsx, reused for both Source and
- * Target. Blob-URL mode is dropped entirely in this port -- blob storage
- * is a stubbed-off, always-400 feature here (see backend/src/api/routes/
- * files.ts), so /api/config always reports blob_read_enabled=false and
- * the original's blob-mode toggle would never actually show. Local
- * upload only.
+ * Port of the original's FileInput.tsx, reused for both Source and Target.
+ * Local upload only: the original's blob-URL mode has no counterpart here.
  */
 @Component({
   selector: "app-file-input",

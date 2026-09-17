@@ -19,7 +19,6 @@ function meta(name: string, dtypes: Array<[string, string]>): FileMetaView {
     hidden_row_count: 0,
     formula_blank_columns: [],
     formula_blank_count: 0,
-    blob_url: "",
   } as FileMetaView;
 }
 

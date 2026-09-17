@@ -19,10 +19,9 @@ export interface UploadProgress {
 }
 
 /** Thin HttpClient wrapper -- one method per backend route this app
- * actually uses. The blob-storage routes are not among them: the server
- * ships them hard-disabled, so a client for them would be dead weight.
- * Nor is /api/auth/me: there is no login, and the identity it reports is
- * recorded server-side in the audit report rather than shown in the page.
+ * actually uses. /api/auth/me is not among them: there is no login, and the
+ * identity it reports is recorded server-side in the audit report rather
+ * than shown in the page.
  *
  * Download endpoints (report.xlsx, the catalogue template) are exposed as
  * URL builders rather than fetch calls: they are meant to be used as

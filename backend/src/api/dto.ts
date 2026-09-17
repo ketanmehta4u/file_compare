@@ -12,9 +12,6 @@ export interface AuthMe {
 }
 
 export interface ConfigInfo {
-  blob_read_enabled: boolean;
-  blob_write_enabled: boolean;
-  blob_output_container_url: string;
   excel_max_rows: number;
   max_upload_bytes: number;
   /** Rows per detail section carried in a compare response; the downloads
@@ -76,14 +73,6 @@ export interface FileMetaView {
   hidden_row_count: number;
   formula_blank_columns: string[];
   formula_blank_count: number;
-  blob_url: string;
-}
-
-export interface BlobReadRequest {
-  url: string;
-  sheet_name?: string | null;
-  has_header?: boolean;
-  delimiter?: string | null;
 }
 
 export interface ExcelSheetsResponse {
@@ -218,9 +207,4 @@ export interface CompareResultResponse {
    * run. The run decides, not the client, so a reloaded or shared result
    * cannot offer a download the server will refuse. */
   annotated_outputs: boolean;
-}
-
-export interface WriteToBlobResponse {
-  written: string[];
-  failed: Array<[string, string]>;
 }

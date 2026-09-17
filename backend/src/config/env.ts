@@ -7,6 +7,10 @@ const DEFAULT_MAX_CONCURRENT_COMPARISONS = 3;
 const DEFAULT_COMPARE_QUEUE_TIMEOUT_S = 120;
 const DEFAULT_MAX_RESPONSE_ROWS = 1000;
 const DEFAULT_MAX_CACHED_RUNS = 50;
+const DEFAULT_RATE_LIMIT_WINDOW_S = 60;
+const DEFAULT_UPLOAD_RATE_LIMIT = 30;
+const DEFAULT_COMPARE_RATE_LIMIT = 10;
+const DEFAULT_DOWNLOAD_RATE_LIMIT = 20;
 
 function envInt(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -109,6 +113,37 @@ export function maxCachedRuns(): number {
 export function runIsolationEnabled(): boolean {
   const raw = (process.env.RUN_ISOLATION ?? "").trim().toLowerCase();
   return !(raw === "off" || raw === "false" || raw === "0" || raw === "no");
+}
+
+/**
+ * Per-client rate limits: the window, and how many requests of each kind a
+ * client may make within it. Keyed per user when a proxy supplies an
+ * identity, else per client address (see api/middleware/rateLimit.ts), so
+ * TRUST_PROXY has to match the deployment or everyone shares one bucket.
+ *
+ * Configurable because the right numbers depend on the deployment: the
+ * defaults suit a handful of people sharing an instance, but 10 comparisons
+ * a minute is easy to meet when someone is iterating on settings, and a
+ * script driving the API legitimately wants more. Read once at startup --
+ * the limiters cannot be resized after construction.
+ */
+export function rateLimitWindowMs(): number {
+  return envInt("RATE_LIMIT_WINDOW_S", DEFAULT_RATE_LIMIT_WINDOW_S) * 1000;
+}
+
+/** Uploads, catalogue uploads and sheet listing. */
+export function uploadRateLimitMax(): number {
+  return envInt("UPLOAD_RATE_LIMIT", DEFAULT_UPLOAD_RATE_LIMIT);
+}
+
+/** Starting a comparison, by either route. */
+export function compareRateLimitMax(): number {
+  return envInt("COMPARE_RATE_LIMIT", DEFAULT_COMPARE_RATE_LIMIT);
+}
+
+/** Downloading a report or an annotated file. */
+export function downloadRateLimitMax(): number {
+  return envInt("DOWNLOAD_RATE_LIMIT", DEFAULT_DOWNLOAD_RATE_LIMIT);
 }
 
 export function corsOrigins(): string[] {

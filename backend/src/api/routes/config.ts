@@ -5,14 +5,10 @@ import type { ConfigInfo } from "../dto";
 
 export const configRouter = Router();
 
-/** Blob storage is out of scope for this port (the original app already
- * ships it hard-disabled) -- these flags always report false/empty,
- * matching the disabled state exactly rather than a partial integration. */
+/** The limits the UI must respect: Excel's row ceiling, the effective
+ * upload cap, and how many rows a compare response will carry. */
 configRouter.get("/config", (_req, res) => {
   const body: ConfigInfo = {
-    blob_read_enabled: false,
-    blob_write_enabled: false,
-    blob_output_container_url: "",
     excel_max_rows: EXCEL_MAX_ROWS,
     max_upload_bytes: maxUploadBytes(),
     max_response_rows: maxResponseRows(),

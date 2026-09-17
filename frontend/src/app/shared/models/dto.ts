@@ -11,9 +11,6 @@
  */
 
 export interface ConfigInfo {
-  blob_read_enabled: boolean;
-  blob_write_enabled: boolean;
-  blob_output_container_url: string;
   excel_max_rows: number;
   max_upload_bytes: number;
   /** Rows per detail section the server puts in a compare response.
@@ -75,7 +72,6 @@ export interface FileMetaView {
   hidden_row_count: number;
   formula_blank_columns: string[];
   formula_blank_count: number;
-  blob_url: string;
 }
 
 export interface ExcelSheetsResponse {

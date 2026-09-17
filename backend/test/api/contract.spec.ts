@@ -23,11 +23,9 @@ describe("health/livez/readyz", () => {
     expect(r.body).toEqual({ status: "alive" });
   });
 
-  it("readyz reports cache sizes and disabled blob flags", async () => {
+  it("readyz reports cache sizes", async () => {
     const r = await request(app).get("/api/readyz");
     expect(r.body.status).toBe("ready");
-    expect(r.body.checks.blob_read_configured).toBe(false);
-    expect(r.body.checks.blob_write_configured).toBe(false);
   });
 });
 
@@ -44,9 +42,8 @@ describe("auth/me", () => {
 });
 
 describe("config", () => {
-  it("reports capability flags and the effective upload cap", async () => {
+  it("reports the limits the UI must respect", async () => {
     const r = await request(app).get("/api/config");
-    expect(r.body.blob_read_enabled).toBe(false);
     expect(r.body.excel_max_rows).toBe(1_048_576);
     expect(typeof r.body.max_upload_bytes).toBe("number");
   });
@@ -58,18 +55,6 @@ describe("security headers", () => {
     expect(r.headers["x-content-type-options"]).toBe("nosniff");
     expect(r.headers["x-frame-options"]).toBe("DENY");
     expect(r.headers["strict-transport-security"]).toBeDefined();
-  });
-});
-
-describe("blob endpoints are disabled stubs", () => {
-  it("from-blob returns 400", async () => {
-    const r = await request(app).post("/api/files/from-blob").send({ url: "https://example.com/x.csv" });
-    expect(r.status).toBe(400);
-  });
-
-  it("write-to-blob returns 400", async () => {
-    const r = await request(app).post("/api/compare/some-run/write-to-blob");
-    expect(r.status).toBe(400);
   });
 });
 

@@ -60,7 +60,7 @@ export function mappingEntryToView(e: MappingEntry): MappingEntryView {
   };
 }
 
-export function fileMetaToView(meta: FileMeta, fileId: string, blobUrl = ""): FileMetaView {
+export function fileMetaToView(meta: FileMeta, fileId: string): FileMetaView {
   return {
     file_id: fileId,
     filename: meta.name,
@@ -77,7 +77,6 @@ export function fileMetaToView(meta: FileMeta, fileId: string, blobUrl = ""): Fi
     hidden_row_count: meta.hiddenRowCount ?? 0,
     formula_blank_columns: [...(meta.formulaBlankColumns ?? [])],
     formula_blank_count: meta.formulaBlankCount ?? 0,
-    blob_url: blobUrl,
   };
 }
 

@@ -38,6 +38,13 @@ another, and a later visit starts clean. That is isolation, not authentication.
   first. When it overflows, the oldest result is dropped and its download link
   stops working. Raise it for a busier instance; each entry holds that run's
   differences, so very large results cost more.
+- **Rate limits** are per client and configurable: `RATE_LIMIT_WINDOW_S`
+  (default 60) with `UPLOAD_RATE_LIMIT` (30), `COMPARE_RATE_LIMIT` (10) and
+  `DOWNLOAD_RATE_LIMIT` (20). The defaults suit a handful of people sharing
+  an instance; 10 comparisons a minute is easy to meet when someone is
+  iterating on settings, so raise it if users report "Rate limit exceeded".
+  They are keyed per client address, so `TRUST_PROXY` must match the
+  deployment or everyone shares one bucket. Read once at startup.
 - **Check it after deploying:** `GET /api/readyz` reports readiness, cache sizes
   and live memory against the budget. It is the one endpoint to look at when
   something is slow or failing.

@@ -207,9 +207,9 @@ agent** (`request.agent(app)`), which keeps the cookie. Plain
   `git log origin/main`. Work has been pushed to the remote, and a
   restore point is tagged `stable-2026-09-17` (see `RESTORE.md`).
 - `.xls` legacy Excel support (deferred by explicit decision, see above).
-- Azure Blob storage (stubbed as 400-returning routes, matching the
-  original app's own already-disabled state — not a gap, a deliberate
-  match).
+- Azure Blob storage was never ported, and the original's disabled stub
+  routes have now been deleted along with their DTOs and config flags —
+  dead surface rather than an unfinished feature.
 
 ## If the user asks you to "continue" or references earlier conversation
 

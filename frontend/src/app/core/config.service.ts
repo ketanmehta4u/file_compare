@@ -4,9 +4,8 @@ import { ApiService } from "./api.service";
 import type { ConfigInfo } from "../shared/models/dto";
 
 /** Fetches /api/config once at bootstrap and exposes it as observable
- * state -- capability flags (blob read/write, always false in this port)
- * and the effective upload size cap the file-input component pre-checks
- * against before uploading. */
+ * state -- the server's limits, including the effective upload size cap the
+ * file-input component pre-checks against before uploading. */
 @Injectable({ providedIn: "root" })
 export class ConfigService {
   private readonly subject = new BehaviorSubject<ConfigInfo | null>(null);
