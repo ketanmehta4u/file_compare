@@ -66,6 +66,13 @@ Then open <http://localhost:3000>. Sample files to try it with are in
 `fixtures/` — upload `sample_source.csv` as Source and
 `sample_target.csv` as Target.
 
+To exercise the **sheet picker**, use `sample_source_multisheet.xlsx` and
+`sample_target_multisheet.xlsx` instead. Each wraps the same data in a
+workbook of several sheets, and neither names its data sheet obviously
+("GL Detail" and "Ledger Extract", behind cover and summary sheets) — so
+the row and column counts in the dropdown are what tell them apart. Pick
+those two sheets and the result is identical to the CSV pair.
+
 With Docker instead: `docker compose up --build`, then
 <http://localhost:8080>.
 
@@ -980,6 +987,7 @@ frontend/         Angular 14 SPA
   src/app/features/ file input, catalogue picker, settings, results
   nginx.conf        static serving + /api proxy (production image)
 fixtures/         sample CSV/XLSX used by tests and manual checks
+                  *_multisheet.xlsx exercise the sheet picker
 docker-compose.yml
 package.json      root scripts: setup / build / start / serve / test
 docs/             deployment guide (Docker, IIS) and the function-call analysis
