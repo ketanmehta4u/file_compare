@@ -155,13 +155,18 @@
       <label *ngIf="isExcel" class="field">
         Sheet
         <select [(ngModel)]="chosenSheet" [disabled]="sheetsLoading">
-          <option *ngFor="let s of sheets" [value]="s">{{ s }}</option>
+          <option *ngFor="let s of sheets" [value]="s.name">{{ sheetLabel(s) }}</option>
         </select>
         <span *ngIf="sheetsLoading" class="muted">Loading sheets…</span>
       </label>
     </div>
 
-    <button type="button" class="btn-primary" (click)="load()" [disabled]="progress !== null">
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="load()"
+      [disabled]="progress !== null || waitingForSheets"
+    >
       <svg
         class="icon icon-sm"
         viewBox="0 0 24 24"

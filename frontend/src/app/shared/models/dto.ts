@@ -74,8 +74,14 @@ export interface FileMetaView {
   formula_blank_count: number;
 }
 
+export interface ExcelSheetView {
+  name: string;
+  row_count: number;
+  column_count: number;
+}
+
 export interface ExcelSheetsResponse {
-  sheets: string[];
+  sheets: ExcelSheetView[];
 }
 
 export interface CompareRequest {

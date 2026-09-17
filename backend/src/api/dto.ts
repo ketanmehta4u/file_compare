@@ -75,8 +75,16 @@ export interface FileMetaView {
   formula_blank_count: number;
 }
 
+/** One sheet offered for selection. The counts are of the sheet as it
+ * stands, header row included. */
+export interface ExcelSheetView {
+  name: string;
+  row_count: number;
+  column_count: number;
+}
+
 export interface ExcelSheetsResponse {
-  sheets: string[];
+  sheets: ExcelSheetView[];
 }
 
 export interface CompareRequest {

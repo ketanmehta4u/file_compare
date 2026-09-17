@@ -21,11 +21,26 @@ function assertXlsxMagicBytes(data: Buffer, fileName: string): void {
   throw new InputError(`${fileName}: not a recognised .xlsx file (unexpected file signature).`);
 }
 
-export async function listExcelSheets(data: Buffer, fileName: string): Promise<string[]> {
+/** A sheet as offered to the user before anything is loaded. The counts are
+ * what the sheet holds, header row included -- at this point nobody has said
+ * whether the first row is a header. Names alone were not enough to choose
+ * with: a workbook of "Sheet1 / Data / Notes" gives no clue which one holds
+ * the figures. */
+export interface ExcelSheetInfo {
+  name: string;
+  rowCount: number;
+  columnCount: number;
+}
+
+export async function listExcelSheets(data: Buffer, fileName: string): Promise<ExcelSheetInfo[]> {
   assertXlsxMagicBytes(data, fileName);
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(data as unknown as ExcelJS.Buffer);
-  return wb.worksheets.map((ws) => ws.name);
+  return wb.worksheets.map((ws) => ({
+    name: ws.name,
+    rowCount: ws.actualRowCount,
+    columnCount: ws.actualColumnCount,
+  }));
 }
 
 /** Best-effort string conversion of a cell's value, mirroring the source's

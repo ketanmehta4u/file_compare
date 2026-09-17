@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { HttpEventType } from "@angular/common/http";
 import { ApiService, uploadPercent } from "../../core/api.service";
-import type { FileMetaView } from "../../shared/models/dto";
+import type { ExcelSheetView, FileMetaView } from "../../shared/models/dto";
 
 function extensionOf(name: string): string {
   const parts = name.toLowerCase().split(".");
@@ -47,7 +47,7 @@ export class FileInputComponent {
   hasHeader = true;
   delimiter = "";
   pickedFile: File | null = null;
-  sheets: string[] = [];
+  sheets: ExcelSheetView[] = [];
   chosenSheet = "";
   sizeError = "";
   loadError = "";
@@ -120,7 +120,7 @@ export class FileInputComponent {
         next: (res) => {
           this.sheetsLoading = false;
           this.sheets = res.sheets;
-          this.chosenSheet = res.sheets[0] ?? "";
+          this.chosenSheet = res.sheets[0]?.name ?? "";
         },
         error: (err) => {
           this.sheetsLoading = false;
@@ -132,6 +132,23 @@ export class FileInputComponent {
 
   get isExcel(): boolean {
     return !!this.pickedFile && isExcelName(this.pickedFile.name);
+  }
+
+  /** "Datasets — 15 rows x 6 columns": names alone do not say which sheet
+   * holds the data. Counts include the header row, since at this point
+   * nobody has said whether there is one. */
+  sheetLabel(sheet: ExcelSheetView): string {
+    const rows = sheet.row_count.toLocaleString();
+    const columns = sheet.column_count.toLocaleString();
+    return `${sheet.name} — ${rows} row${sheet.row_count === 1 ? "" : "s"} × ${columns} column${
+      sheet.column_count === 1 ? "" : "s"
+    }`;
+  }
+
+  /** A workbook whose sheets are still being listed has nothing to load yet:
+   * the dropdown is empty and no sheet has been chosen. */
+  get waitingForSheets(): boolean {
+    return this.isExcel && (this.sheetsLoading || this.sheets.length === 0);
   }
 
   load(): void {

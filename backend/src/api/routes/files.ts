@@ -49,7 +49,9 @@ filesRouter.post("/files/list-sheets", uploadRateLimit, uploadSingle("file"), as
     if (!req.file) return res.status(400).json({ detail: "No file uploaded." });
     if (req.file.buffer.length === 0) return res.status(400).json({ detail: "Uploaded file is empty." });
     const sheets = await listExcelSheets(req.file.buffer, req.file.originalname);
-    const body: ExcelSheetsResponse = { sheets };
+    const body: ExcelSheetsResponse = {
+      sheets: sheets.map((s) => ({ name: s.name, row_count: s.rowCount, column_count: s.columnCount })),
+    };
     res.json(body);
   } catch (err) {
     respondWithError(req, res, err);

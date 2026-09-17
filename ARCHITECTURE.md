@@ -96,7 +96,11 @@ does **not** upload it. The component first validates locally:
 - the size is within `max_upload_bytes`.
 
 If the file is a workbook, it then calls `POST /api/files/list-sheets` so
-the user can choose a sheet. That request sends the file but keeps
+the user can choose a sheet. Each sheet comes back with its row and column
+count, and the picker shows them ("Data — 12,480 rows × 9 columns"): a
+workbook of "Sheet1 / Data / Notes" gives no clue otherwise which one holds
+the figures. **Load** stays disabled until that list arrives, since until
+then no sheet has been chosen. That request sends the file but keeps
 nothing server-side.
 
 ### 3. The user clicks "Load"
@@ -230,18 +234,18 @@ export needs. It remains available to a direct API caller.
 Every request the SPA can make, in the order it typically makes them.
 `ApiService` is the only place in the frontend that knows any URL.
 
-| #   | When               | Method | Path                                      | Sends                         | Gets back                          |
-| --- | ------------------ | ------ | ----------------------------------------- | ----------------------------- | ---------------------------------- |
-| 1   | Bootstrap          | GET    | `/api/config`                             | —                             | limits + capability flags          |
-| 2   | Workbook picked    | POST   | `/api/files/list-sheets`                  | multipart file                | `{ sheets: [...] }`                |
-| 3   | "Load" clicked     | POST   | `/api/files/upload`                       | file + sheet/header/delimiter | `FileMetaView` incl. `file_id`     |
-| 4   | Catalogue uploaded | POST   | `/api/catalog/upload`                     | multipart file                | `catalog_id` + datasets            |
-| 5   | Dataset picked     | GET    | `/api/catalog/{id}/datasets/{ds}/mapping` | —                             | mapping + default key columns      |
-| 6   | Guide link         | GET    | `/api/catalog/template`                   | —                             | blank catalogue `.xlsx`            |
-| 7   | "Run comparison"   | POST   | `/api/compare/jobs`                       | `CompareRequest`              | `202 { job_id, status }`           |
-| 8   | Every 400 ms       | GET    | `/api/compare/jobs/{jobId}`               | —                             | status, progress, result when done |
-| 9   | "Cancel"           | DELETE | `/api/compare/jobs/{jobId}`               | —                             | `{ cancelled }`                    |
-| 10  | Download link      | GET    | `/api/compare/{runId}/report.xlsx`        | —                             | workbook                           |
+| #   | When               | Method | Path                                      | Sends                         | Gets back                                       |
+| --- | ------------------ | ------ | ----------------------------------------- | ----------------------------- | ----------------------------------------------- |
+| 1   | Bootstrap          | GET    | `/api/config`                             | —                             | limits + capability flags                       |
+| 2   | Workbook picked    | POST   | `/api/files/list-sheets`                  | multipart file                | `{ sheets: [{name, row_count, column_count}] }` |
+| 3   | "Load" clicked     | POST   | `/api/files/upload`                       | file + sheet/header/delimiter | `FileMetaView` incl. `file_id`                  |
+| 4   | Catalogue uploaded | POST   | `/api/catalog/upload`                     | multipart file                | `catalog_id` + datasets                         |
+| 5   | Dataset picked     | GET    | `/api/catalog/{id}/datasets/{ds}/mapping` | —                             | mapping + default key columns                   |
+| 6   | Guide link         | GET    | `/api/catalog/template`                   | —                             | blank catalogue `.xlsx`                         |
+| 7   | "Run comparison"   | POST   | `/api/compare/jobs`                       | `CompareRequest`              | `202 { job_id, status }`                        |
+| 8   | Every 400 ms       | GET    | `/api/compare/jobs/{jobId}`               | —                             | status, progress, result when done              |
+| 9   | "Cancel"           | DELETE | `/api/compare/jobs/{jobId}`               | —                             | `{ cancelled }`                                 |
+| 10  | Download link      | GET    | `/api/compare/{runId}/report.xlsx`        | —                             | workbook                                        |
 
 Conventions across all of them:
 

@@ -8,11 +8,22 @@ const FIXTURES = join(__dirname, "../../../fixtures");
 
 // Ported from tests/test_comparison.py::TestLoading (Excel subset).
 describe("listExcelSheets", () => {
-  it("reads sheet names from the real sample_catalog.xlsx fixture", async () => {
+  it("reads each sheet with its size from the real sample_catalog.xlsx fixture", async () => {
     const data = readFileSync(join(FIXTURES, "sample_catalog.xlsx"));
     const sheets = await listExcelSheets(data, "sample_catalog.xlsx");
-    expect(sheets).toContain("Datasets");
-    expect(sheets).toContain("Columns");
+
+    const names = sheets.map((s) => s.name);
+    expect(names).toContain("Datasets");
+    expect(names).toContain("Columns");
+
+    // The counts are the point: a name alone does not say which sheet holds
+    // the data. They are of the sheet as it stands, header row included --
+    // at this stage nobody has said whether the first row is a header.
+    const datasets = sheets.find((s) => s.name === "Datasets")!;
+    const columns = sheets.find((s) => s.name === "Columns")!;
+    expect(datasets.rowCount).toBe(3);
+    expect(columns.rowCount).toBe(15);
+    expect(columns.columnCount).toBeGreaterThan(0);
   });
 
   it("rejects a legacy .xls (OLE2) file with a clear error, not a silent misread", async () => {

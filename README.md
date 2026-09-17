@@ -532,7 +532,7 @@ the setting silently dropped, and `key_columns: "id"` returned a 500.
 | POST   | `/api/catalog/upload`                                 | Upload catalogue → `catalog_id` + datasets                                                                                          |
 | GET    | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset                                                                                                               |
 | POST   | `/api/files/upload`                                   | Upload one file → `file_id` + metadata                                                                                              |
-| POST   | `/api/files/list-sheets`                              | Sheet names in a workbook                                                                                                           |
+| POST   | `/api/files/list-sheets`                              | A workbook's sheets, each with its row and column count                                                                             |
 | POST   | `/api/compare/run`                                    | Run a comparison synchronously → result + `run_id`                                                                                  |
 | POST   | `/api/compare/jobs`                                   | Start a comparison in the background → `job_id` (202)                                                                               |
 | GET    | `/api/compare/jobs/:jobId`                            | Live progress, and the result once done                                                                                             |

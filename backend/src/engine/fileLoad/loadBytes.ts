@@ -34,7 +34,7 @@ export async function loadBytes(
   options: LoadOptions
 ): Promise<{ table: Table; meta: FileMeta }> {
   if (isExcelName(fileName)) {
-    const sheet = options.sheetName || (await listExcelSheets(data, fileName))[0];
+    const sheet = options.sheetName || (await listExcelSheets(data, fileName))[0]?.name;
     if (!sheet) throw new InputError(`${fileName}: workbook has no sheets.`);
     return loadExcel(data, fileName, { sheetName: sheet, hasHeader: options.hasHeader });
   }

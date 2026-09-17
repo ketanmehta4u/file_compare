@@ -319,7 +319,7 @@ All routes under `/api`, all JSON `snake_case`, all errors
 | POST   | `/api/catalog/upload`                                 | Upload catalogue → `catalog_id` + datasets              |
 | GET    | `/api/catalog/:catalogId/datasets/:datasetId/mapping` | Mapping for a dataset                                   |
 | POST   | `/api/files/upload`                                   | Upload one file → `file_id` + metadata                  |
-| POST   | `/api/files/list-sheets`                              | Sheet names in a workbook                               |
+| POST   | `/api/files/list-sheets`                              | A workbook's sheets, each with its row and column count |
 | POST   | `/api/compare/run`                                    | Run a comparison synchronously → full result + `run_id` |
 | POST   | `/api/compare/jobs`                                   | Start a comparison in the background → `job_id`         |
 | GET    | `/api/compare/jobs/:jobId`                            | Live progress; the result once done                     |
