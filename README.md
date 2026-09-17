@@ -990,12 +990,16 @@ fixtures/         sample CSV/XLSX used by tests and manual checks
                   *_multisheet.xlsx exercise the sheet picker
 docker-compose.yml
 package.json      root scripts: setup / build / start / serve / test
-docs/             deployment guide (Docker, IIS) and the function-call analysis
+docs/             code map (what each file holds), deployment guide, decisions
 ARCHITECTURE.md   how it works: workflow, API calls, internals
 BUILD_PROMPT.md   full specification of this app, written from the code
 prompt.md         an earlier, rejected specification -- kept for reference
 CLAUDE.md         project context and history for AI-assisted sessions
 ```
+
+**New to the code?** [docs/code-map.md](docs/code-map.md) walks through
+every file and says what it holds — including a short introduction to
+Angular for reading the frontend half.
 
 The **git log is the build narrative**: each commit describes what was
 built in that phase, how it was verified, and every real bug found along
