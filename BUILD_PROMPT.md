@@ -501,6 +501,25 @@ Retention is a shared resource too: keep finished runs under a configurable cap
 (`MAX_CACHED_RUNS`) rather than a fixed handful, or a few concurrent users will
 evict each other's results before they are downloaded.
 
+### Validate requests at the boundary
+
+Parse every JSON request body against a schema before the handler runs, and
+refuse anything that does not match with a **400 naming the field**. TypeScript
+interfaces are erased at runtime, so a cast like `req.body as CompareRequest`
+checks nothing — and both failure modes are bad. Measured against a running
+server without this: `key_columns: "id"` produced a 500 and an unhandled-error
+log line, while `case_sensitive: "yes"` and `decimal_precision: "abc"` produced
+**200 and a reconciliation result**, computed with the setting quietly ignored.
+On financial data the second is far worse than the first.
+
+Be strict about unknown fields, so a typo (`key_column`) is refused rather than
+dropped in silence, and cap list and map sizes so an absurd body inside the
+1 MB limit cannot make absurd work.
+
+Do **not** validate responses at runtime: they are built by typed code from
+server-side data, contract tests already pin their shape, and checking them
+again costs CPU on every request for nothing.
+
 ### Caching
 
 Three LRU caches, keyed by content hash so identical uploads from

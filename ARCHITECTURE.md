@@ -461,6 +461,7 @@ message and the error is rebuilt on the other side.
 
 | Where it fails                                           | Status                | What the user sees                                                                  |
 | -------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------- |
+| Request body fails its schema                            | 400                   | "Invalid request — key_columns: Invalid input: expected array"                      |
 | File too large (header)                                  | 413                   | "Request body exceeds the server's upload limit…"                                   |
 | File too large (actual)                                  | 400                   | multer's limit error                                                                |
 | Legacy `.xls`                                            | 400                   | "…please re-save as .xlsx or .csv" — usually caught client-side first               |

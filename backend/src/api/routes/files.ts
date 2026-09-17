@@ -9,6 +9,7 @@ import { fileMetaToView } from "../toView";
 import type { ExcelSheetsResponse, FileMetaView } from "../dto";
 import type { FileMeta, Table } from "../../engine/types";
 import { respondWithError } from "../errors";
+import { uploadOptionsSchema } from "../schemas";
 
 export const filesRouter = Router();
 
@@ -18,11 +19,13 @@ filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (
     const data = req.file.buffer;
     if (data.length === 0) return res.status(400).json({ detail: "Uploaded file is empty." });
 
+    const opts = uploadOptionsSchema.parse(req.body ?? {});
     const load: LoadOptions = {
-      sheetName: typeof req.body.sheet_name === "string" ? req.body.sheet_name : undefined,
-      hasHeader: req.body.has_header !== "false",
-      delimiter:
-        typeof req.body.delimiter === "string" && req.body.delimiter ? req.body.delimiter : undefined,
+      sheetName: opts.sheet_name,
+      // Anything but the literal "false" means yes, as before -- a checkbox
+      // that never arrives should not silently drop the header row.
+      hasHeader: opts.has_header !== "false",
+      delimiter: opts.delimiter,
     };
 
     // Parsed once here for the metadata the UI needs (columns, dtypes, row

@@ -20,6 +20,7 @@ import { currentUser } from "../middleware/currentUser";
 import { currentSession } from "../middleware/session";
 import { runIsolationEnabled } from "../../config/env";
 import { compareToResponse } from "../toView";
+import { compareRequestSchema } from "../schemas";
 import { HttpError, respondWithError } from "../errors";
 import { log } from "../middleware/requestLog";
 import type { CompareRequest, CompareResultResponse, WriteToBlobResponse } from "../dto";
@@ -181,7 +182,8 @@ export function storeRun(
 compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
   let slotHeld = false;
   try {
-    const { input, complianceWarnings } = prepareCompare(req.body as CompareRequest, currentUser(req));
+    const body = compareRequestSchema.parse(req.body) as CompareRequest;
+    const { input, complianceWarnings } = prepareCompare(body, currentUser(req));
 
     slotHeld = await acquireCompareSlot();
     if (!slotHeld) {
@@ -196,7 +198,7 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
     }
 
     const outcome = await runComparisonInWorker(input);
-    res.json(storeRun(outcome, req.body as CompareRequest, input, complianceWarnings, currentSession(req)));
+    res.json(storeRun(outcome, body, input, complianceWarnings, currentSession(req)));
   } catch (err) {
     respondWithError(req, res, err);
   } finally {
@@ -208,7 +210,7 @@ compareRouter.post("/compare/run", compareRateLimit, async (req, res) => {
 compareRouter.post("/compare/jobs", compareRateLimit, (req, res) => {
   try {
     const user = currentUser(req);
-    const body = req.body as CompareRequest;
+    const body = compareRequestSchema.parse(req.body) as CompareRequest;
     const { input, complianceWarnings } = prepareCompare(body, user);
     const job = startCompareJob(input, {
       user,

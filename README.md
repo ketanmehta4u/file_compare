@@ -510,6 +510,14 @@ LOG_LEVEL=debug
 All routes are under `/api`, JSON is `snake_case`, and errors come back
 as `{"detail": "..."}`. Decimal values cross the wire as strings.
 
+**Request bodies are validated against a schema** before a route runs
+(`backend/src/api/schemas.ts`). A field of the wrong type — or an unknown
+field, so a typo is caught rather than ignored — is refused with a 400 that
+names it: `{"detail": "Invalid request — case_sensitive: Invalid input:
+expected boolean"}`. That matters more than it sounds: before this,
+`case_sensitive: "yes"` returned a **reconciliation result** computed with
+the setting silently dropped, and `key_columns: "id"` returned a 500.
+
 | Method | Path                                                  | Purpose                                                                                                                             |
 | ------ | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | `/api/health`, `/api/livez`                           | Liveness                                                                                                                            |
