@@ -12,6 +12,8 @@ import { CompareStateService, type CompareFormState } from "../../core/compare-s
   selector: "app-settings-panel",
   templateUrl: "./settings-panel.component.html",
 })
+/** The settings step: column mapping, key and control-total columns, and
+ * the matching options folded away behind a summary. */
 export class SettingsPanelComponent implements OnInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
 

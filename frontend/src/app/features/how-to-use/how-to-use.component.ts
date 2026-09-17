@@ -14,6 +14,8 @@ interface DtypeRow {
   selector: "app-how-to-use",
   templateUrl: "./how-to-use.component.html",
 })
+/** The collapsible guide: the walkthrough, the supported data types and
+ * the gotchas that most often surprise people. */
 export class HowToUseComponent {
   @Input() maxUploadBytes: number | null = null;
 

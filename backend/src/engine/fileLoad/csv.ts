@@ -92,6 +92,9 @@ export function cleanupColumnNames(rawColumns: readonly string[]): string[] {
   return result;
 }
 
+/** A display label for a column's kind, inferred from its values.
+ * Advisory only -- the comparison normalises cell by cell, so a column
+ * labelled text can still compare numerically where both sides parse. */
 export function inferColumnDtype(values: readonly string[]): "numeric" | "date" | "text" | "empty" {
   const sample = values.filter((v) => v !== "" && v !== undefined && v !== null).slice(0, 50);
   if (sample.length === 0) return "empty";
@@ -102,6 +105,8 @@ export function inferColumnDtype(values: readonly string[]): "numeric" | "date" 
   return "text";
 }
 
+/** How to read a CSV: whether the first row is a header, and the delimiter
+ * (auto-detected when absent). */
 export interface LoadCsvOptions {
   hasHeader?: boolean;
   delimiter?: string | null;

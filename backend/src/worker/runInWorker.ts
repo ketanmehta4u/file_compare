@@ -6,6 +6,8 @@ import type { ProgressUpdate } from "../engine/progress";
 import type { CompareReport, FileMeta } from "../engine/types";
 import { InputError } from "../engine/errors";
 
+/** Hooks for a run: progress as it happens, and the worker handle so a
+ * caller can cancel it. */
 export interface RunInWorkerOptions {
   onProgress?: (update: ProgressUpdate) => void;
   /** Resolves the worker handle so a caller can cancel the run. */
@@ -27,11 +29,22 @@ function workerEntry(): { file: string; execArgv: string[] | undefined } {
   return { file, execArgv: ext === ".ts" ? ["--import", "tsx"] : undefined };
 }
 
+/** The run was cancelled deliberately -- the worker was terminated, rather
+ * than the comparison failing. */
 export class ComparisonCancelledError extends Error {
   constructor() {
     super("Comparison cancelled.");
     this.name = "ComparisonCancelledError";
   }
+}
+
+/** What a finished run hands back: the report, plus how each file looked
+ * after parsing and mapping inside the worker. */
+export interface WorkerComparison {
+  report: CompareReport;
+  /** Post-mapping metadata, as the worker saw it after parsing. */
+  sourceMeta: FileMeta;
+  targetMeta: FileMeta;
 }
 
 /**
@@ -41,13 +54,6 @@ export class ComparisonCancelledError extends Error {
  * (see transfer.ts) -- a structured clone would otherwise strip Decimal's
  * prototype and leave money values as inert objects.
  */
-export interface WorkerComparison {
-  report: CompareReport;
-  /** Post-mapping metadata, as the worker saw it after parsing. */
-  sourceMeta: FileMeta;
-  targetMeta: FileMeta;
-}
-
 export function runComparisonInWorker(
   input: CompareJobInput,
   options: RunInWorkerOptions = {}

@@ -13,6 +13,7 @@ import type {
   JobProgress,
 } from "./shared/models/dto";
 
+/** Where one step of the indicator stands. */
 export type StepStatus = "done" | "current" | "todo";
 
 /** One entry in the step indicator at the top of the page. */

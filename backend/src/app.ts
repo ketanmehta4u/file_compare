@@ -13,6 +13,12 @@ import { filesRouter } from "./api/routes/files";
 import { compareRouter } from "./api/routes/compare";
 import { serveFrontend } from "./api/serveFrontend";
 
+/**
+ * Builds the Express app: middleware in the order that matters, then the
+ * API routers, then optionally the built SPA. Exported as a factory rather
+ * than a ready-made app so tests can construct one per suite with their own
+ * environment.
+ */
 export function createApp(): Express {
   const app = express();
 

@@ -79,10 +79,15 @@ export function acquireCompareSlot(timeoutMs = compareQueueTimeoutMs()): Promise
   return semaphore.acquire(timeoutMs);
 }
 
+/** Returns a slot taken with acquireCompareSlot. Exactly one release per
+ * successful acquire, including on failure and cancellation paths. */
 export function releaseCompareSlot(): void {
   semaphore.release();
 }
 
+/** Middleware form of the gate, for a route whose work finishes with its
+ * response. A queued job uses acquireCompareSlot directly instead, because
+ * it must hold the slot for the run rather than for the request. */
 export async function compareSlot(req: Request, res: Response, next: NextFunction): Promise<void> {
   const waitedFrom = performance.now();
   const acquired = await semaphore.acquire(compareQueueTimeoutMs());

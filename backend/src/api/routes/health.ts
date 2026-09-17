@@ -5,6 +5,7 @@ import { Router } from "express";
 import { fileCache, catalogCache, runCache } from "../../cache/stores";
 import { cacheBudgetBytes } from "../../config/env";
 
+/** Liveness, readiness, and the memory figures an operator needs. */
 export const healthRouter = Router();
 
 healthRouter.get("/health", (_req, res) => res.json({ status: "ok" }));

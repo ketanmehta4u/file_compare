@@ -2,6 +2,7 @@ import { Router } from "express";
 import { currentUser } from "../middleware/currentUser";
 import type { AuthMe } from "../dto";
 
+/** Reports the identity a fronting proxy supplied, if any. The UI does not call it; it exists for diagnosing a proxy setup. */
 export const authRouter = Router();
 
 /**

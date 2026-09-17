@@ -14,6 +14,7 @@ import type {
   MappingView,
 } from "../shared/models/dto";
 
+/** Upload progress as a whole percentage. */
 export interface UploadProgress {
   percent: number;
 }

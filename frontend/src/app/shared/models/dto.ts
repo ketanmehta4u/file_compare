@@ -18,6 +18,8 @@ export interface ConfigInfo {
   max_response_rows: number;
 }
 
+/** One catalogue column: what it is called canonically, which source
+ * column feeds it, and whether it identifies a row. */
 export interface MappingEntryView {
   canonical_name: string;
   source_column: string;
@@ -27,6 +29,8 @@ export interface MappingEntryView {
   description: string;
 }
 
+/** One dataset a catalogue describes, with the comparison defaults it
+ * suggests. */
 export interface DatasetView {
   dataset_id: string;
   dataset_name: string;
@@ -40,6 +44,8 @@ export interface DatasetView {
   description: string;
 }
 
+/** A dataset's full column mapping, plus the key columns and settings it
+ * pre-fills. */
 export interface MappingView {
   dataset_id: string;
   dataset: DatasetView | null;
@@ -49,6 +55,7 @@ export interface MappingView {
   sha256: string;
 }
 
+/** What an uploaded catalogue offers: its id and the datasets inside. */
 export interface CatalogUploadResponse {
   catalog_id: string;
   sha256: string;
@@ -56,6 +63,8 @@ export interface CatalogUploadResponse {
   datasets: DatasetView[];
 }
 
+/** An uploaded file as the page describes it: identity, shape, and the
+ * warnings worth showing (hidden data, uncalculated formulas). */
 export interface FileMetaView {
   file_id: string;
   filename: string;
@@ -74,16 +83,22 @@ export interface FileMetaView {
   formula_blank_count: number;
 }
 
+/** One sheet offered for selection, with the size that tells it apart
+ * from the workbook's other sheets. */
 export interface ExcelSheetView {
   name: string;
   row_count: number;
   column_count: number;
 }
 
+/** The sheets a workbook holds, for the picker. */
 export interface ExcelSheetsResponse {
   sheets: ExcelSheetView[];
 }
 
+/** Everything one comparison needs, as sent to the server. Validated
+ * there against a schema, so a wrong type is refused rather than
+ * silently ignored. */
 export interface CompareRequest {
   source_file_id: string;
   target_file_id: string;
@@ -104,6 +119,8 @@ export interface CompareRequest {
   annotated_outputs?: boolean;
 }
 
+/** Structural differences: columns on one side only, in a different
+ * position, or holding different kinds of value. */
 export interface ColumnDifferencesView {
   source_only: string[];
   target_only: string[];
@@ -112,6 +129,8 @@ export interface ColumnDifferencesView {
   dtype_mismatches: Array<{ column: string; source_dtype: string; target_dtype: string }>;
 }
 
+/** One differing cell in a row that matched. Decimals arrive as strings,
+ * so no precision is lost in JSON. */
 export interface ValueDifferenceView {
   key: Record<string, unknown>;
   column: string;
@@ -123,6 +142,7 @@ export interface ValueDifferenceView {
   target_row: number;
 }
 
+/** One column's totals on both sides, and whether they tie out. */
 export interface ControlTotalView {
   column: string;
   source_total: string;
@@ -131,6 +151,7 @@ export interface ControlTotalView {
   ties_out: boolean;
 }
 
+/** The verdict and the counts behind it. */
 export interface ReconciliationOutcomeView {
   verdict: string;
   reconciled: boolean;
@@ -142,6 +163,7 @@ export interface ReconciliationOutcomeView {
   control_totals_not_tied_out: number;
 }
 
+/** The audit header: who ran it, when, and the verdict. */
 export interface AuditView {
   rows: Array<[string, string]>;
   user: string;
@@ -149,6 +171,8 @@ export interface AuditView {
   outcome: ReconciliationOutcomeView | null;
 }
 
+/** The headline counts. Always the true totals, even when the detail
+ * sections below them were capped for the wire. */
 export interface CompareSummary {
   source_rows: number;
   target_rows: number;
@@ -171,6 +195,8 @@ export interface CompareSummary {
   target_duplicate_keys: number;
 }
 
+/** How much of one detail section made it into the response, and how much
+ * there really is. */
 export interface SectionTruncation {
   returned: number;
   total: number;
@@ -188,6 +214,8 @@ export interface ResponseTruncation {
   value_differences: SectionTruncation;
 }
 
+/** A finished comparison as the page receives it. The detail arrays may
+ * be a preview; `truncation` says so, and the downloads are complete. */
 export interface CompareResultResponse {
   run_id: string;
   summary: CompareSummary;
@@ -216,13 +244,17 @@ export interface JobProgress {
   percent: number | null;
 }
 
+/** Where a background comparison has got to. */
 export type CompareJobStatus = "queued" | "running" | "done" | "error" | "cancelled";
 
+/** The acknowledgement that a comparison has been queued. */
 export interface CompareJobStarted {
   job_id: string;
   status: CompareJobStatus;
 }
 
+/** A job while it runs and once it finishes: progress, then either the
+ * result or the reason it failed. */
 export interface CompareJobView {
   job_id: string;
   status: CompareJobStatus;
@@ -233,6 +265,8 @@ export interface CompareJobView {
   detail: string | null;
 }
 
+/** The answer to a cancel request -- `cancelled` is false when the job had
+ * already finished. */
 export interface CompareJobCancelled {
   job_id: string;
   status: CompareJobStatus;

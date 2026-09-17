@@ -13,6 +13,8 @@ export interface FooterLink {
   href: string;
 }
 
+/** The palette, written into CSS custom properties at startup so the
+ * stylesheet and the components read the same values. */
 export interface ThemeColors {
   bg: string;
   panel: string;
@@ -29,6 +31,8 @@ export interface ThemeColors {
   code: string;
 }
 
+/** Everything that identifies the organisation and the product: names,
+ * logos, the disclaimer, the palette and the footer links. */
 export interface Theme {
   orgName: string;
   orgLegalName: string;
@@ -47,6 +51,7 @@ export interface Theme {
   footerLinks: FooterLink[];
 }
 
+/** The active branding. Editing this file re-brands the whole app. */
 export const theme: Theme = {
   orgName: "The World Bank",
   orgLegalName: "The World Bank Group",
@@ -87,6 +92,8 @@ export const theme: Theme = {
   ],
 };
 
+/** CSS custom property -> palette entry, applied by ThemeService. Several
+ * properties deliberately map to the same colour. */
 export const CSS_VAR_MAP: Record<string, keyof ThemeColors> = {
   "--bg": "bg",
   "--panel": "panel",
@@ -105,6 +112,8 @@ export const CSS_VAR_MAP: Record<string, keyof ThemeColors> = {
   "--code": "code",
 };
 
+/** The MIME type for a favicon path, so the link tag declares it
+ * correctly whatever image format the branding uses. */
 export function faviconMimeType(src: string): string {
   const ext = src.slice(src.lastIndexOf(".") + 1).toLowerCase();
   switch (ext) {

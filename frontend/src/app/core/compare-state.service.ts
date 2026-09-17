@@ -3,6 +3,10 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import type { CompareResultResponse, DatasetView, FileMetaView, MappingView } from "../shared/models/dto";
 
+/** Everything the page has been told to compare and how: the two files,
+ * the mapping, the key and control-total columns, and the matching
+ * options. One object, shared by every panel, so no two of them can
+ * disagree about what the next run will do. */
 export interface CompareFormState {
   sourceFile: FileMetaView | null;
   targetFile: FileMetaView | null;

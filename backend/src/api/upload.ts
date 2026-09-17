@@ -18,6 +18,7 @@ import { maxUploadBytes } from "../config/env";
  */
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: maxUploadBytes() } });
 
+/** Multer middleware for one file field, with the upload cap applied. */
 export function uploadSingle(fieldName: string) {
   return upload.single(fieldName);
 }

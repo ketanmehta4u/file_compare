@@ -57,6 +57,8 @@ export function maxUploadBytes(): number {
   return Math.min(DEFAULT_MAX_UPLOAD_BYTES, Math.floor(cacheBudgetBytes() / 2));
 }
 
+/** Headroom above the file cap for multipart framing, so a file exactly at
+ * the limit is not rejected by the body-size guard. */
 export function multipartSlackBytes(): number {
   return MULTIPART_SLACK_BYTES;
 }
@@ -67,6 +69,8 @@ export function maxConcurrentComparisons(): number {
   return envInt("MAX_CONCURRENT_COMPARISONS", DEFAULT_MAX_CONCURRENT_COMPARISONS);
 }
 
+/** How long a comparison waits for a free slot before the caller is told
+ * the server is busy. Read per call, so it can be tuned without a restart. */
 export function compareQueueTimeoutMs(): number {
   return envInt("COMPARE_QUEUE_TIMEOUT_S", DEFAULT_COMPARE_QUEUE_TIMEOUT_S) * 1000;
 }
@@ -146,6 +150,8 @@ export function downloadRateLimitMax(): number {
   return envInt("DOWNLOAD_RATE_LIMIT", DEFAULT_DOWNLOAD_RATE_LIMIT);
 }
 
+/** Origins allowed to call the API. Neither supported topology needs CORS
+ * at all -- page and API share an origin in both. */
 export function corsOrigins(): string[] {
   // Defaults to the single-process origin. Neither supported topology
   // needs CORS at all -- the page and the API share an origin in both --
@@ -158,10 +164,12 @@ export function corsOrigins(): string[] {
     .filter(Boolean);
 }
 
+/** pino level: trace/debug/info/warn/error. */
 export function logLevel(): string {
   return process.env.LOG_LEVEL ?? "info";
 }
 
+/** Structured JSON for a deployment, pretty-printed text for development. */
 export function logFormat(): "json" | "text" {
   return process.env.LOG_FORMAT === "text" ? "text" : "json";
 }
@@ -217,6 +225,7 @@ export function frontendDist(): string {
   return path.resolve(__dirname, "..", "..", "..", "frontend", "dist", "frontend");
 }
 
+/** The port this process listens on. */
 export function port(): number {
   return envInt("PORT", 3000);
 }

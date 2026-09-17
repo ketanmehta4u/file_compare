@@ -20,6 +20,7 @@ export const PHASE_LABELS: Record<ProgressPhase, string> = {
   reporting: "Building the report",
 };
 
+/** One progress tick from inside the engine. */
 export interface ProgressUpdate {
   phase: ProgressPhase;
   /** Units finished in this phase. */
@@ -28,6 +29,8 @@ export interface ProgressUpdate {
   total: number;
 }
 
+/** What the engine calls as it works. In the worker this becomes a
+ * postMessage; elsewhere (tests) it can be any function. */
 export type ProgressReporter = (update: ProgressUpdate) => void;
 
 /**

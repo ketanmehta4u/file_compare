@@ -33,8 +33,11 @@ export interface JobContext {
   targetFileId: string;
 }
 
+/** Where a background comparison has got to. */
 export type JobStatus = "queued" | "running" | "done" | "error" | "cancelled";
 
+/** A progress snapshot as the UI displays it: which phase, how far through
+ * it, and one overall percentage across the whole run. */
 export interface JobProgress {
   phase: string;
   label: string;
@@ -44,6 +47,8 @@ export interface JobProgress {
   percent: number | null;
 }
 
+/** A comparison that outlives the request that started it. `worker` is
+ * held so a cancel can terminate the thread rather than merely forget it. */
 export interface CompareJob {
   id: string;
   status: JobStatus;
@@ -96,10 +101,13 @@ function toJobProgress(u: ProgressUpdate): JobProgress {
  * does, since a done job holds a full response. */
 const jobs = new LRUCache<string, CompareJob>({ max: 40, ttl: 30 * 60 * 1000 });
 
+/** Looks up a job. Callers must still check it belongs to the requesting
+ * browser (see ownsJob in routes/compare.ts). */
 export function getJob(id: string): CompareJob | undefined {
   return jobs.get(id);
 }
 
+/** Jobs currently tracked, for diagnostics. */
 export function jobCount(): number {
   return jobs.size;
 }

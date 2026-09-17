@@ -13,6 +13,9 @@ const CURRENCY_RE = /[$€£¥₹₽₩₪]/g;
 const THOUSANDS_RE = /(?<=\d),(?=\d{3}\b)/g;
 const PAREN_NEG_RE = /^\((.+)\)$/;
 
+/** Parses a value as an exact decimal, or null if it is not a number.
+ * Understands currency symbols, thousands separators and accounting
+ * negatives in brackets. Never goes through a float. */
 export function toDecimal(raw: unknown): Decimal | null {
   if (raw === null || raw === undefined) return null;
   if (raw instanceof Decimal) return raw;

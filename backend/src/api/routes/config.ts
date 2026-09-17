@@ -3,6 +3,7 @@ import { maxUploadBytes, maxResponseRows } from "../../config/env";
 import { EXCEL_MAX_ROWS } from "../../engine/report/buildExcelReport";
 import type { ConfigInfo } from "../dto";
 
+/** The limits the UI must respect, fetched once at startup. */
 export const configRouter = Router();
 
 /** The limits the UI must respect: Excel's row ceiling, the effective

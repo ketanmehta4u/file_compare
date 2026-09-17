@@ -34,6 +34,9 @@ export function jsonable(value: unknown): unknown {
   return value;
 }
 
+/** Engine type -> wire DTO. These converters are the only place camelCase
+ * becomes snake_case and Decimal/Date become strings, so the HTTP contract
+ * cannot drift by accident. */
 export function datasetToView(ds: DatasetEntry): DatasetView {
   return {
     dataset_id: ds.datasetId,
@@ -49,6 +52,7 @@ export function datasetToView(ds: DatasetEntry): DatasetView {
   };
 }
 
+/** One catalogue column definition, as the mapping table displays it. */
 export function mappingEntryToView(e: MappingEntry): MappingEntryView {
   return {
     canonical_name: e.canonicalName,
@@ -60,6 +64,9 @@ export function mappingEntryToView(e: MappingEntry): MappingEntryView {
   };
 }
 
+/** What the UI shows about an uploaded file, plus the id everything later
+ * refers to it by. Copies the arrays so a caller cannot mutate cached
+ * metadata through the response. */
 export function fileMetaToView(meta: FileMeta, fileId: string): FileMetaView {
   return {
     file_id: fileId,
@@ -80,6 +87,7 @@ export function fileMetaToView(meta: FileMeta, fileId: string): FileMetaView {
   };
 }
 
+/** Structural differences between the two files' columns. */
 export function columnDiffToView(cd: ColumnDifferences): ColumnDifferencesView {
   return {
     source_only: [...cd.sourceOnly],
@@ -98,6 +106,8 @@ export function columnDiffToView(cd: ColumnDifferences): ColumnDifferencesView {
   };
 }
 
+/** One differing cell. Decimals cross the wire as strings, so no precision
+ * is lost to a JSON number on the way to the browser. */
 export function valueDiffToView(vd: ValueDifference): ValueDifferenceView {
   const key: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(vd.key)) key[k] = jsonable(v as CellValue | string);
@@ -113,6 +123,7 @@ export function valueDiffToView(vd: ValueDifference): ValueDifferenceView {
   };
 }
 
+/** One column's totals on both sides, as exact decimal strings. */
 export function controlTotalToView(ct: ControlTotal): ControlTotalView {
   return {
     column: ct.column,
@@ -123,6 +134,8 @@ export function controlTotalToView(ct: ControlTotal): ControlTotalView {
   };
 }
 
+/** Detail rows carry raw normalised values (Decimal, Date); this makes a
+ * JSON-safe copy without touching the cached originals. */
 export function rowsToJsonable(rows: ReadonlyArray<Record<string, unknown>>): Array<Record<string, unknown>> {
   return rows.map((r) => {
     const out: Record<string, unknown> = {};
@@ -131,6 +144,8 @@ export function rowsToJsonable(rows: ReadonlyArray<Record<string, unknown>>): Ar
   });
 }
 
+/** What the catalogue route has after parsing an uploaded workbook, before
+ * it is shaped for the wire. */
 export interface CatalogDatasetsResult {
   catalogId: string;
   sha256: string;
@@ -138,6 +153,7 @@ export interface CatalogDatasetsResult {
   datasets: DatasetEntry[];
 }
 
+/** The datasets a freshly-uploaded catalogue offers. */
 export function catalogUploadToView(r: CatalogDatasetsResult): CatalogUploadResponse {
   return {
     catalog_id: r.catalogId,
@@ -147,8 +163,6 @@ export function catalogUploadToView(r: CatalogDatasetsResult): CatalogUploadResp
   };
 }
 
-/** Port of models.py's `compare_to_response` -- assembles the full
- * CompareResultResponse from an engine CompareReport. */
 /** Caps one detail section, recording what was left behind. */
 function capSection<T>(rows: readonly T[], limit: number): { rows: T[]; info: SectionTruncation } {
   const returned = Math.min(rows.length, limit);
@@ -158,6 +172,14 @@ function capSection<T>(rows: readonly T[], limit: number): { rows: T[]; info: Se
   };
 }
 
+/**
+ * Port of models.py's `compare_to_response`: assembles the whole
+ * CompareResultResponse from an engine report.
+ *
+ * Only the detail sections are capped, and only for the wire -- the full
+ * report stays in the run cache, so the downloads still contain every row,
+ * and `summary` always carries the true totals.
+ */
 export function compareToResponse(
   report: CompareReport,
   runId: string,

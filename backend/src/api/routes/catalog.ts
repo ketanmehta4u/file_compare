@@ -8,6 +8,7 @@ import { datasetToView, mappingEntryToView } from "../toView";
 import type { CatalogUploadResponse, MappingView } from "../dto";
 import { respondWithError } from "../errors";
 
+/** Catalogue workbook upload, its datasets, one dataset's mapping, and the blank template. */
 export const catalogRouter = Router();
 
 /**

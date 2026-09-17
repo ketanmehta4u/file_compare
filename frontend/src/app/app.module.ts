@@ -39,4 +39,6 @@ export function initTheme(theme: ThemeService): () => void {
   providers: [{ provide: APP_INITIALIZER, useFactory: initTheme, deps: [ThemeService], multi: true }],
   bootstrap: [AppComponent],
 })
+/** The application module. See the file header for why there is no
+ * router and how the branding is applied before the first paint. */
 export class AppModule {}

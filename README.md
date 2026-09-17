@@ -173,8 +173,8 @@ original `8080` binding still conflicts.
 ### 3. Confirm the install is good
 
 ```bash
-cd backend && npm test     # 192 tests
-cd ../frontend && npm test # 50 tests (opens Chrome)
+cd backend && npm test     # 207 tests
+cd ../frontend && npm test # 55 tests (opens Chrome)
 ```
 
 An end-to-end check against a running instance, using the sample files.
@@ -327,8 +327,8 @@ cd frontend && npm run watch                       # rebuild on change
 ### Test
 
 ```bash
-cd backend  && npm test                            # vitest, 192 tests
-cd frontend && npm test                            # karma/jasmine, 50 tests
+cd backend  && npm test                            # vitest, 207 tests
+cd frontend && npm test                            # karma/jasmine, 55 tests
 
 cd backend  && npx vitest run test/engine          # one directory
 cd backend  && npx vitest run test/api/contract.spec.ts   # one file
@@ -456,8 +456,8 @@ falls back to whole-row matching).
 ## Tests
 
 ```bash
-cd backend && npm test    # vitest — engine + API, 192 tests
-cd frontend && npm test   # karma/jasmine, needs Chrome — 50 tests
+cd backend && npm test    # vitest — engine + API, 207 tests
+cd frontend && npm test   # karma/jasmine, needs Chrome — 55 tests
 ```
 
 Test files run one at a time (`fileParallelism: false`). Five of them run

@@ -32,6 +32,7 @@ export interface ExcelSheetInfo {
   columnCount: number;
 }
 
+/** Every sheet in a workbook, with its size, for the picker to offer. */
 export async function listExcelSheets(data: Buffer, fileName: string): Promise<ExcelSheetInfo[]> {
   assertXlsxMagicBytes(data, fileName);
   const wb = new ExcelJS.Workbook();
@@ -87,6 +88,7 @@ function formatDateLikePython(d: Date): string {
 
 const XLSX_INSPECT_MAX_BYTES = 25_000_000;
 
+/** Which sheet to read, and whether its first row is a header. */
 export interface LoadExcelOptions {
   sheetName: string;
   hasHeader?: boolean;

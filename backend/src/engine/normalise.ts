@@ -47,6 +47,7 @@ export function normaliseCell(
   return { kind: "text", value: settings.caseSensitive ? s : s.toLowerCase() };
 }
 
+/** Whether a normalised cell holds a value at all. */
 export function isNonNullKind(kind: CellKind): boolean {
   return kind !== "null";
 }

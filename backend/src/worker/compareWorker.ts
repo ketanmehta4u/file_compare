@@ -22,12 +22,16 @@ import type { ColumnMapping, CompareSettings, FileMeta } from "../engine/types";
  * requests while this thread is busy.
  */
 
+/** One side's file as the worker receives it: bytes, not a parsed table,
+ * so the parse happens off the main thread. */
 export interface CompareFileInput {
   bytes: Buffer;
   fileName: string;
   load: LoadOptions;
 }
 
+/** Everything one comparison needs. Crosses the thread boundary encoded
+ * (see transfer.ts). */
 export interface CompareJobInput {
   source: CompareFileInput;
   target: CompareFileInput;
@@ -42,6 +46,8 @@ export interface CompareJobInput {
   annotatedOutputs: boolean;
 }
 
+/** What the worker sends back: progress while it runs, then exactly one
+ * terminal message. */
 export type WorkerMessage =
   | { type: "progress"; update: ProgressUpdate }
   | { type: "done"; report: unknown; sourceMeta: unknown; targetMeta: unknown }

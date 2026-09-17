@@ -4,6 +4,8 @@ import pino from "pino";
 import { logFormat, logLevel } from "../../config/env";
 import { currentUser } from "./currentUser";
 
+/** The process-wide logger. Structured JSON by default; LOG_FORMAT=text
+ * gives readable output for development. */
 export const log = pino({
   level: logLevel(),
   transport: logFormat() === "text" ? { target: "pino-pretty", options: { colorize: true } } : undefined,

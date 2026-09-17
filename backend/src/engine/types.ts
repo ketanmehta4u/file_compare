@@ -14,6 +14,8 @@ export interface CompareSettings {
   enforcedDtypes: ReadonlyMap<string, "id" | "timestamp">;
 }
 
+/** Settings with every default filled in. The defaults are the cautious
+ * ones: exact decimals, case sensitive, no tolerance. */
 export function defaultSettings(overrides: Partial<CompareSettings> = {}): CompareSettings {
   return {
     keyColumns: [],
@@ -29,10 +31,14 @@ export function defaultSettings(overrides: Partial<CompareSettings> = {}): Compa
   };
 }
 
+/** What a cell turned out to be once normalised. The kind decides how two
+ * cells are compared -- numerically, by day, or as text. */
 export type CellKind = "null" | "numeric" | "date" | "timestamp" | "text";
 
+/** A normalised cell's value. Money is always a Decimal, never a float. */
 export type CellValue = null | Decimal | Date | string;
 
+/** One cell after normalisation: the value plus what it was taken to be. */
 export interface NormalisedCell {
   kind: CellKind;
   value: CellValue;
@@ -46,6 +52,8 @@ export interface Table {
   rows: ReadonlyArray<Record<string, unknown>>;
 }
 
+/** The dtype a column was declared as, if any -- 'id' keeps leading zeros
+ * significant, 'timestamp' compares the time of day too. */
 export function enforcedFor(settings: CompareSettings, column: string): "id" | "timestamp" | undefined {
   return settings.enforcedDtypes.get(column);
 }
@@ -76,6 +84,8 @@ export interface DuplicateStats {
   keyed: boolean;
 }
 
+/** How one row of a file fared. Written into the annotated exports, which
+ * is the only thing that reads it. */
 export type RowStatus =
   "source_only" | "target_only" | "matched_equal" | "matched_with_differences" | "matched_with_tolerance";
 
@@ -100,12 +110,14 @@ export interface FileMeta {
   hasHeader?: boolean;
 }
 
+/** A column present on both sides but in a different position (0-based). */
 export interface SequenceMismatch {
   column: string;
   sourceIndex: number;
   targetIndex: number;
 }
 
+/** A column whose values are of different kinds on each side. */
 export interface DtypeMismatch {
   column: string;
   sourceDtype: string;

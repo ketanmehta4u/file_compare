@@ -11,6 +11,7 @@ export interface AuthMe {
   user: string;
 }
 
+/** The limits the UI must respect, fetched once at startup. */
 export interface ConfigInfo {
   excel_max_rows: number;
   max_upload_bytes: number;
@@ -19,6 +20,8 @@ export interface ConfigInfo {
   max_response_rows: number;
 }
 
+/** One catalogue column: its canonical name, which source column feeds
+ * it, and whether it identifies a row. */
 export interface MappingEntryView {
   canonical_name: string;
   source_column: string;
@@ -28,6 +31,8 @@ export interface MappingEntryView {
   description: string;
 }
 
+/** One dataset a catalogue describes, with the comparison defaults it
+ * suggests. */
 export interface DatasetView {
   dataset_id: string;
   dataset_name: string;
@@ -41,6 +46,8 @@ export interface DatasetView {
   description: string;
 }
 
+/** A dataset's full column mapping, plus the key columns and settings it
+ * pre-fills. */
 export interface MappingView {
   dataset_id: string;
   dataset: DatasetView | null;
@@ -50,6 +57,7 @@ export interface MappingView {
   sha256: string;
 }
 
+/** What an uploaded catalogue offers: its id and the datasets inside. */
 export interface CatalogUploadResponse {
   catalog_id: string;
   sha256: string;
@@ -57,6 +65,8 @@ export interface CatalogUploadResponse {
   datasets: DatasetView[];
 }
 
+/** An uploaded file as the page describes it: identity, shape, and the
+ * warnings worth showing (hidden data, uncalculated formulas). */
 export interface FileMetaView {
   file_id: string;
   filename: string;
@@ -83,10 +93,14 @@ export interface ExcelSheetView {
   column_count: number;
 }
 
+/** The sheets a workbook holds, for the picker. */
 export interface ExcelSheetsResponse {
   sheets: ExcelSheetView[];
 }
 
+/** Everything one comparison needs. Validated against a schema before a
+ * route runs (api/schemas.ts), so a wrong type is refused rather than
+ * silently ignored. */
 export interface CompareRequest {
   source_file_id: string;
   target_file_id: string;
@@ -110,6 +124,8 @@ export interface CompareRequest {
   annotated_outputs?: boolean;
 }
 
+/** Structural differences: columns on one side only, in a different
+ * position, or holding different kinds of value. */
 export interface ColumnDifferencesView {
   source_only: string[];
   target_only: string[];
@@ -118,6 +134,8 @@ export interface ColumnDifferencesView {
   dtype_mismatches: Array<{ column: string; source_dtype: string; target_dtype: string }>;
 }
 
+/** One differing cell in a row that matched. Decimals cross the wire as
+ * strings, so no precision is lost to a JSON number. */
 export interface ValueDifferenceView {
   key: Record<string, unknown>;
   column: string;
@@ -129,6 +147,7 @@ export interface ValueDifferenceView {
   target_row: number;
 }
 
+/** One column's totals on both sides, and whether they tie out. */
 export interface ControlTotalView {
   column: string;
   source_total: string;
@@ -137,6 +156,7 @@ export interface ControlTotalView {
   ties_out: boolean;
 }
 
+/** The verdict and the counts behind it. */
 export interface ReconciliationOutcomeView {
   verdict: string;
   reconciled: boolean;
@@ -148,6 +168,7 @@ export interface ReconciliationOutcomeView {
   control_totals_not_tied_out: number;
 }
 
+/** The audit header: who ran it, when, and the verdict. */
 export interface AuditView {
   rows: Array<[string, string]>;
   user: string;
@@ -155,6 +176,8 @@ export interface AuditView {
   outcome: ReconciliationOutcomeView | null;
 }
 
+/** The headline counts. Always the true totals, even when the detail
+ * sections were capped for the wire. */
 export interface CompareSummary {
   source_rows: number;
   target_rows: number;
@@ -199,6 +222,8 @@ export interface ResponseTruncation {
   value_differences: SectionTruncation;
 }
 
+/** A finished comparison as the page receives it. The detail arrays may be
+ * a preview; `truncation` says so, and the downloads are complete. */
 export interface CompareResultResponse {
   run_id: string;
   summary: CompareSummary;

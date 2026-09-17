@@ -12,6 +12,9 @@ const SSO_HEADERS = [
   "remote-user",
 ];
 
+/** The identity a fronting proxy vouched for, or "" when there is none.
+ * This deployment has no sign-in, so it is usually "" -- it still reaches
+ * the audit report and the rate-limit key when a proxy supplies it. */
 export function currentUser(req: Request): string {
   for (const h of SSO_HEADERS) {
     const v = req.headers[h];

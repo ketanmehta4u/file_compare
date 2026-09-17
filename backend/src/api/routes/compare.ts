@@ -26,6 +26,7 @@ import { log } from "../middleware/requestLog";
 import type { CompareRequest, CompareResultResponse } from "../dto";
 import type { CompareJobInput } from "../../worker/compareWorker";
 
+/** Running comparisons -- synchronous and as background jobs -- and the downloads a finished run offers. */
 export const compareRouter = Router();
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

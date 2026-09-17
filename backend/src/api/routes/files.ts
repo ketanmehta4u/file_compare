@@ -11,6 +11,7 @@ import type { FileMeta, Table } from "../../engine/types";
 import { respondWithError } from "../errors";
 import { uploadOptionsSchema } from "../schemas";
 
+/** Uploading a file and listing a workbook's sheets. */
 export const filesRouter = Router();
 
 filesRouter.post("/files/upload", uploadRateLimit, uploadSingle("file"), async (req, res) => {

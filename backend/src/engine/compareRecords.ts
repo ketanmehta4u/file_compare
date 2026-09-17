@@ -5,6 +5,8 @@ import type { CellValue, CompareSettings, DuplicateStats, RowStatus, Table, Valu
 import { enforcedFor } from "./types";
 import { throttleByCount, type ProgressPhase, type ProgressReporter } from "./progress";
 
+/** Everything row matching produced: the one-sided rows, the cell-level
+ * differences, the counts, per-row statuses and the duplicate tally. */
 export interface CompareRecordsResult {
   sourceOnlyRows: Array<Record<string, unknown>>;
   targetOnlyRows: Array<Record<string, unknown>>;

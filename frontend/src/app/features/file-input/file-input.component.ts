@@ -33,6 +33,8 @@ export function formatBytes(bytes: number): string {
   selector: "app-file-input",
   templateUrl: "./file-input.component.html",
 })
+/** One upload card, used for both Source and Target: choose or drop a
+ * file, pick a sheet if it is a workbook, then load it. */
 export class FileInputComponent {
   @Input() label: "Source" | "Target" = "Source";
 

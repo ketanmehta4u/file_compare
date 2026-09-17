@@ -11,6 +11,8 @@ import type { CatalogUploadResponse, MappingView } from "../../shared/models/dto
   selector: "app-catalog-picker",
   templateUrl: "./catalog-picker.component.html",
 })
+/** The optional catalogue step: upload a catalogue workbook, pick a
+ * dataset, and let it pre-fill the mapping, key columns and settings. */
 export class CatalogPickerComponent {
   catalog: CatalogUploadResponse | null = null;
   datasetId = "";

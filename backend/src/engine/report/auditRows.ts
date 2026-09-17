@@ -1,5 +1,6 @@
 import type { AuditHeader, ReconciliationOutcome } from "../types";
 
+/** One label/value line of the audit header. */
 export type Row = readonly [string, string];
 
 function printableDelimiter(d: string | null | undefined): string {

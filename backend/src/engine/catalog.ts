@@ -58,6 +58,7 @@ export function sourceRenameMap(mapping: ColumnMapping): Map<string, string> {
   return m;
 }
 
+/** Every canonical column the mapping declares, in workbook order. */
 export function canonicalNames(mapping: ColumnMapping): string[] {
   return mapping.entries.map((e) => e.canonicalName);
 }

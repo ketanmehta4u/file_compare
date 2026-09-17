@@ -4,6 +4,7 @@ import type { LoadOptions } from "../engine/fileLoad/loadBytes";
 import { cacheBudgetBytes, maxCachedRuns } from "../config/env";
 import type { CompareReport } from "../engine/types";
 
+/** An uploaded file as it is held between requests. */
 export interface CachedFile {
   /** The uploaded bytes, kept instead of the parsed table: a parsed table
    * costs roughly 12x its source bytes (measured), so caching the parse
@@ -20,11 +21,14 @@ export interface CachedFile {
   cachedAt: number;
 }
 
+/** A parsed catalogue workbook, kept so a dataset's mapping can be fetched
+ * without re-uploading it. */
 export interface CachedCatalog {
   catalog: DatasetCatalog;
   cachedAt: number;
 }
 
+/** A finished comparison, kept so its downloads keep working. */
 export interface CachedRun {
   report: CompareReport;
   /** File ids rather than the tables themselves. The annotated downloads
@@ -75,6 +79,8 @@ export const fileCache = new LRUCache<string, CachedFile>({
   sizeCalculation: (value) => value.bytes.byteLength || 1,
 });
 
+/** Catalogues are small (metadata, no row data), so this one counts
+ * entries rather than bytes. */
 export const catalogCache = new LRUCache<string, CachedCatalog>({ max: 60 });
 
 /** Runs hold a report (whose size follows the number of differences found)
@@ -84,6 +90,8 @@ export const catalogCache = new LRUCache<string, CachedCatalog>({ max: 60 });
  * users could churn through before anyone downloaded anything. */
 export const runCache = new LRUCache<string, CachedRun>({ max: maxCachedRuns() });
 
+/** A fresh run id: 64 bits of randomness, so a run cannot be found by
+ * guessing. Ownership is checked separately (see middleware/session.ts). */
 export function newRunId(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 }

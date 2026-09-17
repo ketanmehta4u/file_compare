@@ -1,6 +1,8 @@
 import Decimal from "decimal.js";
 import type { CellKind, CellValue, CompareSettings } from "./types";
 
+/** Whether two cells matched, and by how much they differ when numeric --
+ * delta is TARGET minus SOURCE. */
 export interface EqualityResult {
   equal: boolean;
   withinTolerance: boolean;

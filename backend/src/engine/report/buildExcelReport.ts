@@ -90,6 +90,7 @@ export class ReportAbortedError extends Error {
   }
 }
 
+/** A sheet of the streaming writer, as exceljs hands it back. */
 export type SheetWriter = ReturnType<ExcelJS.stream.xlsx.WorkbookWriter["addWorksheet"]>;
 
 /** Uncompressed sheet XML allowed to queue for the compressor before writing pauses. */
@@ -211,6 +212,7 @@ const solidFill = (hex: string): ExcelJS.Fill => ({
 
 const cellValue = (v: unknown) => (v === undefined || v === null ? "" : v);
 
+/** Name of the guide sheet, and the first tab of every workbook. */
 export const GUIDE_SHEET = "How to Read";
 
 /** What the guide needs to know about how the detail tables were laid out. */
@@ -434,6 +436,7 @@ async function writeDetailSheets(
   }
 }
 
+/** Options for building the workbook. */
 export interface ExcelReportOptions {
   /** Rows per sheet including the header. Only tests lower it, so that
    * splitting can be exercised without writing a million rows. */

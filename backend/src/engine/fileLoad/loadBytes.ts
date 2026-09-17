@@ -18,6 +18,8 @@ export interface LoadOptions {
   delimiter?: string | null;
 }
 
+/** Whether a filename claims to be a workbook. The magic bytes are checked
+ * separately when it is read -- extensions lie. */
 export function isExcelName(fileName: string): boolean {
   const ext = fileName.toLowerCase().split(".").pop();
   return ext === "xlsx" || ext === "xls";

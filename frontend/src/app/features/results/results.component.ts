@@ -22,6 +22,8 @@ type RowTab = "source_only" | "target_only" | "value_diffs";
   // component's own clicks is enough.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Everything a finished comparison shows: verdict, summary tiles, column
+ * and record differences, control totals and the downloads. */
 export class ResultsComponent {
   /**
    * Setters rather than plain inputs plus ngOnChanges: the derived values
